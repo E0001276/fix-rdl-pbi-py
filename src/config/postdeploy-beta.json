@@ -1,0 +1,9 @@
+{
+  "workspaceId": "8a737b4d-eaea-404c-9e75-fcd2c3c05a6b",
+  "workspaceName": "ws-beta",
+  "repositoryRoot": "C:\\Code\\profuturo\\powerbi\\pbi-nci-reportes\\source\\pbi-nci-reportes",
+  "expectedOracleDatabase": "NCI_QA_DB",
+  "refreshSemanticModels": true,
+  "waitForRefresh": false,
+  "failOnUnresolvedRdlVisual": true
+}
