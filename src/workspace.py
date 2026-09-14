@@ -115,6 +115,10 @@ def _get_definition(client, workspace_id: str, item: WorkspaceItem):
     if item.kind == "Report":
         path = f"workspaces/{workspace_id}/reports/{item.id}/getDefinition"
     elif item.kind == "PaginatedReport":
+        # Microsoft documents `format` as optional. When omitted,
+        # PaginatedReportDefinition is the default. Some tenants currently
+        # reject the explicit query string with InvalidDefinitionFormat, so
+        # use the documented default form of the endpoint.
         path = f"workspaces/{workspace_id}/paginatedReports/{item.id}/getDefinition"
     else:
         raise ValueError(f"Definitions are not loaded for item type {item.kind}.")
@@ -303,3 +307,41 @@ def discover_paginated_report_definitions(client, workspace_id: str, workspace_i
         result.append(PaginatedReportInfo(report, parameter_names))
 
     return result
+
+
+def get_report_definition(client, workspace_id: str, report_id: str):
+    response = client.post(
+        f"workspaces/{workspace_id}/reports/{report_id}/getDefinition"
+    )
+    return client.get_json_lro_result(response)
+
+
+def get_paginated_report_definition(client, workspace_id: str, report_id: str):
+    # `format` is optional per Microsoft Learn. If omitted,
+    # PaginatedReportDefinition is used by default.
+    response = client.post(
+        f"workspaces/{workspace_id}/paginatedReports/{report_id}/getDefinition"
+    )
+    return client.get_json_lro_result(response)
+
+
+def update_report_definition(client, workspace_id: str, report_id: str, definition: dict):
+    response = client.post(
+        f"workspaces/{workspace_id}/reports/{report_id}/updateDefinition",
+        json={"definition": definition},
+    )
+    status_code = response.status_code
+    client.wait_for_lro_completion(response)
+    return status_code
+
+
+def update_paginated_report_definition(
+    client, workspace_id: str, report_id: str, definition: dict
+):
+    response = client.post(
+        f"workspaces/{workspace_id}/paginatedReports/{report_id}/updateDefinition",
+        json={"definition": definition},
+    )
+    status_code = response.status_code
+    client.wait_for_lro_completion(response)
+    return status_code

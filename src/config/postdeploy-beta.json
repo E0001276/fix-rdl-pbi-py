@@ -2,7 +2,12 @@
   "workspaceId": "8a737b4d-eaea-404c-9e75-fcd2c3c05a6b",
   "workspaceName": "ws-beta",
   "expectedOracleDatabase": "NCI_QA_DB",
-  "refreshSemanticModels": true,
-  "waitForRefresh": false,
-  "failOnUnresolvedRdlVisual": true
+  "failOnUnresolvedRdlVisual": true,
+  "applyRdlVisualFix": true,
+  "applyPaginatedReportFix": true,
+  "failOnUnresolvedPaginatedReport": true,
+  "paginatedVerifyMaxAttempts": 5,
+  "paginatedVerifyDelaySeconds": 2,
+  "bindSemanticModelsToConnection": true,
+  "failOnUnresolvedConnectionBinding": true
 }

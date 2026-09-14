@@ -20,17 +20,71 @@ class ApiClient:
             return path_or_url
         return urljoin(self.base_url, path_or_url.lstrip("/"))
 
+    @staticmethod
+    def _raise_for_status_with_body(response):
+        if response.ok:
+            return
+
+        try:
+            body = response.json()
+        except Exception:
+            body = response.text
+
+        raise requests.HTTPError(
+            f"{response.status_code} {response.reason} for {response.url}; "
+            f"response={body}",
+            response=response,
+        )
+
     def get(self, path_or_url: str, params=None):
         response = self.session.get(self._url(path_or_url), params=params)
-        response.raise_for_status()
+        self._raise_for_status_with_body(response)
         return response
 
     def post(self, path_or_url: str, json=None, params=None):
         response = self.session.post(
             self._url(path_or_url), json=json, params=params
         )
-        response.raise_for_status()
+        self._raise_for_status_with_body(response)
         return response
+
+
+    def wait_for_lro_completion(self, response, timeout_seconds: int = 300):
+        if response.status_code != 202:
+            return
+
+        operation_id = response.headers.get("x-ms-operation-id")
+        location = response.headers.get("Location")
+        if not operation_id and not location:
+            raise RuntimeError(
+                "Fabric returned HTTP 202 without x-ms-operation-id or Location."
+            )
+
+        started = time.monotonic()
+        retry_after = int(response.headers.get("Retry-After", "2"))
+
+        while True:
+            if time.monotonic() - started > timeout_seconds:
+                raise TimeoutError(
+                    f"Fabric operation did not finish within {timeout_seconds} seconds."
+                )
+
+            time.sleep(max(1, retry_after))
+            state_url = location or f"operations/{operation_id}"
+            state_response = self.get(state_url)
+            state = state_response.json()
+            status = state.get("status")
+
+            if status == "Succeeded":
+                return
+
+            if status in {"Failed", "Cancelled", "Canceled"}:
+                raise RuntimeError(
+                    f"Fabric operation {operation_id or ''} finished with status {status}: {state}"
+                )
+
+            retry_after = int(state_response.headers.get("Retry-After", "2"))
+            location = state_response.headers.get("Location", location)
 
     def get_json_lro_result(self, response, timeout_seconds: int = 300):
         """Return JSON for an immediate response or poll a Fabric LRO to completion."""

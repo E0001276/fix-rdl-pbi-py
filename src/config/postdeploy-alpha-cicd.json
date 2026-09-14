@@ -2,7 +2,12 @@
   "workspaceId": "ce38ea21-2bf0-446b-84a3-5fc21ac70214",
   "workspaceName": "ws-alpha-cicd",
   "expectedOracleDatabase": "NCI_QA_DB",
-  "refreshSemanticModels": true,
-  "waitForRefresh": false,
-  "failOnUnresolvedRdlVisual": true
+  "failOnUnresolvedRdlVisual": true,
+  "applyRdlVisualFix": true,
+  "applyPaginatedReportFix": true,
+  "failOnUnresolvedPaginatedReport": true,
+  "paginatedVerifyMaxAttempts": 5,
+  "paginatedVerifyDelaySeconds": 2,
+  "bindSemanticModelsToConnection": true,
+  "failOnUnresolvedConnectionBinding": true
 }

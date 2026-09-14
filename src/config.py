@@ -8,9 +8,14 @@ class PostDeployConfig:
     workspace_id: str
     workspace_name: str
     expected_oracle_database: str
-    refresh_semantic_models: bool
-    wait_for_refresh: bool
     fail_on_unresolved_rdl_visual: bool
+    apply_rdl_visual_fix: bool
+    apply_paginated_report_fix: bool
+    fail_on_unresolved_paginated_report: bool
+    paginated_verify_max_attempts: int
+    paginated_verify_delay_seconds: int
+    bind_semantic_models_to_connection: bool
+    fail_on_unresolved_connection_binding: bool
 
 
 def load_config(path: str) -> PostDeployConfig:
@@ -20,7 +25,20 @@ def load_config(path: str) -> PostDeployConfig:
         workspace_id=data["workspaceId"],
         workspace_name=data["workspaceName"],
         expected_oracle_database=data.get("expectedOracleDatabase", ""),
-        refresh_semantic_models=data.get("refreshSemanticModels", True),
-        wait_for_refresh=data.get("waitForRefresh", False),
         fail_on_unresolved_rdl_visual=data.get("failOnUnresolvedRdlVisual", True),
+        apply_rdl_visual_fix=data.get("applyRdlVisualFix", True),
+        apply_paginated_report_fix=data.get("applyPaginatedReportFix", True),
+        fail_on_unresolved_paginated_report=data.get(
+            "failOnUnresolvedPaginatedReport", True
+        ),
+        paginated_verify_max_attempts=int(data.get("paginatedVerifyMaxAttempts", 5)),
+        paginated_verify_delay_seconds=int(data.get("paginatedVerifyDelaySeconds", 2)),
+        bind_semantic_models_to_connection=data.get(
+            "bindSemanticModelsToConnection",
+            data.get("bindSemanticModelsToGateway", True),
+        ),
+        fail_on_unresolved_connection_binding=data.get(
+            "failOnUnresolvedConnectionBinding",
+            data.get("failOnUnresolvedGatewayBinding", True),
+        ),
     )

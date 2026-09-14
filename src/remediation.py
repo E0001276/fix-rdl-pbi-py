@@ -1,5 +1,9 @@
+import base64
+import json
 import re
 import unicodedata
+
+from workspace import get_report_definition, update_report_definition
 
 
 _GENERIC_PAGE_WORDS = {"reporte", "report", "paginado", "paginada", "paginated"}
@@ -176,9 +180,77 @@ def _print_resolution_header(index, total, visual):
     )
 
 
-def apply_remediation(rdl_visuals, paginated_infos, workspace_items, config):
+def _encode_json_part(data: dict) -> str:
+    text = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+    return base64.b64encode(text.encode("utf-8")).decode("ascii")
+
+
+def _set_literal_value(node: dict, value: str) -> None:
+    node.setdefault("expr", {}).setdefault("Literal", {})["Value"] = f"'{value}'"
+
+
+def _patch_rdl_visual_part(part: dict, target_item_id: str, target_workspace_id: str):
+    if part.get("payloadType") != "InlineBase64":
+        raise RuntimeError(
+            f"Unsupported payload type for {part.get('path')}: {part.get('payloadType')}"
+        )
+
+    raw = base64.b64decode(part.get("payload", "")).decode("utf-8-sig")
+    data = json.loads(raw)
+    visual = data.get("visual", {})
+    if visual.get("visualType") != "rdlVisual":
+        raise RuntimeError(f"Definition part is not an RDL visual: {part.get('path')}")
+
+    try:
+        objects = visual.setdefault("objects", {})
+        report_info = objects.setdefault("reportInfo", [])
+        if not report_info:
+            report_info.append({})
+        properties = report_info[0].setdefault("properties", {})
+
+        # Replace the complete reference, not only the two literal values.
+        # This mirrors the canonical ItemLocation structure produced by Power BI
+        # when the user manually selects a paginated report in the visual UI.
+        properties["reference"] = {
+            "kind": "ItemLocation",
+            "byReference": {
+                "itemId": {
+                    "expr": {"Literal": {"Value": f"'{target_item_id}'"}}
+                },
+                "workspaceId": {
+                    "expr": {"Literal": {"Value": f"'{target_workspace_id}'"}}
+                },
+            },
+        }
+    except (KeyError, IndexError, TypeError) as exc:
+        raise RuntimeError(
+            f"Unable to create RDL visual report reference in {part.get('path')}"
+        ) from exc
+
+    part["payload"] = _encode_json_part(data)
+
+
+def _read_reference_from_definition(definition_response: dict, part_path: str):
+    for part in definition_response.get("definition", {}).get("parts", []):
+        if part.get("path") != part_path:
+            continue
+        if part.get("payloadType") != "InlineBase64":
+            return "", ""
+        raw = base64.b64decode(part.get("payload", "")).decode("utf-8-sig")
+        data = json.loads(raw)
+        try:
+            ref = data["visual"]["objects"]["reportInfo"][0]["properties"]["reference"]["byReference"]
+            item_id = ref["itemId"]["expr"]["Literal"]["Value"].strip("'")
+            workspace_id = ref["workspaceId"]["expr"]["Literal"]["Value"].strip("'")
+            return item_id, workspace_id
+        except (KeyError, IndexError, TypeError, AttributeError):
+            return "", ""
+    return "", ""
+
+
+def apply_remediation(fabric, rdl_visuals, paginated_infos, workspace_items, config):
     unresolved = []
-    resolved = []
+    plan = []
 
     print(f"Workspace: {config.workspace_name} [{config.workspace_id}]")
     print(f"RDL Visuals to resolve: {len(rdl_visuals)}")
@@ -190,41 +262,100 @@ def apply_remediation(rdl_visuals, paginated_infos, workspace_items, config):
         candidates = _folder_candidates(paginated_infos, visual)
         print(f"  Candidate reports  : {len(candidates)}")
         for candidate in candidates:
-            print(
-                f"    - {candidate.item.name} "
-                f"[{candidate.item.id}]"
-            )
+            print(f"    - {candidate.item.name} [{candidate.item.id}]")
 
         paginated, reason = _resolve_paginated(paginated_infos, visual)
         if paginated is None:
             unresolved.append(visual)
             print("  Target report      : NOT RESOLVED")
             print(f"  Resolution reason  : {reason}")
-            print("  Status             : UNRESOLVED")
+            print("  Resolution status  : UNRESOLVED")
+            print("  Apply status       : NOT APPLIED")
             print()
             continue
 
-        resolved.append((visual, paginated.item))
         already_points_to_target = visual.old_item_id == paginated.item.id
-        workspace_is_current = (
-            not visual.old_workspace_id
-            or visual.old_workspace_id == config.workspace_id
-        )
+        workspace_is_current = visual.old_workspace_id == config.workspace_id
+        needs_update = not (already_points_to_target and workspace_is_current)
+        plan.append((visual, paginated.item, reason, needs_update))
 
         print(f"  Target report      : {paginated.item.name}")
         print(f"  Target report Id   : {paginated.item.id}")
         print(f"  Resolution reason  : {reason}")
-        print(
-            "  Current reference  : "
-            + ("MATCHES TARGET" if already_points_to_target else "DIFFERS FROM TARGET")
-        )
-        print(
-            "  Workspace reference: "
-            + ("CURRENT" if workspace_is_current else "DIFFERS FROM TARGET")
-        )
-        print("  Status             : RESOLVED")
+        print("  Current reference  : " + ("MATCHES TARGET" if already_points_to_target else "DIFFERS FROM TARGET"))
+        print("  Workspace reference: " + ("CURRENT" if workspace_is_current else "DIFFERS FROM TARGET"))
+        print("  Resolution status  : TARGET IDENTIFIED")
+        print("  Apply status       : " + ("NOT REQUIRED" if not needs_update else "PENDING"))
         print()
 
+    if unresolved and config.fail_on_unresolved_rdl_visual:
+        raise RuntimeError(
+            f"Unable to resolve {len(unresolved)} RDL Visual relationship(s) safely. No report definitions were updated."
+        )
+
+    print("=" * 80)
+    print("RDL VISUAL APPLY")
+    print("=" * 80)
+
+    if not config.apply_rdl_visual_fix:
+        print("Apply is disabled by configuration (applyRdlVisualFix=false).")
+    else:
+        by_report = {}
+        for visual, target, reason, needs_update in plan:
+            if needs_update:
+                by_report.setdefault(visual.report_id, []).append((visual, target))
+
+        for report_id, changes in by_report.items():
+            report_name = changes[0][0].report_name
+            print(f"[REPORT] {report_name} [{report_id}]")
+            definition_response = get_report_definition(fabric, config.workspace_id, report_id)
+            definition = definition_response.get("definition", {})
+            parts = definition.get("parts", [])
+            parts_by_path = {part.get("path"): part for part in parts}
+
+            for visual, target in changes:
+                part = parts_by_path.get(visual.definition_part_path)
+                if part is None:
+                    raise RuntimeError(
+                        f"Definition part not found: {visual.definition_part_path}"
+                    )
+                print(f"  Patching page      : {visual.page_name}")
+                print(f"    Old itemId       : {visual.old_item_id or '(empty)'}")
+                print(f"    New itemId       : {target.id}")
+                print(f"    Old workspaceId  : {visual.old_workspace_id or '(empty)'}")
+                print(f"    New workspaceId  : {config.workspace_id}")
+                _patch_rdl_visual_part(part, target.id, config.workspace_id)
+
+            print("  Calling Update Report Definition...")
+            status_code = update_report_definition(
+                fabric, config.workspace_id, report_id, definition
+            )
+            print(f"  UpdateDefinition   : HTTP {status_code}")
+
+            print("  Verifying updated references...")
+            verify_definition = get_report_definition(
+                fabric, config.workspace_id, report_id
+            )
+            for visual, target in changes:
+                actual_item_id, actual_workspace_id = _read_reference_from_definition(
+                    verify_definition, visual.definition_part_path
+                )
+                ok = (
+                    actual_item_id == target.id
+                    and actual_workspace_id == config.workspace_id
+                )
+                print(f"    {visual.page_name}: {'OK' if ok else 'FAILED'}")
+                print(f"      itemId      : {actual_item_id or '(empty)'}")
+                print(f"      workspaceId : {actual_workspace_id or '(empty)'}")
+                if not ok:
+                    raise RuntimeError(
+                        f"RDL visual update verification failed for {report_name} / {visual.page_name}."
+                    )
+            print("  Apply status       : UPDATED AND VERIFIED")
+            print()
+
+    resolved = [(visual, target) for visual, target, _, _ in plan]
+    updated_count = sum(1 for _, _, _, needs_update in plan if needs_update)
     print("=" * 80)
     print("POST-DEPLOY SUMMARY")
     print("=" * 80)
@@ -233,33 +364,19 @@ def apply_remediation(rdl_visuals, paginated_infos, workspace_items, config):
     print(f"RDL Visuals         : {len(rdl_visuals)}")
     print(f"Resolved            : {len(resolved)}")
     print(f"Unresolved          : {len(unresolved)}")
+    print(f"Updates required    : {updated_count}")
 
     if resolved:
         print()
         print("Resolved relationships:")
         for visual, target in resolved:
-            print(
-                f"  - {visual.report_name} / {visual.page_name or '(unnamed page)'}"
-            )
+            print(f"  - {visual.report_name} / {visual.page_name or '(unnamed page)'}")
             print(f"    -> {target.name} [{target.id}]")
 
-    if unresolved:
-        print()
-        print("Unresolved relationships:")
-        for visual in unresolved:
-            print(
-                f"  - {visual.report_name} / {visual.page_name or '(unnamed page)'}"
-            )
-
     print()
-    print(
-        f"RDL Visual relationships resolved: "
-        f"{len(resolved)}/{len(rdl_visuals)}"
-    )
+    print(f"RDL Visual relationships resolved: {len(resolved)}/{len(rdl_visuals)}")
+    if config.apply_rdl_visual_fix:
+        print("RDL Visual report definitions updated and verified where required.")
+    else:
+        print("RDL Visual apply phase was disabled.")
 
-    if unresolved and config.fail_on_unresolved_rdl_visual:
-        raise RuntimeError(
-            f"Unable to resolve {len(unresolved)} RDL Visual relationship(s) safely."
-        )
-
-    print("Workspace-only discovery and safety checks completed.")
