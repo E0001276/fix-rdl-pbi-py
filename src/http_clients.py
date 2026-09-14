@@ -63,6 +63,20 @@ class ApiClient:
         self._raise_for_status_with_body(response)
         return response
 
+    def patch(self, path_or_url: str, json=None, params=None):
+        url = self._url(path_or_url)
+        response = self.session.patch(url, json=json, params=params)
+        self._log("PATCH", url, json, response)
+        self._raise_for_status_with_body(response)
+        return response
+
+    def delete(self, path_or_url: str, params=None):
+        url = self._url(path_or_url)
+        response = self.session.delete(url, params=params)
+        self._log("DELETE", url, None, response)
+        self._raise_for_status_with_body(response)
+        return response
+
     @staticmethod
     def _fabric_operation_path(operation_id: str) -> str:
         return f"operations/{operation_id}"

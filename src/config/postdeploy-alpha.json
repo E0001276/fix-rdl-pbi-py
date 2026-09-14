@@ -6,5 +6,6 @@
   "waitForRefresh": false,
   "failOnUnresolvedRdlVisual": true,
   "bindPaginatedReportsToSemanticModels": true,
-  "failOnUnresolvedPaginatedDatasourceBinding": true
+  "failOnUnresolvedPaginatedDatasourceBinding": true,
+  "recreatePaginatedOnDefinitionMismatch": false
 }

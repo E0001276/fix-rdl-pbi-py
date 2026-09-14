@@ -8,7 +8,7 @@ truststore.inject_into_ssl()
 from auth import get_access_token
 from config import load_config
 from diagnostics import start_diagnostics
-from fabric_connections import bind_semantic_models_to_connections
+from powerbi_gateway import bind_semantic_models_to_gateway
 from http_clients import ApiClient
 from paginated import remediate_paginated_reports
 from powerbi_paginated import bind_paginated_reports_to_semantic_models
@@ -26,7 +26,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--config",
-        default=str(Path(__file__).parent / "config" / "postdeploy-alpha-cicd.json"),
+        default=str(Path(__file__).parent / "config" / "postdeploy-gamma.json"),
         help="Path to the environment configuration JSON.",
     )
     return parser
@@ -116,35 +116,45 @@ def _main(args, diagnostics) -> None:
     paginated_infos = discover_paginated_report_definitions(
         fabric, config.workspace_id, workspace_items
     )
-    print(
-        f"[DISCOVERY] Paginated report definitions loaded: {len(paginated_infos)}"
-    )
+    print(f"[DISCOVERY] Paginated report definitions loaded: {len(paginated_infos)}")
 
     _section("DISCOVERY SUMMARY")
     summarize_discovery(workspace_items, rdl_visuals, config)
 
-    # Dependency order:
-    # 1) Semantic model -> Oracle connection (Fabric)
-    # 2) RDL definition -> target workspace/model metadata (Fabric)
-    # 3) Paginated report runtime datasource -> semantic model (Power BI REST)
-    # 4) Main report RDL visual -> target paginated report itemId (Fabric)
-    _section("SEMANTIC MODEL CONNECTION BINDING")
-    bind_semantic_models_to_connections(fabric, workspace_items, config)
+    # Target-only post-deploy order.
+    #
+    # Target-only strategy aligned with the working .NET implementation.
+    # Paginated Report item identity is NEVER replaced. This prevents Git
+    # integration from seeing DELETE + ADD pairs for the same logical report.
+    #
+    # 1) Semantic model -> compatible on-premises gateway.
+    # 2) Paginated RDL update in place (same itemId).
+    # 3) Paginated runtime datasource -> target semantic model.
+    # 4) Main report RDL Visual -> current target paginated itemIds.
+
+    _section("SEMANTIC MODEL GATEWAY BINDING")
+    bind_semantic_models_to_gateway(powerbi, workspace_items, config)
 
     _section("PAGINATED REPORT RDL REMEDIATION")
-    remediate_paginated_reports(
-        fabric, workspace_items, paginated_infos, config
+    remediate_paginated_reports(fabric, workspace_items, paginated_infos, config)
+
+    _section("POST-RDL WORKSPACE REDISCOVERY")
+    workspace_items = list_fabric_workspace_items(fabric, config.workspace_id)
+    paginated_infos = discover_paginated_report_definitions(
+        fabric, config.workspace_id, workspace_items
     )
+    print(f"[DISCOVERY] Current paginated report definitions: {len(paginated_infos)}")
 
     _section("PAGINATED REPORT RUNTIME DATASOURCE BINDING")
     bind_paginated_reports_to_semantic_models(
-        powerbi, workspace_items, paginated_infos, config
+        powerbi, fabric, workspace_items, paginated_infos, config
     )
 
     _section("RDL VISUAL RESOLUTION AND APPLY")
-    apply_remediation(
-        fabric, rdl_visuals, paginated_infos, workspace_items, config
+    rdl_visuals = discover_report_definitions(
+        fabric, config.workspace_id, workspace_items
     )
+    apply_remediation(fabric, rdl_visuals, paginated_infos, workspace_items, config)
 
 
 if __name__ == "__main__":

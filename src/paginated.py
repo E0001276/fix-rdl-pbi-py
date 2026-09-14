@@ -25,6 +25,12 @@ def _normalize_workspace_datasource_prefix(workspace_name: str) -> str:
 
 
 def _target_datasource_name(current_name: str, workspace_name: str) -> str:
+    """Target-only equivalent of the .NET workspace-prefix replacement.
+
+    We do not need the source workspace name: the current RDL itself supplies the
+    suffix. Replace only the prefix before the first underscore with the normalized
+    target workspace name, preserving the datasource-specific suffix exactly.
+    """
     if not current_name:
         return current_name
     target_prefix = _normalize_workspace_datasource_prefix(workspace_name)
@@ -238,24 +244,32 @@ def _patch_rdl(
     return changed, result
 
 
-def _is_binding_correct(
+def _is_binding_logically_correct(
     binding: dict,
     workspace_name: str,
-    semantic_model_id: str,
     semantic_model_name: str,
 ) -> bool:
+    """Match the .NET logical rule without consulting a source workspace.
+
+    The expected datasource name is derived from the current target RDL: preserve
+    everything after the first underscore and replace only the workspace prefix.
+    The virtual database GUID is intentionally excluded; runtime binding handles it.
+    """
     if not binding["datasource_names"]:
         return False
 
-    target_prefix = _normalize_workspace_datasource_prefix(workspace_name) + "_"
-    target_database = f"sobe_wowvirtualserver-{semantic_model_id}".casefold()
-
-    datasource_names_ok = all(
-        name.casefold().startswith(target_prefix.casefold())
+    expected_names = [
+        _target_datasource_name(name, workspace_name)
         for name in binding["datasource_names"]
+    ]
+    datasource_names_ok = all(
+        current.casefold() == expected.casefold()
+        for current, expected in zip(binding["datasource_names"], expected_names)
     )
-    dataset_refs_ok = all(
-        name.casefold().startswith(target_prefix.casefold())
+
+    expected_set = {name.casefold() for name in expected_names if name}
+    dataset_refs_ok = bool(binding["dataset_datasource_names"]) and all(
+        name.casefold() in expected_set
         for name in binding["dataset_datasource_names"]
     )
     workspace_ok = bool(binding["workspace_names"]) and all(
@@ -266,17 +280,7 @@ def _is_binding_correct(
         name.casefold() == semantic_model_name.casefold()
         for name in binding["dataset_names"]
     )
-    catalog_ok = bool(binding["connect_strings"]) and all(
-        target_database in value.casefold() for value in binding["connect_strings"]
-    )
-
-    return (
-        datasource_names_ok
-        and dataset_refs_ok
-        and workspace_ok
-        and dataset_ok
-        and catalog_ok
-    )
+    return datasource_names_ok and dataset_refs_ok and workspace_ok and dataset_ok
 
 
 def _build_fabric_definition(original_response: dict, item_name: str, xml_after: str) -> dict:
@@ -304,6 +308,39 @@ def _build_fabric_definition(original_response: dict, item_name: str, xml_after:
             }
         ]
     }
+
+
+
+def _expected_datasource_name(workspace_name: str, semantic_model_name: str) -> str:
+    workspace_prefix = re.sub(r"[\s-]+", "", workspace_name or "")
+    model_suffix = re.sub(r"[\s-]+", "", semantic_model_name or "")
+    return f"{workspace_prefix}_{model_suffix}"
+
+
+def _binding_matches_target(binding: dict, workspace_name: str, model_name: str) -> bool:
+    expected_ds = _expected_datasource_name(workspace_name, model_name).lower()
+    ds_names = [str(x).strip().lower() for x in binding.get("datasource_names", [])]
+    ws_names = [str(x).strip().lower() for x in binding.get("workspace_names", [])]
+    model_names = [str(x).strip().lower() for x in binding.get("dataset_names", [])]
+    return (
+        bool(ds_names)
+        and all(x == expected_ds for x in ds_names)
+        and bool(ws_names)
+        and all(x == (workspace_name or "").strip().lower() for x in ws_names)
+        and bool(model_names)
+        and all(x == (model_name or "").strip().lower() for x in model_names)
+    )
+
+
+def _extract_created_item_id(client, response):
+    if response.status_code == 201:
+        body = response.json()
+        return body.get("id") or body.get("itemId")
+    if response.status_code == 202:
+        result = client.get_json_lro_result(response)
+        if isinstance(result, dict):
+            return result.get("id") or result.get("itemId")
+    return None
 
 
 def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config):
@@ -352,9 +389,11 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
         print("    Semantic Model    : " + (", ".join(binding_before["dataset_names"]) or "(none)"))
         print("    Connect String    : " + (" | ".join(binding_before["connect_strings"]) or "(none)"))
 
-        if _is_binding_correct(
-            binding_before, config.workspace_name, model.id, model.name
+        if _is_binding_logically_correct(
+            binding_before, config.workspace_name, model.name
         ):
+            print("  Logical RDL binding: ALREADY CORRECT")
+            print("  Note               : virtual database GUID is handled by Power BI runtime binding")
             print("  Status             : ALREADY CORRECT")
             results.append(
                 PaginatedBindingResult(item.id, item.name, model.id, model.name, "UNCHANGED")
@@ -378,8 +417,8 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
             continue
 
         patched_binding = _extract_rdl_binding(xml_after)
-        if not _is_binding_correct(
-            patched_binding, config.workspace_name, model.id, model.name
+        if not _is_binding_logically_correct(
+            patched_binding, config.workspace_name, model.name
         ):
             message = "Local RDL validation failed before calling Fabric updateDefinition."
             print("  Status             : LOCAL_VERIFY_FAILED")
@@ -419,17 +458,64 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
             )
             continue
 
-        # Intentionally do not re-read and verify the persisted RDL definition here.
-        # The .NET implementation used for this project does not treat the delayed
-        # getDefinition reflection as a blocking condition. Fabric may accept the
-        # updateDefinition request (HTTP 200) while getDefinition continues to expose
-        # the previous logical binding for a period of time. The post-deploy must not
-        # fail only because of that delayed reflection.
-        print("  RDL verification   : SKIPPED")
-        print("  Status             : UPDATED (HTTP ACCEPTED)")
-        results.append(
-            PaginatedBindingResult(item.id, item.name, model.id, model.name, "UPDATED")
-        )
+        # IMPORTANT: never recreate, delete, or rename a Paginated Report item.
+        # Recreating an item changes its Fabric itemId and Git integration sees the
+        # operation as DELETE + ADD, producing duplicated entries in Source Control.
+        # The working .NET implementation keeps the original item identity and fixes
+        # the runtime datasource separately. We do the same here.
+        #
+        # We still perform one diagnostic read after updateDefinition. If Fabric has
+        # not reflected the logical RDL binding yet, that condition is NON-BLOCKING:
+        # the next phase (Power BI Default.UpdateDatasources) fixes the effective
+        # runtime connection without replacing the item.
+        try:
+            persisted = get_paginated_report_definition(
+                fabric, config.workspace_id, item.id
+            )
+            persisted_part = _find_rdl_part(persisted)
+            persisted_xml = _decode_part(persisted_part)
+            persisted_binding = _extract_rdl_binding(persisted_xml)
+            persisted_ok = _binding_matches_target(
+                persisted_binding, config.workspace_name, model.name
+            )
+
+            if persisted_ok:
+                print("  RDL verification   : VERIFIED")
+                print("  Status             : UPDATED AND VERIFIED")
+                results.append(
+                    PaginatedBindingResult(
+                        item.id, item.name, model.id, model.name, "UPDATED"
+                    )
+                )
+            else:
+                print("  RDL verification   : NOT REFLECTED (NON-BLOCKING)")
+                print("  Persisted DataSource: " + (
+                    ", ".join(persisted_binding["datasource_names"]) or "(none)"
+                ))
+                print("  Persisted Workspace : " + (
+                    ", ".join(persisted_binding["workspace_names"]) or "(none)"
+                ))
+                print("  Item identity      : PRESERVED")
+                print("  Recreation         : DISABLED")
+                print("  Status             : UPDATED (HTTP ACCEPTED; RUNTIME BINDING NEXT)")
+                results.append(
+                    PaginatedBindingResult(
+                        item.id, item.name, model.id, model.name,
+                        "UPDATED_RUNTIME_BINDING_PENDING"
+                    )
+                )
+        except Exception as exc:
+            print("  RDL verification   : SKIPPED (NON-BLOCKING)")
+            print(f"  Verification reason: {exc}")
+            print("  Item identity      : PRESERVED")
+            print("  Recreation         : DISABLED")
+            print("  Status             : UPDATED (HTTP ACCEPTED; RUNTIME BINDING NEXT)")
+            results.append(
+                PaginatedBindingResult(
+                    item.id, item.name, model.id, model.name,
+                    "UPDATED_RUNTIME_BINDING_PENDING"
+                )
+            )
 
     print()
     print("=" * 80)

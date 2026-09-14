@@ -16,6 +16,7 @@ class PostDeployConfig:
     fail_on_unresolved_connection_binding: bool
     bind_paginated_reports_to_semantic_models: bool
     fail_on_unresolved_paginated_datasource_binding: bool
+    recreate_paginated_on_definition_mismatch: bool
 
 
 def load_config(path: str) -> PostDeployConfig:
@@ -44,5 +45,8 @@ def load_config(path: str) -> PostDeployConfig:
         ),
         fail_on_unresolved_paginated_datasource_binding=data.get(
             "failOnUnresolvedPaginatedDatasourceBinding", True
+        ),
+        recreate_paginated_on_definition_mismatch=data.get(
+            "recreatePaginatedOnDefinitionMismatch", True
         ),
     )
