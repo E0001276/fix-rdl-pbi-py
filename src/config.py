@@ -17,6 +17,11 @@ class PostDeployConfig:
     bind_paginated_reports_to_semantic_models: bool
     fail_on_unresolved_paginated_datasource_binding: bool
     recreate_paginated_on_definition_mismatch: bool
+    refresh_semantic_models: bool
+    wait_for_refresh: bool
+    fail_on_refresh_error: bool
+    refresh_poll_seconds: int
+    refresh_timeout_seconds: int
 
 
 def load_config(path: str) -> PostDeployConfig:
@@ -47,6 +52,11 @@ def load_config(path: str) -> PostDeployConfig:
             "failOnUnresolvedPaginatedDatasourceBinding", True
         ),
         recreate_paginated_on_definition_mismatch=data.get(
-            "recreatePaginatedOnDefinitionMismatch", True
+            "recreatePaginatedOnDefinitionMismatch", False
         ),
+        refresh_semantic_models=data.get("refreshSemanticModels", True),
+        wait_for_refresh=data.get("waitForRefresh", False),
+        fail_on_refresh_error=data.get("failOnRefreshError", True),
+        refresh_poll_seconds=int(data.get("refreshPollSeconds", 5)),
+        refresh_timeout_seconds=int(data.get("refreshTimeoutSeconds", 1800)),
     )

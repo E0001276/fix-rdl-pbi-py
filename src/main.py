@@ -9,6 +9,7 @@ from auth import get_access_token
 from config import load_config
 from diagnostics import start_diagnostics
 from powerbi_gateway import bind_semantic_models_to_gateway
+from semantic_refresh import refresh_semantic_models
 from http_clients import ApiClient
 from paginated import remediate_paginated_reports
 from powerbi_paginated import bind_paginated_reports_to_semantic_models
@@ -26,7 +27,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--config",
-        default=str(Path(__file__).parent / "config" / "postdeploy-gamma.json"),
+        default=str(Path(__file__).parent / "config" / "postdeploy-delta.json"),
         help="Path to the environment configuration JSON.",
     )
     return parser
@@ -133,7 +134,14 @@ def _main(args, diagnostics) -> None:
     # 4) Main report RDL Visual -> current target paginated itemIds.
 
     _section("SEMANTIC MODEL GATEWAY BINDING")
+    # IMPORTANT: this is the exact pre-v22/v21 binding flow. Do not reinterpret
+    # or replace the semantic model datasource as part of refresh.
     bind_semantic_models_to_gateway(powerbi, workspace_items, config)
+
+    _section("SEMANTIC MODEL REFRESH")
+    # Programmatic equivalent of Power BI Service > Semantic model > "Actualizar ahora".
+    # This is intentionally an additional step AFTER the existing gateway binding.
+    refresh_semantic_models(powerbi, workspace_items, config)
 
     _section("PAGINATED REPORT RDL REMEDIATION")
     remediate_paginated_reports(fabric, workspace_items, paginated_infos, config)

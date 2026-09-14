@@ -12,5 +12,10 @@
   "failOnUnresolvedConnectionBinding": true,
   "bindPaginatedReportsToSemanticModels": true,
   "failOnUnresolvedPaginatedDatasourceBinding": true,
-  "recreatePaginatedOnDefinitionMismatch": false
+  "recreatePaginatedOnDefinitionMismatch": false,
+  "refreshSemanticModels": true,
+  "waitForRefresh": false,
+  "failOnRefreshError": true,
+  "refreshPollSeconds": 5,
+  "refreshTimeoutSeconds": 1800
 }
