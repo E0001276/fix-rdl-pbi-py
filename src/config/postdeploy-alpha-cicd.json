@@ -6,8 +6,8 @@
   "applyRdlVisualFix": true,
   "applyPaginatedReportFix": true,
   "failOnUnresolvedPaginatedReport": true,
-  "paginatedVerifyMaxAttempts": 5,
-  "paginatedVerifyDelaySeconds": 2,
   "bindSemanticModelsToConnection": true,
-  "failOnUnresolvedConnectionBinding": true
+  "failOnUnresolvedConnectionBinding": true,
+  "bindPaginatedReportsToSemanticModels": true,
+  "failOnUnresolvedPaginatedDatasourceBinding": true
 }

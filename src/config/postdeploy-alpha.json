@@ -4,5 +4,7 @@
   "expectedOracleDatabase": "NCI_QA_DB",
   "refreshSemanticModels": true,
   "waitForRefresh": false,
-  "failOnUnresolvedRdlVisual": true
+  "failOnUnresolvedRdlVisual": true,
+  "bindPaginatedReportsToSemanticModels": true,
+  "failOnUnresolvedPaginatedDatasourceBinding": true
 }

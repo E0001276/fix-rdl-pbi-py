@@ -12,10 +12,10 @@ class PostDeployConfig:
     apply_rdl_visual_fix: bool
     apply_paginated_report_fix: bool
     fail_on_unresolved_paginated_report: bool
-    paginated_verify_max_attempts: int
-    paginated_verify_delay_seconds: int
     bind_semantic_models_to_connection: bool
     fail_on_unresolved_connection_binding: bool
+    bind_paginated_reports_to_semantic_models: bool
+    fail_on_unresolved_paginated_datasource_binding: bool
 
 
 def load_config(path: str) -> PostDeployConfig:
@@ -31,8 +31,6 @@ def load_config(path: str) -> PostDeployConfig:
         fail_on_unresolved_paginated_report=data.get(
             "failOnUnresolvedPaginatedReport", True
         ),
-        paginated_verify_max_attempts=int(data.get("paginatedVerifyMaxAttempts", 5)),
-        paginated_verify_delay_seconds=int(data.get("paginatedVerifyDelaySeconds", 2)),
         bind_semantic_models_to_connection=data.get(
             "bindSemanticModelsToConnection",
             data.get("bindSemanticModelsToGateway", True),
@@ -40,5 +38,11 @@ def load_config(path: str) -> PostDeployConfig:
         fail_on_unresolved_connection_binding=data.get(
             "failOnUnresolvedConnectionBinding",
             data.get("failOnUnresolvedGatewayBinding", True),
+        ),
+        bind_paginated_reports_to_semantic_models=data.get(
+            "bindPaginatedReportsToSemanticModels", True
+        ),
+        fail_on_unresolved_paginated_datasource_binding=data.get(
+            "failOnUnresolvedPaginatedDatasourceBinding", True
         ),
     )

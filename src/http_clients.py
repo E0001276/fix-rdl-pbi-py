@@ -5,8 +5,10 @@ import requests
 
 
 class ApiClient:
-    def __init__(self, base_url: str, token: str):
+    def __init__(self, base_url: str, token: str, diagnostics=None, token_label: str = "ACCESS_TOKEN"):
         self.base_url = base_url.rstrip("/") + "/"
+        self.diagnostics = diagnostics
+        self.token_label = token_label
         self.session = requests.Session()
         self.session.headers.update(
             {
@@ -36,18 +38,38 @@ class ApiClient:
             response=response,
         )
 
+    def _log(self, method: str, url: str, request_json, response):
+        if self.diagnostics is not None:
+            self.diagnostics.log_http(
+                method=method,
+                url=url,
+                request_headers=dict(self.session.headers),
+                request_json=request_json,
+                response=response,
+                token_label=self.token_label,
+            )
+
     def get(self, path_or_url: str, params=None):
-        response = self.session.get(self._url(path_or_url), params=params)
+        url = self._url(path_or_url)
+        response = self.session.get(url, params=params)
+        self._log("GET", url, None, response)
         self._raise_for_status_with_body(response)
         return response
 
     def post(self, path_or_url: str, json=None, params=None):
-        response = self.session.post(
-            self._url(path_or_url), json=json, params=params
-        )
+        url = self._url(path_or_url)
+        response = self.session.post(url, json=json, params=params)
+        self._log("POST", url, json, response)
         self._raise_for_status_with_body(response)
         return response
 
+    @staticmethod
+    def _fabric_operation_path(operation_id: str) -> str:
+        return f"operations/{operation_id}"
+
+    @staticmethod
+    def _fabric_result_path(operation_id: str) -> str:
+        return f"operations/{operation_id}/result"
 
     def wait_for_lro_completion(self, response, timeout_seconds: int = 300):
         if response.status_code != 202:
@@ -70,8 +92,15 @@ class ApiClient:
                 )
 
             time.sleep(max(1, retry_after))
-            state_url = location or f"operations/{operation_id}"
-            state_response = self.get(state_url)
+            # Prefer the canonical Fabric API operation endpoint. Some Fabric responses
+            # include a regional wabi-paas Location; using x-ms-operation-id keeps all
+            # polling on https://api.fabric.microsoft.com/v1.
+            state_ref = (
+                self._fabric_operation_path(operation_id)
+                if operation_id
+                else location
+            )
+            state_response = self.get(state_ref)
             state = state_response.json()
             status = state.get("status")
 
@@ -84,7 +113,6 @@ class ApiClient:
                 )
 
             retry_after = int(state_response.headers.get("Retry-After", "2"))
-            location = state_response.headers.get("Location", location)
 
     def get_json_lro_result(self, response, timeout_seconds: int = 300):
         """Return JSON for an immediate response or poll a Fabric LRO to completion."""
@@ -108,15 +136,23 @@ class ApiClient:
                 )
 
             time.sleep(max(1, retry_after))
-            state_url = location or f"operations/{operation_id}"
-            state_response = self.get(state_url)
+            state_ref = (
+                self._fabric_operation_path(operation_id)
+                if operation_id
+                else location
+            )
+            state_response = self.get(state_ref)
             state = state_response.json()
             status = state.get("status")
 
             if status == "Succeeded":
+                if operation_id:
+                    return self.get(self._fabric_result_path(operation_id)).json()
                 result_url = state_response.headers.get("Location")
-                if not result_url or not result_url.rstrip("/").endswith("/result"):
-                    result_url = f"operations/{operation_id}/result"
+                if not result_url:
+                    raise RuntimeError(
+                        "Fabric LRO succeeded but no operation id or result Location was available."
+                    )
                 return self.get(result_url).json()
 
             if status in {"Failed", "Cancelled", "Canceled"}:
@@ -125,4 +161,3 @@ class ApiClient:
                 )
 
             retry_after = int(state_response.headers.get("Retry-After", "2"))
-            location = state_response.headers.get("Location", location)

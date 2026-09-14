@@ -7,9 +7,11 @@ truststore.inject_into_ssl()
 
 from auth import get_access_token
 from config import load_config
+from diagnostics import start_diagnostics
 from fabric_connections import bind_semantic_models_to_connections
 from http_clients import ApiClient
 from paginated import remediate_paginated_reports
+from powerbi_paginated import bind_paginated_reports_to_semantic_models
 from remediation import apply_remediation, summarize_discovery
 from workspace import (
     discover_paginated_report_definitions,
@@ -39,6 +41,19 @@ def _section(title: str) -> None:
 
 def main() -> None:
     args = build_parser().parse_args()
+    project_root = Path(__file__).resolve().parent.parent
+    diagnostics = start_diagnostics(project_root)
+    print(f"[LOG] Detailed run directory: {diagnostics.run_dir}")
+    print("[LOG] Bearer tokens are REDACTED from all saved diagnostics.")
+
+    try:
+        _main(args, diagnostics)
+    finally:
+        print(f"[LOG] Detailed run directory: {diagnostics.run_dir}")
+        diagnostics.close()
+
+
+def _main(args, diagnostics) -> None:
     config = load_config(args.config)
 
     _section("POWER BI / MICROSOFT FABRIC POST-DEPLOY")
@@ -51,14 +66,29 @@ def main() -> None:
     )
 
     _section("AUTHENTICATION")
-    print("[AUTH] API family   : Microsoft Fabric REST API v1")
-    print("[AUTH] Base URL     : https://api.fabric.microsoft.com/v1")
+    print("[AUTH] Fabric API    : https://api.fabric.microsoft.com/v1")
+    print("[AUTH] Power BI API  : https://api.powerbi.com/v1.0/myorg")
     print("[AUTH] Requesting Fabric access token...")
     fabric_token = get_access_token("https://api.fabric.microsoft.com")
     print("[AUTH] Fabric access token acquired successfully.")
-    fabric = ApiClient("https://api.fabric.microsoft.com/v1", fabric_token)
+    fabric = ApiClient(
+        "https://api.fabric.microsoft.com/v1",
+        fabric_token,
+        diagnostics=diagnostics,
+        token_label="FABRIC_ACCESS_TOKEN",
+    )
     print("[AUTH] Fabric API client initialized.")
-    print("[AUTH] Power BI REST API token is NOT requested by this version.")
+
+    print("[AUTH] Requesting Power BI access token...")
+    powerbi_token = get_access_token("https://analysis.windows.net/powerbi/api")
+    print("[AUTH] Power BI access token acquired successfully.")
+    powerbi = ApiClient(
+        "https://api.powerbi.com/v1.0/myorg",
+        powerbi_token,
+        diagnostics=diagnostics,
+        token_label="POWERBI_ACCESS_TOKEN",
+    )
+    print("[AUTH] Power BI API client initialized.")
 
     _section("WORKSPACE DISCOVERY")
     print(
@@ -93,18 +123,28 @@ def main() -> None:
     _section("DISCOVERY SUMMARY")
     summarize_discovery(workspace_items, rdl_visuals, config)
 
-    _section("PAGINATED REPORT REMEDIATION")
+    # Dependency order:
+    # 1) Semantic model -> Oracle connection (Fabric)
+    # 2) RDL definition -> target workspace/model metadata (Fabric)
+    # 3) Paginated report runtime datasource -> semantic model (Power BI REST)
+    # 4) Main report RDL visual -> target paginated report itemId (Fabric)
+    _section("SEMANTIC MODEL CONNECTION BINDING")
+    bind_semantic_models_to_connections(fabric, workspace_items, config)
+
+    _section("PAGINATED REPORT RDL REMEDIATION")
     remediate_paginated_reports(
         fabric, workspace_items, paginated_infos, config
+    )
+
+    _section("PAGINATED REPORT RUNTIME DATASOURCE BINDING")
+    bind_paginated_reports_to_semantic_models(
+        powerbi, workspace_items, paginated_infos, config
     )
 
     _section("RDL VISUAL RESOLUTION AND APPLY")
     apply_remediation(
         fabric, rdl_visuals, paginated_infos, workspace_items, config
     )
-
-    _section("SEMANTIC MODEL CONNECTION BINDING")
-    bind_semantic_models_to_connections(fabric, workspace_items, config)
 
 
 if __name__ == "__main__":
