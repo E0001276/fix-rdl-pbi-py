@@ -47,9 +47,7 @@ def _folder_candidates(paginated_infos, visual):
     if not visual.report_folder_id:
         return list(paginated_infos)
     same_folder = [
-        info
-        for info in paginated_infos
-        if info.item.folder_id == visual.report_folder_id
+        info for info in paginated_infos if info.item.folder_id == visual.report_folder_id
     ]
     return same_folder or list(paginated_infos)
 
@@ -136,8 +134,6 @@ def _resolve_paginated(paginated_infos, visual):
     if by_parameters:
         return by_parameters
 
-    # If folder context was too broad or missing, try the entire workspace using
-    # strong signals only. This is useful when all Power BI items live at root.
     if candidates is not paginated_infos and len(candidates) != len(paginated_infos):
         by_page = _resolve_by_page_label(paginated_infos, visual)
         if by_page:
@@ -155,40 +151,111 @@ def summarize_discovery(workspace_items, rdl_visuals, config):
         if item.kind in counts:
             counts[item.kind] += 1
 
-    print("Workspace discovery:")
-    print(f"  Reports: {counts['Report']}")
-    print(f"  Semantic Models: {counts['SemanticModel']}")
-    print(f"  Paginated Reports: {counts['PaginatedReport']}")
-    print(f"  RDL Visuals: {len(rdl_visuals)}")
-    print()
-    print(f"Target workspace: {config.workspace_name} ({config.workspace_id})")
-    print(f"Workspace items discovered: {len(workspace_items)}")
-    print()
+    print(f"Workspace            : {config.workspace_name}")
+    print(f"Workspace Id         : {config.workspace_id}")
+    print(f"Reports              : {counts['Report']}")
+    print(f"Semantic Models      : {counts['SemanticModel']}")
+    print(f"Paginated Reports    : {counts['PaginatedReport']}")
+    print(f"RDL Visuals          : {len(rdl_visuals)}")
+    print(f"Total workspace items: {len(workspace_items)}")
+
+
+def _print_resolution_header(index, total, visual):
+    print("-" * 80)
+    print(f"[{index}/{total}] Resolving RDL Visual")
+    print(f"  Main report        : {visual.report_name}")
+    print(f"  Main report Id     : {visual.report_id}")
+    print(f"  Report folder Id   : {visual.report_folder_id or '(root)'}")
+    print(f"  Page               : {visual.page_name or '(unnamed page)'}")
+    print(f"  Definition part    : {visual.definition_part_path}")
+    print(f"  Current itemId     : {visual.old_item_id or '(empty)'}")
+    print(f"  Current workspaceId: {visual.old_workspace_id or '(empty)'}")
+    print(
+        "  Visual parameters  : "
+        + (", ".join(sorted(visual.parameter_names)) or "(none)")
+    )
 
 
 def apply_remediation(rdl_visuals, paginated_infos, workspace_items, config):
-    # Target-only: all discovery and relationship resolution comes from the
-    # target workspace. No repository folder and no source workspace are read.
     unresolved = []
     resolved = []
 
-    for visual in rdl_visuals:
+    print(f"Workspace: {config.workspace_name} [{config.workspace_id}]")
+    print(f"RDL Visuals to resolve: {len(rdl_visuals)}")
+    print()
+
+    for index, visual in enumerate(rdl_visuals, start=1):
+        _print_resolution_header(index, len(rdl_visuals), visual)
+
+        candidates = _folder_candidates(paginated_infos, visual)
+        print(f"  Candidate reports  : {len(candidates)}")
+        for candidate in candidates:
+            print(
+                f"    - {candidate.item.name} "
+                f"[{candidate.item.id}]"
+            )
+
         paginated, reason = _resolve_paginated(paginated_infos, visual)
         if paginated is None:
             unresolved.append(visual)
-            print(
-                f"[UNRESOLVED] {visual.report_name} / {visual.page_name} ({reason})"
-            )
+            print("  Target report      : NOT RESOLVED")
+            print(f"  Resolution reason  : {reason}")
+            print("  Status             : UNRESOLVED")
+            print()
             continue
 
         resolved.append((visual, paginated.item))
-        print(
-            f"[RESOLVED] {visual.report_name} / {visual.page_name} -> "
-            f"{paginated.item.name} [{paginated.item.id}] ({reason})"
+        already_points_to_target = visual.old_item_id == paginated.item.id
+        workspace_is_current = (
+            not visual.old_workspace_id
+            or visual.old_workspace_id == config.workspace_id
         )
 
+        print(f"  Target report      : {paginated.item.name}")
+        print(f"  Target report Id   : {paginated.item.id}")
+        print(f"  Resolution reason  : {reason}")
+        print(
+            "  Current reference  : "
+            + ("MATCHES TARGET" if already_points_to_target else "DIFFERS FROM TARGET")
+        )
+        print(
+            "  Workspace reference: "
+            + ("CURRENT" if workspace_is_current else "DIFFERS FROM TARGET")
+        )
+        print("  Status             : RESOLVED")
+        print()
+
+    print("=" * 80)
+    print("POST-DEPLOY SUMMARY")
+    print("=" * 80)
+    print(f"Workspace           : {config.workspace_name}")
+    print(f"Workspace Id        : {config.workspace_id}")
+    print(f"RDL Visuals         : {len(rdl_visuals)}")
+    print(f"Resolved            : {len(resolved)}")
+    print(f"Unresolved          : {len(unresolved)}")
+
+    if resolved:
+        print()
+        print("Resolved relationships:")
+        for visual, target in resolved:
+            print(
+                f"  - {visual.report_name} / {visual.page_name or '(unnamed page)'}"
+            )
+            print(f"    -> {target.name} [{target.id}]")
+
+    if unresolved:
+        print()
+        print("Unresolved relationships:")
+        for visual in unresolved:
+            print(
+                f"  - {visual.report_name} / {visual.page_name or '(unnamed page)'}"
+            )
+
     print()
-    print(f"RDL Visual relationships resolved: {len(resolved)}/{len(rdl_visuals)}")
+    print(
+        f"RDL Visual relationships resolved: "
+        f"{len(resolved)}/{len(rdl_visuals)}"
+    )
 
     if unresolved and config.fail_on_unresolved_rdl_visual:
         raise RuntimeError(

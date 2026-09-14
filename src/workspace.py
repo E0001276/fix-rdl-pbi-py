@@ -31,38 +31,76 @@ class PaginatedReportInfo:
     parameter_names: set[str] = field(default_factory=set)
 
 
+class WorkspaceItems(list):
+    @property
+    def reports(self):
+        return [item for item in self if item.kind == "Report"]
+
+    @property
+    def semantic_models(self):
+        return [item for item in self if item.kind == "SemanticModel"]
+
+    @property
+    def paginated_reports(self):
+        return [item for item in self if item.kind == "PaginatedReport"]
+
+
 def _list_all(client, path: str):
     items = []
     next_url = path
+    page_number = 1
+
     while next_url:
         response = client.get(next_url)
         data = response.json()
-        items.extend(data.get("value", []))
+        page_items = data.get("value", [])
+        items.extend(page_items)
+
+        if page_number > 1:
+            print(
+                f"    [PAGE {page_number}] {len(page_items)} additional item(s) loaded."
+            )
+
         next_url = data.get("continuationUri")
         if not next_url:
             token = data.get("continuationToken")
             next_url = f"{path}?continuationToken={token}" if token else None
+        page_number += 1
+
     return items
 
 
+def _print_item(item: WorkspaceItem) -> None:
+    print(f"    - {item.name}")
+    print(f"      Id      : {item.id}")
+    print(f"      FolderId: {item.folder_id or '(root)'}")
+
+
 def list_fabric_workspace_items(client, workspace_id: str):
-    items = []
+    items = WorkspaceItems()
     endpoints = (
-        ("reports", "Report"),
-        ("semanticModels", "SemanticModel"),
-        ("paginatedReports", "PaginatedReport"),
+        ("reports", "Report", "REPORTS"),
+        ("semanticModels", "SemanticModel", "SEMANTIC MODELS"),
+        ("paginatedReports", "PaginatedReport", "PAGINATED REPORTS"),
     )
-    for endpoint, kind in endpoints:
+
+    for endpoint, kind, label in endpoints:
+        print(f"[DISCOVERY] Loading {label}...")
         values = _list_all(client, f"workspaces/{workspace_id}/{endpoint}")
+        print(f"  Found: {len(values)}")
+
         for value in values:
-            items.append(
-                WorkspaceItem(
-                    id=value["id"],
-                    name=value.get("displayName") or value.get("name") or value["id"],
-                    kind=kind,
-                    folder_id=value.get("folderId") or "",
-                )
+            item = WorkspaceItem(
+                id=value["id"],
+                name=value.get("displayName") or value.get("name") or value["id"],
+                kind=kind,
+                folder_id=value.get("folderId") or "",
             )
+            items.append(item)
+            _print_item(item)
+
+        print()
+
     return items
 
 
@@ -77,9 +115,7 @@ def _get_definition(client, workspace_id: str, item: WorkspaceItem):
     if item.kind == "Report":
         path = f"workspaces/{workspace_id}/reports/{item.id}/getDefinition"
     elif item.kind == "PaginatedReport":
-        path = (
-            f"workspaces/{workspace_id}/paginatedReports/{item.id}/getDefinition"
-        )
+        path = f"workspaces/{workspace_id}/paginatedReports/{item.id}/getDefinition"
     else:
         raise ValueError(f"Definitions are not loaded for item type {item.kind}.")
 
@@ -97,9 +133,9 @@ def _literal_value(node):
 def _rdl_visual_parameter_names(visual):
     result = set()
     try:
-        mappings_value = (
-            visual["objects"]["parameterMapping"][0]["properties"]["mappings"]
-        )
+        mappings_value = visual["objects"]["parameterMapping"][0]["properties"][
+            "mappings"
+        ]
         raw = _literal_value(mappings_value)
         if raw:
             for mapping in json.loads(raw):
@@ -113,11 +149,21 @@ def _rdl_visual_parameter_names(visual):
 
 def discover_report_definitions(client, workspace_id: str, workspace_items):
     visuals = []
-    reports = [item for item in workspace_items if item.kind == "Report"]
+    reports = workspace_items.reports
 
-    for report in reports:
+    print(f"[REPORT DEFINITIONS] Reports to inspect: {len(reports)}")
+    print()
+
+    for index, report in enumerate(reports, start=1):
+        print(f"[{index}/{len(reports)}] Report: {report.name}")
+        print(f"  Report Id : {report.id}")
+        print(f"  Folder Id : {report.folder_id or '(root)'}")
+        print("  Loading definition...")
+
         definition_response = _get_definition(client, workspace_id, report)
         parts = definition_response.get("definition", {}).get("parts", [])
+        print(f"  Definition parts: {len(parts)}")
+
         decoded = {}
         for part in parts:
             path = str(part.get("path", ""))
@@ -126,7 +172,7 @@ def discover_report_definitions(client, workspace_id: str, workspace_items):
             try:
                 decoded[path] = _decode_part(part)
             except (UnicodeDecodeError, ValueError):
-                continue
+                print(f"  [WARN] Could not decode JSON part: {path}")
 
         page_names = {}
         for path, text in decoded.items():
@@ -136,11 +182,15 @@ def discover_report_definitions(client, workspace_id: str, workspace_items):
             try:
                 data = json.loads(text)
             except json.JSONDecodeError:
+                print(f"  [WARN] Invalid page JSON: {path}")
                 continue
             page_names[str(pure.parent)] = data.get("displayName") or data.get(
                 "name", ""
             )
 
+        print(f"  Pages found: {len(page_names)}")
+
+        report_visuals = []
         for path, text in decoded.items():
             pure = PurePosixPath(path)
             if pure.name != "visual.json":
@@ -148,6 +198,7 @@ def discover_report_definitions(client, workspace_id: str, workspace_items):
             try:
                 data = json.loads(text)
             except json.JSONDecodeError:
+                print(f"  [WARN] Invalid visual JSON: {path}")
                 continue
 
             visual = data.get("visual", {})
@@ -165,20 +216,35 @@ def discover_report_definitions(client, workspace_id: str, workspace_items):
             except (KeyError, IndexError, TypeError):
                 pass
 
-            # definition/pages/<page-id>/visuals/<visual-id>/visual.json
             page_dir = str(pure.parents[2]) if len(pure.parents) >= 3 else ""
-            visuals.append(
-                WorkspaceRdlVisual(
-                    report_id=report.id,
-                    report_name=report.name,
-                    report_folder_id=report.folder_id,
-                    page_name=page_names.get(page_dir, ""),
-                    definition_part_path=path,
-                    old_item_id=old_item_id,
-                    old_workspace_id=old_workspace_id,
-                    parameter_names=_rdl_visual_parameter_names(visual),
-                )
+            workspace_visual = WorkspaceRdlVisual(
+                report_id=report.id,
+                report_name=report.name,
+                report_folder_id=report.folder_id,
+                page_name=page_names.get(page_dir, ""),
+                definition_part_path=path,
+                old_item_id=old_item_id,
+                old_workspace_id=old_workspace_id,
+                parameter_names=_rdl_visual_parameter_names(visual),
             )
+            report_visuals.append(workspace_visual)
+            visuals.append(workspace_visual)
+
+        print(f"  RDL Visuals found: {len(report_visuals)}")
+        for visual in report_visuals:
+            print(f"    - Page             : {visual.page_name or '(unnamed page)'}")
+            print(f"      Definition part  : {visual.definition_part_path}")
+            print(f"      Current itemId   : {visual.old_item_id or '(empty)'}")
+            print(
+                f"      Current workspace: "
+                f"{visual.old_workspace_id or '(empty)'}"
+            )
+            print(
+                "      Parameters       : "
+                + (", ".join(sorted(visual.parameter_names)) or "(none)")
+            )
+
+        print()
 
     return visuals
 
@@ -204,15 +270,36 @@ def _rdl_parameter_names(xml_text: str):
 
 def discover_paginated_report_definitions(client, workspace_id: str, workspace_items):
     result = []
-    reports = [item for item in workspace_items if item.kind == "PaginatedReport"]
+    reports = workspace_items.paginated_reports
 
-    for report in reports:
+    print(f"[PAGINATED DEFINITIONS] Reports to inspect: {len(reports)}")
+    print()
+
+    for index, report in enumerate(reports, start=1):
+        print(f"[{index}/{len(reports)}] Paginated report: {report.name}")
+        print(f"  Report Id : {report.id}")
+        print(f"  Folder Id : {report.folder_id or '(root)'}")
+        print("  Loading RDL definition...")
+
         definition_response = _get_definition(client, workspace_id, report)
         parts = definition_response.get("definition", {}).get("parts", [])
+        print(f"  Definition parts: {len(parts)}")
+
         parameter_names = set()
+        rdl_count = 0
         for part in parts:
             if str(part.get("path", "")).lower().endswith(".rdl"):
+                rdl_count += 1
                 parameter_names |= _rdl_parameter_names(_decode_part(part))
+
+        print(f"  RDL parts       : {rdl_count}")
+        print(
+            "  RDL parameters  : "
+            + (", ".join(sorted(parameter_names)) or "(none)")
+        )
+        print("  Status          : LOADED")
+        print()
+
         result.append(PaginatedReportInfo(report, parameter_names))
 
     return result
