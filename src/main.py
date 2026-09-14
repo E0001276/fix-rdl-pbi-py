@@ -1,50 +1,70 @@
 import argparse
+import truststore
 from pathlib import Path
 
-from auth import get_access_token
-from config import load_config, override_repository_root
-from http_clients import ApiClient
-from repository import discover_repository
-from remediation import apply_remediation, summarize_discovery
-from workspace import list_powerbi_workspace_items
+try:
+    truststore.inject_into_ssl()
+    from auth import get_access_token
+    from config import load_config
+    from http_clients import ApiClient
+    from remediation import apply_remediation, summarize_discovery
+    from workspace import (
+        discover_paginated_report_definitions,
+        discover_report_definitions,
+        list_fabric_workspace_items,
+    )
+except ImportError:
+
+    from auth import get_access_token
+    from config import load_config
+    from http_clients import ApiClient
+    from remediation import apply_remediation, summarize_discovery
+    from workspace import (
+        discover_paginated_report_definitions,
+        discover_report_definitions,
+        list_fabric_workspace_items,
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Power BI target-only post-deploy remediation"
+        description="Power BI target-only workspace remediation"
     )
     parser.add_argument(
         "--config",
         default=str(Path(__file__).parent / "config" / "postdeploy-beta.json"),
         help="Path to the environment configuration JSON.",
     )
-    parser.add_argument(
-        "--repository-root",
-        help=(
-            "Optional path to the Power BI report source folder. "
-            "Overrides repositoryRoot from the JSON configuration."
-        ),
-    )
     return parser
 
 
 def main() -> None:
     args = build_parser().parse_args()
-    config = override_repository_root(load_config(args.config), args.repository_root)
+    config = load_config(args.config)
+    print("=" * 80)
+    print("POWER BI POST-DEPLOY")
+    print("=" * 80)
 
-    if not config.repository_root:
-        raise ValueError(
-            "repositoryRoot is empty. Set it in the JSON config or pass --repository-root."
-        )
+    print(f"[WORKSPACE] Name : {config.workspace_name}")
+    print(f"[WORKSPACE] Id   : {config.workspace_id}")
+    print()
+    fabric_token = get_access_token("https://api.fabric.microsoft.com")
+    fabric = ApiClient("https://api.fabric.microsoft.com/v1", fabric_token)
 
-    repo_items, rdl_visuals = discover_repository(config.repository_root)
+    workspace_items = list_fabric_workspace_items(fabric, config.workspace_id)
+    print(f"  Reports           : {len(workspace_items.reports)}")
+    print(f"  Semantic Models   : {len(workspace_items.semantic_models)}")
+    print(f"  Paginated Reports : {len(workspace_items.paginated_reports)}")
+    print()
+    rdl_visuals = discover_report_definitions(
+        fabric, config.workspace_id, workspace_items
+    )
+    paginated_infos = discover_paginated_report_definitions(
+        fabric, config.workspace_id, workspace_items
+    )
 
-    token = get_access_token("https://analysis.windows.net/powerbi/api")
-    pbi = ApiClient("https://api.powerbi.com/v1.0/myorg", token)
-    workspace_items = list_powerbi_workspace_items(pbi, config.workspace_id)
-
-    summarize_discovery(repo_items, rdl_visuals, workspace_items, config)
-    apply_remediation(repo_items, rdl_visuals, workspace_items, config)
+    summarize_discovery(workspace_items, rdl_visuals, config)
+    apply_remediation(rdl_visuals, paginated_infos, workspace_items, config)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 {
-  "workspaceId": "8a737b4d-eaea-404c-9e75-fcd2c3c05a6b",
-  "workspaceName": "ws-beta",
+  "workspaceId": "ce38ea21-2bf0-446b-84a3-5fc21ac70214",
+  "workspaceName": "ws-alpha-cicd",
   "expectedOracleDatabase": "NCI_QA_DB",
   "refreshSemanticModels": true,
   "waitForRefresh": false,
