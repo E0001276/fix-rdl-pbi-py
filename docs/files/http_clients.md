@@ -129,45 +129,6 @@ Devuelve valor `response`.
 
 Llamadas relevantes: `self._url`, `self.session.post`, `self._log`, `self._raise_for_status_with_body`.
 
-#### `patch(self, path_or_url: str, json=None, params=None)`
-
-Ejecuta una solicitud HTTP PATCH autenticada y registra la respuesta.
-
-**Parámetros**
-
-| Parámetro | Tipo | Predeterminado |
-|---|---|---|
-| `path_or_url` | `str` | `Requerido` |
-| `json` | `No especificado` | `None` |
-| `params` | `No especificado` | `None` |
-
-**Retorno**
-
-Devuelve valor `response`.
-
-**Comportamiento y efectos**
-
-Llamadas relevantes: `self._url`, `self.session.patch`, `self._log`, `self._raise_for_status_with_body`.
-
-#### `delete(self, path_or_url: str, params=None)`
-
-Ejecuta una solicitud HTTP DELETE autenticada y registra la respuesta.
-
-**Parámetros**
-
-| Parámetro | Tipo | Predeterminado |
-|---|---|---|
-| `path_or_url` | `str` | `Requerido` |
-| `params` | `No especificado` | `None` |
-
-**Retorno**
-
-Devuelve valor `response`.
-
-**Comportamiento y efectos**
-
-Llamadas relevantes: `self._url`, `self.session.delete`, `self._log`, `self._raise_for_status_with_body`.
-
 #### `_fabric_operation_path(operation_id: str)`
 
 Implementa la responsabilidad interna `_fabric_operation_path` del módulo `http_clients.py`.

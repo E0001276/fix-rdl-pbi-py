@@ -5,7 +5,13 @@ import requests
 
 
 class ApiClient:
-    def __init__(self, base_url: str, token: str, diagnostics=None, token_label: str = "ACCESS_TOKEN"):
+    def __init__(
+        self,
+        base_url: str,
+        token: str,
+        diagnostics=None,
+        token_label: str = "ACCESS_TOKEN",
+    ):
         self.base_url = base_url.rstrip("/") + "/"
         self.diagnostics = diagnostics
         self.token_label = token_label
@@ -63,19 +69,19 @@ class ApiClient:
         self._raise_for_status_with_body(response)
         return response
 
-    def patch(self, path_or_url: str, json=None, params=None):
-        url = self._url(path_or_url)
-        response = self.session.patch(url, json=json, params=params)
-        self._log("PATCH", url, json, response)
-        self._raise_for_status_with_body(response)
-        return response
+    # def patch(self, path_or_url: str, json=None, params=None):
+    #     url = self._url(path_or_url)
+    #     response = self.session.patch(url, json=json, params=params)
+    #     self._log("PATCH", url, json, response)
+    #     self._raise_for_status_with_body(response)
+    #     return response
 
-    def delete(self, path_or_url: str, params=None):
-        url = self._url(path_or_url)
-        response = self.session.delete(url, params=params)
-        self._log("DELETE", url, None, response)
-        self._raise_for_status_with_body(response)
-        return response
+    # def delete(self, path_or_url: str, params=None):
+    #     url = self._url(path_or_url)
+    #     response = self.session.delete(url, params=params)
+    #     self._log("DELETE", url, None, response)
+    #     self._raise_for_status_with_body(response)
+    #     return response
 
     @staticmethod
     def _fabric_operation_path(operation_id: str) -> str:
@@ -110,9 +116,7 @@ class ApiClient:
             # include a regional wabi-paas Location; using x-ms-operation-id keeps all
             # polling on https://api.fabric.microsoft.com/v1.
             state_ref = (
-                self._fabric_operation_path(operation_id)
-                if operation_id
-                else location
+                self._fabric_operation_path(operation_id) if operation_id else location
             )
             state_response = self.get(state_ref)
             state = state_response.json()
@@ -151,9 +155,7 @@ class ApiClient:
 
             time.sleep(max(1, retry_after))
             state_ref = (
-                self._fabric_operation_path(operation_id)
-                if operation_id
-                else location
+                self._fabric_operation_path(operation_id) if operation_id else location
             )
             state_response = self.get(state_ref)
             state = state_response.json()

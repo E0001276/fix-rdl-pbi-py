@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>http_clients.py - fix-rdl-pbi-py - Documentación por módulo</title>
+    <title>http_clients.py - fix-rdl-pbi-py - Documentación del código</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -30,7 +30,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
-          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación por módulo
+          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación del código
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
@@ -47,10 +47,8 @@
                 <li class="toctree-l1"><a class="reference internal" href="../arquitectura/">Arquitectura</a>
                 </li>
               </ul>
-              <p class="caption"><span class="caption-text">Módulos</span></p>
+              <p class="caption"><span class="caption-text">Módulos Python</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../auth/">auth.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../config/">config.py</a>
@@ -59,47 +57,55 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">http_clients.py</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación</a>
+    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-del-modulo">Responsabilidad del módulo</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#dependencias">Dependencias</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#clases">Clases</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#apiclient">ApiClient</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#__init__self-base_url-str-token-str-diagnosticsnone-token_label-straccess_token">__init__(self, base_url: str, token: str, diagnostics=None, token_label: str='ACCESS_TOKEN')</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#_urlself-path_or_url-str">_url(self, path_or_url: str)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#_raise_for_status_with_bodyresponse">_raise_for_status_with_body(response)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#_logself-method-str-url-str-request_json-response">_log(self, method: str, url: str, request_json, response)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#getself-path_or_url-str-paramsnone">get(self, path_or_url: str, params=None)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#postself-path_or_url-str-jsonnone-paramsnone">post(self, path_or_url: str, json=None, params=None)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#_fabric_operation_pathoperation_id-str">_fabric_operation_path(operation_id: str)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#_fabric_result_pathoperation_id-str">_fabric_result_path(operation_id: str)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#wait_for_lro_completionself-response-timeout_seconds-int300">wait_for_lro_completion(self, response, timeout_seconds: int=300)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#get_json_lro_resultself-response-timeout_seconds-int300">get_json_lro_result(self, response, timeout_seconds: int=300)</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#funciones-de-modulo">Funciones de módulo</a>
+        </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#algoritmo-pseudocodigo">Algoritmo / pseudocódigo</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#apis-relacionadas">APIs relacionadas</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#entradas-y-salidas-principales">Entradas y salidas principales</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#relacion-con-otros-modulos">Relación con otros módulos</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#codigo-fuente-analizado">Código fuente analizado</a>
+    <li class="toctree-l2"><a class="reference internal" href="#archivo-fuente">Archivo fuente</a>
     </li>
     </ul>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../paginated/">paginated.py</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../powerbi_paginated/">powerbi_paginated.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../remediation/">remediation.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../fabric_connections/">fabric_connections.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../gateway/">gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../repository/">repository.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
                   </li>
               </ul>
       </div>
@@ -109,14 +115,14 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
       <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="..">fix-rdl-pbi-py - Documentación por módulo</a>
+          <a href="..">fix-rdl-pbi-py - Documentación del código</a>
         
       </nav>
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">Módulos</li>
+          <li class="breadcrumb-item">Módulos Python</li>
       <li class="breadcrumb-item active">http_clients.py</li>
     <li class="wy-breadcrumbs-aside">
     </li>
@@ -126,133 +132,331 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="http_clientspy"><code>http_clients.py</code><a class="headerlink" href="#http_clientspy" title="Permanent link">&para;</a></h1>
-<p><strong>Rol:</strong> Infraestructura HTTP</p>
-<p>Cliente HTTP común para Fabric y Power BI, manejo de errores y operaciones de larga duración (LRO).</p>
-<h2 id="responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación<a class="headerlink" href="#responsabilidad-dentro-de-la-aplicacion" title="Permanent link">&para;</a></h2>
-<p>Uniforma autenticación Bearer, construcción de URLs, logging HTTP, propagación de errores y polling de operaciones Fabric.</p>
-<h2 id="dependencias">Dependencias<a class="headerlink" href="#dependencias" title="Permanent link">&para;</a></h2>
+                <h1 id="http_clientspy"><code>http_clients.py</code></h1>
+<p>Documentación del módulo Python <a href="../../src/http_clients.py"><code>src/http_clients.py</code></a>.</p>
+<h2 id="responsabilidad-del-modulo">Responsabilidad del módulo</h2>
+<p>Implementa el cliente HTTP compartido y el manejo de operaciones Fabric de larga duración.</p>
+<h2 id="dependencias">Dependencias</h2>
 <ul>
 <li><code>time</code></li>
-<li><code>urllib.parse:urljoin</code></li>
+<li><code>urllib.parse: urljoin</code></li>
 <li><code>requests</code></li>
 </ul>
-<h2 id="clases">Clases<a class="headerlink" href="#clases" title="Permanent link">&para;</a></h2>
-<h3 id="apiclient"><code>ApiClient</code><a class="headerlink" href="#apiclient" title="Permanent link">&para;</a></h3>
+<h2 id="clases">Clases</h2>
+<h3 id="apiclient"><code>ApiClient</code></h3>
+<h4 id="__init__self-base_url-str-token-str-diagnosticsnone-token_label-straccess_token"><code>__init__(self, base_url: str, token: str, diagnostics=None, token_label: str='ACCESS_TOKEN')</code></h4>
+<p>Inicializa la instancia y sus dependencias/estado interno.</p>
+<p><strong>Parámetros</strong></p>
 <table>
 <thead>
 <tr>
-<th>Método</th>
-<th>Firma</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>__init__</code></td>
-<td><code>__init__(self, base_url: str, token: str, diagnostics=None, token_label: str='ACCESS_TOKEN')</code></td>
-</tr>
-<tr>
-<td><code>_url</code></td>
-<td><code>_url(self, path_or_url: str)</code></td>
-</tr>
-<tr>
-<td><code>_raise_for_status_with_body</code></td>
-<td><code>_raise_for_status_with_body(response)</code></td>
-</tr>
-<tr>
-<td><code>_log</code></td>
-<td><code>_log(self, method: str, url: str, request_json, response)</code></td>
-</tr>
-<tr>
-<td><code>get</code></td>
-<td><code>get(self, path_or_url: str, params=None)</code></td>
-</tr>
-<tr>
-<td><code>post</code></td>
-<td><code>post(self, path_or_url: str, json=None, params=None)</code></td>
-</tr>
-<tr>
-<td><code>patch</code></td>
-<td><code>patch(self, path_or_url: str, json=None, params=None)</code></td>
-</tr>
-<tr>
-<td><code>delete</code></td>
-<td><code>delete(self, path_or_url: str, params=None)</code></td>
-</tr>
-<tr>
-<td><code>_fabric_operation_path</code></td>
-<td><code>_fabric_operation_path(operation_id: str)</code></td>
-</tr>
-<tr>
-<td><code>_fabric_result_path</code></td>
-<td><code>_fabric_result_path(operation_id: str)</code></td>
-</tr>
-<tr>
-<td><code>wait_for_lro_completion</code></td>
-<td><code>wait_for_lro_completion(self, response, timeout_seconds: int=300)</code></td>
-</tr>
-<tr>
-<td><code>get_json_lro_result</code></td>
-<td><code>get_json_lro_result(self, response, timeout_seconds: int=300)</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="funciones-de-modulo">Funciones de módulo<a class="headerlink" href="#funciones-de-modulo" title="Permanent link">&para;</a></h2>
-<p>No define funciones de módulo.</p>
-<h2 id="algoritmo-pseudocodigo">Algoritmo / pseudocódigo<a class="headerlink" href="#algoritmo-pseudocodigo" title="Permanent link">&para;</a></h2>
-<pre><code class="language-text">INICIO
-    construir URL absoluta
-    agregar Authorization Bearer
-    ejecutar GET/POST/PATCH/DELETE
-    registrar diagnóstico
-    SI status no exitoso
-        incluir body en HTTPError
-    FIN SI
-    SI operación Fabric devuelve 202
-        obtener x-ms-operation-id
-        consultar /operations/{id} hasta estado terminal
-        obtener /result cuando corresponda
-    FIN SI
-FIN
-</code></pre>
-<h2 id="apis-relacionadas">APIs relacionadas<a class="headerlink" href="#apis-relacionadas" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>GET /v1/operations/{operationId}</code></li>
-<li><code>GET /v1/operations/{operationId}/result</code></li>
-</ul>
-<h2 id="entradas-y-salidas-principales">Entradas y salidas principales<a class="headerlink" href="#entradas-y-salidas-principales" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
+<th>Parámetro</th>
 <th>Tipo</th>
-<th>Valor</th>
+<th>Predeterminado</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Entrada</td>
-<td>base URL, token y request</td>
+<td><code>base_url</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
 </tr>
 <tr>
-<td>Salida</td>
-<td><code>requests.Response</code> o resultado LRO</td>
+<td><code>token</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>diagnostics</code></td>
+<td><code>No especificado</code></td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>token_label</code></td>
+<td><code>str</code></td>
+<td><code>'ACCESS_TOKEN'</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="relacion-con-otros-modulos">Relación con otros módulos<a class="headerlink" href="#relacion-con-otros-modulos" title="Permanent link">&para;</a></h2>
-<p><strong>Importa módulos internos:</strong> ninguno.</p>
-<p><strong>Es utilizado por:</strong> <a href="../main/"><code>main.py</code></a></p>
-<h2 id="codigo-fuente-analizado">Código fuente analizado<a class="headerlink" href="#codigo-fuente-analizado" title="Permanent link">&para;</a></h2>
-<p>Archivo: <code>src/http_clients.py</code></p>
-<blockquote>
-<p>Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.</p>
-</blockquote>
+<p><strong>Retorno</strong></p>
+<p>No devuelve un valor explícito (<code>None</code>).</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>self.session.headers.update</code>.</p>
+<h4 id="_urlself-path_or_url-str"><code>_url(self, path_or_url: str)</code></h4>
+<p>Convierte una ruta relativa en una URL absoluta usando la URL base del cliente.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>path_or_url</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<h4 id="_raise_for_status_with_bodyresponse"><code>_raise_for_status_with_body(response)</code></h4>
+<p>Eleva un <code>HTTPError</code> enriquecido con el body de respuesta cuando la solicitud no fue exitosa.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>response</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>No devuelve un valor útil (<code>None</code>).</p>
+<p><strong>Excepciones explícitas</strong></p>
+<ul>
+<li><code>requests.HTTPError(f'{response.status_code} {response.reason} for {response.url}; response={body}', response=response)</code></li>
+</ul>
+<h4 id="_logself-method-str-url-str-request_json-response"><code>_log(self, method: str, url: str, request_json, response)</code></h4>
+<p>Envía request y response al registrador de diagnósticos, si está habilitado.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>method</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>url</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>request_json</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>response</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>No devuelve un valor explícito (<code>None</code>).</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>self.diagnostics.log_http</code>.</p>
+<h4 id="getself-path_or_url-str-paramsnone"><code>get(self, path_or_url: str, params=None)</code></h4>
+<p>Ejecuta una solicitud HTTP GET autenticada y registra la respuesta.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>path_or_url</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>params</code></td>
+<td><code>No especificado</code></td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve valor <code>response</code>.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>self._url</code>, <code>self.session.get</code>, <code>self._log</code>, <code>self._raise_for_status_with_body</code>.</p>
+<h4 id="postself-path_or_url-str-jsonnone-paramsnone"><code>post(self, path_or_url: str, json=None, params=None)</code></h4>
+<p>Ejecuta una solicitud HTTP POST autenticada y registra la respuesta.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>path_or_url</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>json</code></td>
+<td><code>No especificado</code></td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>params</code></td>
+<td><code>No especificado</code></td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve valor <code>response</code>.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>self._url</code>, <code>self.session.post</code>, <code>self._log</code>, <code>self._raise_for_status_with_body</code>.</p>
+<h4 id="_fabric_operation_pathoperation_id-str"><code>_fabric_operation_path(operation_id: str)</code></h4>
+<p>Implementa la responsabilidad interna <code>_fabric_operation_path</code> del módulo <code>http_clients.py</code>.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>operation_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Rutas/API construidas o utilizadas:
+- <code>f'operations/{operation_id}'</code>
+- <code>operations/</code></p>
+<h4 id="_fabric_result_pathoperation_id-str"><code>_fabric_result_path(operation_id: str)</code></h4>
+<p>Implementa la responsabilidad interna <code>_fabric_result_path</code> del módulo <code>http_clients.py</code>.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>operation_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Rutas/API construidas o utilizadas:
+- <code>f'operations/{operation_id}/result'</code>
+- <code>operations/</code></p>
+<h4 id="wait_for_lro_completionself-response-timeout_seconds-int300"><code>wait_for_lro_completion(self, response, timeout_seconds: int=300)</code></h4>
+<p>Espera la finalización de una operación Fabric de larga duración (LRO).</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>response</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>timeout_seconds</code></td>
+<td><code>int</code></td>
+<td><code>300</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>No devuelve un valor útil (<code>None</code>).</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>time.sleep</code>, <code>self.get</code>, <code>self._fabric_operation_path</code>.
+Realiza espera activa entre intentos de polling.</p>
+<p><strong>Excepciones explícitas</strong></p>
+<ul>
+<li><code>RuntimeError('Fabric returned HTTP 202 without x-ms-operation-id or Location.')</code></li>
+<li><code>TimeoutError(f'Fabric operation did not finish within {timeout_seconds} seconds.')</code></li>
+<li><code>RuntimeError(f"Fabric operation {operation_id or ''} finished with status {status}: {state}")</code></li>
+</ul>
+<h4 id="get_json_lro_resultself-response-timeout_seconds-int300"><code>get_json_lro_result(self, response, timeout_seconds: int=300)</code></h4>
+<p>Return JSON for an immediate response or poll a Fabric LRO to completion.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>response</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>timeout_seconds</code></td>
+<td><code>int</code></td>
+<td><code>300</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve resultado de una llamada.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>time.sleep</code>, <code>self.get</code>, <code>self._fabric_operation_path</code>, <code>self.get(result_url).json</code>, <code>self.get(self._fabric_result_path(operation_id)).json</code>, <code>self._fabric_result_path</code>.
+Realiza espera activa entre intentos de polling.</p>
+<p><strong>Excepciones explícitas</strong></p>
+<ul>
+<li><code>RuntimeError('Fabric returned HTTP 202 without x-ms-operation-id or Location.')</code></li>
+<li><code>TimeoutError(f'Fabric operation did not finish within {timeout_seconds} seconds.')</code></li>
+<li><code>RuntimeError(f"Fabric operation {operation_id or ''} finished with status {status}: {state}")</code></li>
+<li><code>RuntimeError('Fabric LRO succeeded but no operation id or result Location was available.')</code></li>
+</ul>
+<h2 id="archivo-fuente">Archivo fuente</h2>
+<p>Ruta: <code>src/http_clients.py</code></p>
+<p>Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../diagnostics/" class="btn btn-neutral float-left" title="diagnostics.py"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../workspace/" class="btn btn-neutral float-right" title="workspace.py">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../main/" class="btn btn-neutral float-right" title="main.py">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -278,7 +482,7 @@ FIN
       <span><a href="../diagnostics/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../workspace/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../main/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

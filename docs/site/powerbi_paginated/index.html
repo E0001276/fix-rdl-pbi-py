@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>powerbi_paginated.py - fix-rdl-pbi-py - Documentación por módulo</title>
+    <title>powerbi_paginated.py - fix-rdl-pbi-py - Documentación del código</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -30,7 +30,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
-          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación por módulo
+          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación del código
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
@@ -47,10 +47,8 @@
                 <li class="toctree-l1"><a class="reference internal" href="../arquitectura/">Arquitectura</a>
                 </li>
               </ul>
-              <p class="caption"><span class="caption-text">Módulos</span></p>
+              <p class="caption"><span class="caption-text">Módulos Python</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../auth/">auth.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../config/">config.py</a>
@@ -59,43 +57,51 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../http_clients/">http_clients.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../paginated/">paginated.py</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
+                  </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">powerbi_paginated.py</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación</a>
+    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-del-modulo">Responsabilidad del módulo</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#dependencias">Dependencias</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#clases">Clases</a>
+    <li class="toctree-l2"><a class="reference internal" href="#funciones">Funciones</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#_normvalue">_norm(value)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#funciones-de-modulo">Funciones de módulo</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_datasourcespayload-dict">_datasources(payload: dict)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#algoritmo-pseudocodigo">Algoritmo / pseudocódigo</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_connection_detailsdatasource-dict">_connection_details(datasource: dict)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#apis-relacionadas">APIs relacionadas</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_runtime_namedatasource-dict">_runtime_name(datasource: dict)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#entradas-y-salidas-principales">Entradas y salidas principales</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_target_databasesemantic_model_id-str">_target_database(semantic_model_id: str)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#relacion-con-otros-modulos">Relación con otros módulos</a>
+    <li class="toctree-l3"><a class="reference internal" href="#get_paginated_report_datasourcespowerbi-workspace_id-str-report_id-str">get_paginated_report_datasources(powerbi, workspace_id: str, report_id: str)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#codigo-fuente-analizado">Código fuente analizado</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_get_persisted_rdl_datasource_namesfabric-workspace_id-str-report_id-str">_get_persisted_rdl_datasource_names(fabric, workspace_id: str, report_id: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_find_runtime_for_rdlruntime_datasources-listdict-rdl_name-str">_find_runtime_for_rdl(runtime_datasources: list[dict], rdl_name: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_build_update_detailsruntime_datasources-listdict-rdl_names-liststr-semantic_model_id-str">_build_update_details(runtime_datasources: list[dict], rdl_names: list[str], semantic_model_id: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#bind_paginated_reports_to_semantic_modelspowerbi-fabric-workspace_items-paginated_infos-config">bind_paginated_reports_to_semantic_models(powerbi, fabric, workspace_items, paginated_infos, config)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#archivo-fuente">Archivo fuente</a>
     </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../remediation/">remediation.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../fabric_connections/">fabric_connections.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../gateway/">gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../repository/">repository.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
                   </li>
               </ul>
       </div>
@@ -105,14 +111,14 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
       <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="..">fix-rdl-pbi-py - Documentación por módulo</a>
+          <a href="..">fix-rdl-pbi-py - Documentación del código</a>
         
       </nav>
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">Módulos</li>
+          <li class="breadcrumb-item">Módulos Python</li>
       <li class="breadcrumb-item active">powerbi_paginated.py</li>
     <li class="wy-breadcrumbs-aside">
     </li>
@@ -122,119 +128,319 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="powerbi_paginatedpy"><code>powerbi_paginated.py</code><a class="headerlink" href="#powerbi_paginatedpy" title="Permanent link">&para;</a></h1>
-<p><strong>Rol:</strong> Binding runtime de paginados</p>
-<p>Binding runtime de informes paginados hacia los Semantic Models reales del workspace destino.</p>
-<h2 id="responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación<a class="headerlink" href="#responsabilidad-dentro-de-la-aplicacion" title="Permanent link">&para;</a></h2>
-<p>Corrige la conexión efectiva que Power BI mantiene para un informe paginado. Esta fase complementa el cambio del XML RDL y opera sobre el datasource runtime del servicio.</p>
-<h2 id="dependencias">Dependencias<a class="headerlink" href="#dependencias" title="Permanent link">&para;</a></h2>
+                <h1 id="powerbi_paginatedpy"><code>powerbi_paginated.py</code></h1>
+<p>Documentación del módulo Python <a href="../../src/powerbi_paginated.py"><code>src/powerbi_paginated.py</code></a>.</p>
+<h2 id="responsabilidad-del-modulo">Responsabilidad del módulo</h2>
+<p>Corrige el datasource runtime de los informes paginados para apuntar al Semantic Model destino.</p>
+<h2 id="dependencias">Dependencias</h2>
 <ul>
-<li><code>paginated:_extract_rdl_binding, _find_rdl_part, _decode_part, _resolve_semantic_model</code></li>
-<li><code>workspace:get_paginated_report_definition</code></li>
+<li><code>paginated: _extract_rdl_binding, _find_rdl_part, _decode_part, _resolve_semantic_model</code></li>
+<li><code>workspace: get_paginated_report_definition</code></li>
 </ul>
-<h2 id="clases">Clases<a class="headerlink" href="#clases" title="Permanent link">&para;</a></h2>
-<p>Este módulo no define clases.</p>
-<h2 id="funciones-de-modulo">Funciones de módulo<a class="headerlink" href="#funciones-de-modulo" title="Permanent link">&para;</a></h2>
+<h2 id="funciones">Funciones</h2>
+<h3 id="_normvalue"><code>_norm(value)</code></h3>
+<p>Normaliza un valor textual para comparaciones tolerantes a mayúsculas/minúsculas y espacios.</p>
+<p><strong>Parámetros</strong></p>
 <table>
 <thead>
 <tr>
-<th>Función</th>
-<th>Firma</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>_norm</code></td>
-<td><code>_norm(value)</code></td>
-</tr>
-<tr>
-<td><code>_datasources</code></td>
-<td><code>_datasources(payload: dict)</code></td>
-</tr>
-<tr>
-<td><code>_connection_details</code></td>
-<td><code>_connection_details(datasource: dict)</code></td>
-</tr>
-<tr>
-<td><code>_runtime_name</code></td>
-<td><code>_runtime_name(datasource: dict)</code></td>
-</tr>
-<tr>
-<td><code>_target_database</code></td>
-<td><code>_target_database(semantic_model_id: str)</code></td>
-</tr>
-<tr>
-<td><code>get_paginated_report_datasources</code></td>
-<td><code>get_paginated_report_datasources(powerbi, workspace_id: str, report_id: str)</code></td>
-</tr>
-<tr>
-<td><code>_get_persisted_rdl_datasource_names</code></td>
-<td><code>_get_persisted_rdl_datasource_names(fabric, workspace_id: str, report_id: str)</code></td>
-</tr>
-<tr>
-<td><code>_find_runtime_for_rdl</code></td>
-<td><code>_find_runtime_for_rdl(runtime_datasources: list[dict], rdl_name: str)</code></td>
-</tr>
-<tr>
-<td><code>_build_update_details</code></td>
-<td><code>_build_update_details(runtime_datasources: list[dict], rdl_names: list[str], semantic_model_id: str)</code></td>
-</tr>
-<tr>
-<td><code>bind_paginated_reports_to_semantic_models</code></td>
-<td><code>bind_paginated_reports_to_semantic_models(powerbi, fabric, workspace_items, paginated_infos, config)</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="algoritmo-pseudocodigo">Algoritmo / pseudocódigo<a class="headerlink" href="#algoritmo-pseudocodigo" title="Permanent link">&para;</a></h2>
-<pre><code class="language-text">PARA CADA Paginated Report
-    obtener datasource runtime actual
-    leer datasourceName persistido en el RDL
-    resolver Semantic Model destino
-    conservar connectionDetails.server
-    database &lt;- &quot;sobe_wowvirtualserver-&quot; + semanticModelId
-    POST Default.TakeOver
-    POST Default.UpdateDatasources
-    volver a consultar datasources y validar
-FIN PARA
-</code></pre>
-<h2 id="apis-relacionadas">APIs relacionadas<a class="headerlink" href="#apis-relacionadas" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>GET /groups/{workspaceId}/reports/{reportId}/datasources</code></li>
-<li><code>POST /groups/{workspaceId}/reports/{reportId}/Default.TakeOver</code></li>
-<li><code>POST /groups/{workspaceId}/reports/{reportId}/Default.UpdateDatasources</code></li>
-</ul>
-<h2 id="entradas-y-salidas-principales">Entradas y salidas principales<a class="headerlink" href="#entradas-y-salidas-principales" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
+<th>Parámetro</th>
 <th>Tipo</th>
-<th>Valor</th>
+<th>Predeterminado</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Entrada</td>
-<td>clientes Power BI/Fabric + paginados + config</td>
-</tr>
-<tr>
-<td>Salida</td>
-<td>datasource runtime apuntando al Semantic Model destino</td>
+<td><code>value</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="relacion-con-otros-modulos">Relación con otros módulos<a class="headerlink" href="#relacion-con-otros-modulos" title="Permanent link">&para;</a></h2>
-<p><strong>Importa módulos internos:</strong> <a href="../paginated/"><code>paginated.py</code></a>, <a href="../workspace/"><code>workspace.py</code></a></p>
-<p><strong>Es utilizado por:</strong> <a href="../main/"><code>main.py</code></a></p>
-<h2 id="codigo-fuente-analizado">Código fuente analizado<a class="headerlink" href="#codigo-fuente-analizado" title="Permanent link">&para;</a></h2>
-<p>Archivo: <code>src/powerbi_paginated.py</code></p>
-<blockquote>
-<p>Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.</p>
-</blockquote>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<h3 id="_datasourcespayload-dict"><code>_datasources(payload: dict)</code></h3>
+<p>Extrae la lista <code>value</code> de un payload de datasources de Power BI.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>payload</code></td>
+<td><code>dict</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>list[dict]</code></p>
+<h3 id="_connection_detailsdatasource-dict"><code>_connection_details(datasource: dict)</code></h3>
+<p>Obtiene de forma segura el diccionario <code>connectionDetails</code> de un datasource.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>datasource</code></td>
+<td><code>dict</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>dict</code></p>
+<h3 id="_runtime_namedatasource-dict"><code>_runtime_name(datasource: dict)</code></h3>
+<p>Obtiene el nombre runtime del datasource del informe paginado.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>datasource</code></td>
+<td><code>dict</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<h3 id="_target_databasesemantic_model_id-str"><code>_target_database(semantic_model_id: str)</code></h3>
+<p>Construye el nombre de base virtual <code>sobe_wowvirtualserver-{semanticModelId}</code>.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>semantic_model_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<h3 id="get_paginated_report_datasourcespowerbi-workspace_id-str-report_id-str"><code>get_paginated_report_datasources(powerbi, workspace_id: str, report_id: str)</code></h3>
+<p>Consulta los datasources runtime actuales de un informe paginado.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>powerbi</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>report_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>list[dict]</code></p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>powerbi.get</code>.
+Rutas/API construidas o utilizadas:
+- <code>f'groups/{workspace_id}/reports/{report_id}/datasources'</code>
+- <code>groups/</code></p>
+<h3 id="_get_persisted_rdl_datasource_namesfabric-workspace_id-str-report_id-str"><code>_get_persisted_rdl_datasource_names(fabric, workspace_id: str, report_id: str)</code></h3>
+<p>Lee la definición persistida del RDL y obtiene sus nombres de datasource.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fabric</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>report_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>list[str]</code></p>
+<h3 id="_find_runtime_for_rdlruntime_datasources-listdict-rdl_name-str"><code>_find_runtime_for_rdl(runtime_datasources: list[dict], rdl_name: str)</code></h3>
+<p>Relaciona un datasource persistido en RDL con el datasource runtime correspondiente.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>runtime_datasources</code></td>
+<td><code>list[dict]</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>rdl_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve valor calculado.</p>
+<h3 id="_build_update_detailsruntime_datasources-listdict-rdl_names-liststr-semantic_model_id-str"><code>_build_update_details(runtime_datasources: list[dict], rdl_names: list[str], semantic_model_id: str)</code></h3>
+<p>Construye la colección <code>updateDetails</code> requerida por <code>Default.UpdateDatasources</code>.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>runtime_datasources</code></td>
+<td><code>list[dict]</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>rdl_names</code></td>
+<td><code>list[str]</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>semantic_model_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve valor <code>details</code>.</p>
+<h3 id="bind_paginated_reports_to_semantic_modelspowerbi-fabric-workspace_items-paginated_infos-config"><code>bind_paginated_reports_to_semantic_models(powerbi, fabric, workspace_items, paginated_infos, config)</code></h3>
+<p>Mirror the proven .NET paginated runtime remediation, target-only.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>powerbi</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>fabric</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_items</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>paginated_infos</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve lista, valor <code>results</code>.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>print</code>, <code>powerbi.post</code>.
+Rutas/API construidas o utilizadas:
+- `Mirror the proven .NET paginated runtime remediation, target-only.</p>
+<pre><code>The target semantic model is resolved from the target workspace folder.
+The persisted target RDL supplies datasourceName. Power BI GET /datasources
+supplies the current server. Only the virtual database semantic-model ID is
+replaced. TakeOver is executed before Default.UpdateDatasources, exactly as
+in the working .NET application.
+`
+</code></pre>
+<ul>
+<li><code>Calling Default.TakeOver...</code></li>
+<li><code>f'groups/{config.workspace_id}/reports/{item.id}/Default.TakeOver'</code></li>
+<li><code>Calling Default.UpdateDatasources...</code></li>
+<li><code>f'groups/{config.workspace_id}/reports/{item.id}/Default.UpdateDatasources'</code></li>
+<li><code>groups/</code></li>
+<li><code>/Default.TakeOver</code></li>
+<li><code>/Default.UpdateDatasources</code>
+Escribe información de diagnóstico en consola.</li>
+</ul>
+<p><strong>Excepciones explícitas</strong></p>
+<ul>
+<li><code>RuntimeError(f'Unable to safely bind {len(failures)} paginated report runtime datasource(s).')</code></li>
+</ul>
+<h2 id="archivo-fuente">Archivo fuente</h2>
+<p>Ruta: <code>src/powerbi_paginated.py</code></p>
+<p>Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../paginated/" class="btn btn-neutral float-left" title="paginated.py"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../powerbi_gateway/" class="btn btn-neutral float-left" title="powerbi_gateway.py"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../remediation/" class="btn btn-neutral float-right" title="remediation.py">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -258,7 +464,7 @@ FIN PARA
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../paginated/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../powerbi_gateway/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../remediation/" style="color: #fcfcfc">Next &raquo;</a></span>

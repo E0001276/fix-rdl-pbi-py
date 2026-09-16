@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>remediation.py - fix-rdl-pbi-py - Documentación por módulo</title>
+    <title>remediation.py - fix-rdl-pbi-py - Documentación del código</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -30,7 +30,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
-          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación por módulo
+          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación del código
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
@@ -47,10 +47,8 @@
                 <li class="toctree-l1"><a class="reference internal" href="../arquitectura/">Arquitectura</a>
                 </li>
               </ul>
-              <p class="caption"><span class="caption-text">Módulos</span></p>
+              <p class="caption"><span class="caption-text">Módulos Python</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../auth/">auth.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../config/">config.py</a>
@@ -59,43 +57,59 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../http_clients/">http_clients.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../paginated/">paginated.py</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../powerbi_paginated/">powerbi_paginated.py</a>
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">remediation.py</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación</a>
+    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-del-modulo">Responsabilidad del módulo</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#dependencias">Dependencias</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#clases">Clases</a>
+    <li class="toctree-l2"><a class="reference internal" href="#funciones">Funciones</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#_plainvalue-str">_plain(value: str)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#funciones-de-modulo">Funciones de módulo</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_tokensvalue-str-drop_generic-boolfalse">_tokens(value: str, drop_generic: bool=False)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#algoritmo-pseudocodigo">Algoritmo / pseudocódigo</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_strip_report_prefixcandidate_name-str-report_name-str">_strip_report_prefix(candidate_name: str, report_name: str)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#apis-relacionadas">APIs relacionadas</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_folder_candidatespaginated_infos-visual">_folder_candidates(paginated_infos, visual)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#entradas-y-salidas-principales">Entradas y salidas principales</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_resolve_by_page_labelcandidates-visual">_resolve_by_page_label(candidates, visual)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#relacion-con-otros-modulos">Relación con otros módulos</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_resolve_by_parameterscandidates-visual">_resolve_by_parameters(candidates, visual)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#codigo-fuente-analizado">Código fuente analizado</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_resolve_paginatedpaginated_infos-visual">_resolve_paginated(paginated_infos, visual)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#summarize_discoveryworkspace_items-rdl_visuals-config">summarize_discovery(workspace_items, rdl_visuals, config)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_print_resolution_headerindex-total-visual">_print_resolution_header(index, total, visual)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_encode_json_partdata-dict">_encode_json_part(data: dict)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_set_literal_valuenode-dict-value-str">_set_literal_value(node: dict, value: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_patch_rdl_visual_partpart-dict-target_item_id-str-target_workspace_id-str">_patch_rdl_visual_part(part: dict, target_item_id: str, target_workspace_id: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_read_reference_from_definitiondefinition_response-dict-part_path-str">_read_reference_from_definition(definition_response: dict, part_path: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#apply_remediationfabric-rdl_visuals-paginated_infos-workspace_items-config">apply_remediation(fabric, rdl_visuals, paginated_infos, workspace_items, config)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#archivo-fuente">Archivo fuente</a>
     </li>
     </ul>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../fabric_connections/">fabric_connections.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../gateway/">gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../repository/">repository.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
                   </li>
               </ul>
       </div>
@@ -105,14 +119,14 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
       <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="..">fix-rdl-pbi-py - Documentación por módulo</a>
+          <a href="..">fix-rdl-pbi-py - Documentación del código</a>
         
       </nav>
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">Módulos</li>
+          <li class="breadcrumb-item">Módulos Python</li>
       <li class="breadcrumb-item active">remediation.py</li>
     <li class="wy-breadcrumbs-aside">
     </li>
@@ -122,140 +136,439 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="remediationpy"><code>remediation.py</code><a class="headerlink" href="#remediationpy" title="Permanent link">&para;</a></h1>
-<p><strong>Rol:</strong> Remediación de RDL Visuals</p>
-<p>Resolución de Paginated Reports y corrección de <code>itemId</code>/<code>workspaceId</code> en los RDL Visuals.</p>
-<h2 id="responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación<a class="headerlink" href="#responsabilidad-dentro-de-la-aplicacion" title="Permanent link">&para;</a></h2>
-<p>Relaciona cada RDL Visual con el Paginated Report correcto y actualiza la definición del Report principal únicamente cuando la resolución es segura.</p>
-<h2 id="dependencias">Dependencias<a class="headerlink" href="#dependencias" title="Permanent link">&para;</a></h2>
+                <h1 id="remediationpy"><code>remediation.py</code></h1>
+<p>Documentación del módulo Python <a href="../../src/remediation.py"><code>src/remediation.py</code></a>.</p>
+<h2 id="responsabilidad-del-modulo">Responsabilidad del módulo</h2>
+<p>Resuelve RDL Visuals contra informes paginados destino y actualiza <code>itemId</code>/<code>workspaceId</code> en Reports.</p>
+<h2 id="dependencias">Dependencias</h2>
 <ul>
 <li><code>base64</code></li>
 <li><code>json</code></li>
 <li><code>re</code></li>
 <li><code>unicodedata</code></li>
-<li><code>workspace:get_report_definition, update_report_definition</code></li>
+<li><code>workspace: get_report_definition, update_report_definition</code></li>
 </ul>
-<h2 id="clases">Clases<a class="headerlink" href="#clases" title="Permanent link">&para;</a></h2>
-<p>Este módulo no define clases.</p>
-<h2 id="funciones-de-modulo">Funciones de módulo<a class="headerlink" href="#funciones-de-modulo" title="Permanent link">&para;</a></h2>
+<h2 id="funciones">Funciones</h2>
+<h3 id="_plainvalue-str"><code>_plain(value: str)</code></h3>
+<p>Normaliza texto removiendo acentos, signos y diferencias de mayúsculas para facilitar comparaciones.</p>
+<p><strong>Parámetros</strong></p>
 <table>
 <thead>
 <tr>
-<th>Función</th>
-<th>Firma</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>_plain</code></td>
-<td><code>_plain(value: str)</code></td>
-</tr>
-<tr>
-<td><code>_tokens</code></td>
-<td><code>_tokens(value: str, drop_generic: bool=False)</code></td>
-</tr>
-<tr>
-<td><code>_strip_report_prefix</code></td>
-<td><code>_strip_report_prefix(candidate_name: str, report_name: str)</code></td>
-</tr>
-<tr>
-<td><code>_folder_candidates</code></td>
-<td><code>_folder_candidates(paginated_infos, visual)</code></td>
-</tr>
-<tr>
-<td><code>_resolve_by_page_label</code></td>
-<td><code>_resolve_by_page_label(candidates, visual)</code></td>
-</tr>
-<tr>
-<td><code>_resolve_by_parameters</code></td>
-<td><code>_resolve_by_parameters(candidates, visual)</code></td>
-</tr>
-<tr>
-<td><code>_resolve_paginated</code></td>
-<td><code>_resolve_paginated(paginated_infos, visual)</code></td>
-</tr>
-<tr>
-<td><code>summarize_discovery</code></td>
-<td><code>summarize_discovery(workspace_items, rdl_visuals, config)</code></td>
-</tr>
-<tr>
-<td><code>_print_resolution_header</code></td>
-<td><code>_print_resolution_header(index, total, visual)</code></td>
-</tr>
-<tr>
-<td><code>_encode_json_part</code></td>
-<td><code>_encode_json_part(data: dict)</code></td>
-</tr>
-<tr>
-<td><code>_set_literal_value</code></td>
-<td><code>_set_literal_value(node: dict, value: str)</code></td>
-</tr>
-<tr>
-<td><code>_patch_rdl_visual_part</code></td>
-<td><code>_patch_rdl_visual_part(part: dict, target_item_id: str, target_workspace_id: str)</code></td>
-</tr>
-<tr>
-<td><code>_read_reference_from_definition</code></td>
-<td><code>_read_reference_from_definition(definition_response: dict, part_path: str)</code></td>
-</tr>
-<tr>
-<td><code>apply_remediation</code></td>
-<td><code>apply_remediation(fabric, rdl_visuals, paginated_infos, workspace_items, config)</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="algoritmo-pseudocodigo">Algoritmo / pseudocódigo<a class="headerlink" href="#algoritmo-pseudocodigo" title="Permanent link">&para;</a></h2>
-<pre><code class="language-text">PARA CADA RDL Visual
-    obtener candidatos de la misma carpeta
-    intentar resolver por etiqueta de página
-    si hace falta, resolver por parámetros
-    exigir una única resolución segura
-    leer definición actual del Report
-    modificar visual.json:
-        itemId &lt;- paginatedReportId destino
-        workspaceId &lt;- workspace destino
-    updateDefinition del Report
-    verificar referencia persistida
-FIN PARA
-</code></pre>
-<h2 id="apis-relacionadas">APIs relacionadas<a class="headerlink" href="#apis-relacionadas" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>POST /v1/workspaces/{workspaceId}/reports/{reportId}/getDefinition</code></li>
-<li><code>POST /v1/workspaces/{workspaceId}/reports/{reportId}/updateDefinition</code></li>
-</ul>
-<h2 id="entradas-y-salidas-principales">Entradas y salidas principales<a class="headerlink" href="#entradas-y-salidas-principales" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
+<th>Parámetro</th>
 <th>Tipo</th>
-<th>Valor</th>
+<th>Predeterminado</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Entrada</td>
-<td>RDL Visuals + paginated_infos + workspace_items</td>
-</tr>
-<tr>
-<td>Salida</td>
-<td>visual.json con itemId/workspaceId destino</td>
+<td><code>value</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="relacion-con-otros-modulos">Relación con otros módulos<a class="headerlink" href="#relacion-con-otros-modulos" title="Permanent link">&para;</a></h2>
-<p><strong>Importa módulos internos:</strong> <a href="../workspace/"><code>workspace.py</code></a></p>
-<p><strong>Es utilizado por:</strong> <a href="../main/"><code>main.py</code></a></p>
-<h2 id="codigo-fuente-analizado">Código fuente analizado<a class="headerlink" href="#codigo-fuente-analizado" title="Permanent link">&para;</a></h2>
-<p>Archivo: <code>src/remediation.py</code></p>
-<blockquote>
-<p>Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.</p>
-</blockquote>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<h3 id="_tokensvalue-str-drop_generic-boolfalse"><code>_tokens(value: str, drop_generic: bool=False)</code></h3>
+<p>Tokeniza y normaliza un texto; opcionalmente elimina palabras genéricas de nombres de página.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>drop_generic</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve valor calculado.</p>
+<h3 id="_strip_report_prefixcandidate_name-str-report_name-str"><code>_strip_report_prefix(candidate_name: str, report_name: str)</code></h3>
+<p>Elimina del nombre de un paginado el prefijo que coincide con el nombre del reporte principal.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>candidate_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>report_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<h3 id="_folder_candidatespaginated_infos-visual"><code>_folder_candidates(paginated_infos, visual)</code></h3>
+<p>Prioriza informes paginados ubicados en la misma carpeta que el reporte que contiene el RDL Visual.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>paginated_infos</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>visual</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve resultado de una llamada, valor calculado.</p>
+<h3 id="_resolve_by_page_labelcandidates-visual"><code>_resolve_by_page_label(candidates, visual)</code></h3>
+<p>Intenta resolver un paginado a partir del nombre de la página del reporte.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>candidates</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>visual</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve NoneType, tupla.</p>
+<h3 id="_resolve_by_parameterscandidates-visual"><code>_resolve_by_parameters(candidates, visual)</code></h3>
+<p>Intenta resolver un paginado comparando parámetros del RDL Visual contra parámetros definidos en el RDL.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>candidates</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>visual</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve NoneType, tupla.</p>
+<h3 id="_resolve_paginatedpaginated_infos-visual"><code>_resolve_paginated(paginated_infos, visual)</code></h3>
+<p>Combina las estrategias de resolución para obtener un único informe paginado candidato.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>paginated_infos</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>visual</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve tupla, valor <code>by_page</code>, valor <code>by_parameters</code>.</p>
+<h3 id="summarize_discoveryworkspace_items-rdl_visuals-config"><code>summarize_discovery(workspace_items, rdl_visuals, config)</code></h3>
+<p>Imprime un resumen de objetos y RDL Visuals descubiertos antes de la remediación.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_items</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>rdl_visuals</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>No devuelve un valor explícito (<code>None</code>).</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>print</code>.
+Escribe información de diagnóstico en consola.</p>
+<h3 id="_print_resolution_headerindex-total-visual"><code>_print_resolution_header(index, total, visual)</code></h3>
+<p>Imprime el encabezado de diagnóstico de un RDL Visual que será resuelto.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>index</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>total</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>visual</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>No devuelve un valor explícito (<code>None</code>).</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>print</code>.
+Escribe información de diagnóstico en consola.</p>
+<h3 id="_encode_json_partdata-dict"><code>_encode_json_part(data: dict)</code></h3>
+<p>Serializa un JSON y lo codifica en Base64 para una definición Fabric.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data</code></td>
+<td><code>dict</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>json.dumps</code>, <code>base64.b64encode</code>.</p>
+<h3 id="_set_literal_valuenode-dict-value-str"><code>_set_literal_value(node: dict, value: str)</code></h3>
+<p>Actualiza el valor de una expresión <code>Literal</code> dentro de la estructura del <code>visual.json</code>.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>node</code></td>
+<td><code>dict</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>None</code></p>
+<h3 id="_patch_rdl_visual_partpart-dict-target_item_id-str-target_workspace_id-str"><code>_patch_rdl_visual_part(part: dict, target_item_id: str, target_workspace_id: str)</code></h3>
+<p>Modifica en una parte <code>visual.json</code> el <code>itemId</code> y <code>workspaceId</code> de un RDL Visual.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>part</code></td>
+<td><code>dict</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>target_item_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>target_workspace_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>No devuelve un valor explícito (<code>None</code>).</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>json.loads</code>, <code>base64.b64decode</code>.</p>
+<p><strong>Excepciones explícitas</strong></p>
+<ul>
+<li><code>RuntimeError(f"Unsupported payload type for {part.get('path')}: {part.get('payloadType')}")</code></li>
+<li><code>RuntimeError(f"Definition part is not an RDL visual: {part.get('path')}")</code></li>
+<li><code>RuntimeError(f"Unable to create RDL visual report reference in {part.get('path')}")</code></li>
+</ul>
+<h3 id="_read_reference_from_definitiondefinition_response-dict-part_path-str"><code>_read_reference_from_definition(definition_response: dict, part_path: str)</code></h3>
+<p>Lee de una definición de reporte los IDs actualmente persistidos para un RDL Visual.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>definition_response</code></td>
+<td><code>dict</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>part_path</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve tupla.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>json.loads</code>, <code>base64.b64decode</code>.</p>
+<h3 id="apply_remediationfabric-rdl_visuals-paginated_infos-workspace_items-config"><code>apply_remediation(fabric, rdl_visuals, paginated_infos, workspace_items, config)</code></h3>
+<p>Resuelve cada RDL Visual contra un informe paginado destino y actualiza la definición del reporte.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fabric</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>rdl_visuals</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>paginated_infos</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_items</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>No devuelve un valor explícito (<code>None</code>).</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>print</code>.
+Escribe información de diagnóstico en consola.</p>
+<p><strong>Excepciones explícitas</strong></p>
+<ul>
+<li><code>RuntimeError(f'Unable to resolve {len(unresolved)} RDL Visual relationship(s) safely. No report definitions were updated.')</code></li>
+<li><code>RuntimeError(f'Definition part not found: {visual.definition_part_path}')</code></li>
+<li><code>RuntimeError(f'RDL visual update verification failed for {report_name} / {visual.page_name}.')</code></li>
+</ul>
+<h2 id="archivo-fuente">Archivo fuente</h2>
+<p>Ruta: <code>src/remediation.py</code></p>
+<p>Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../powerbi_paginated/" class="btn btn-neutral float-left" title="powerbi_paginated.py"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../fabric_connections/" class="btn btn-neutral float-right" title="fabric_connections.py">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../semantic_refresh/" class="btn btn-neutral float-right" title="semantic_refresh.py">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -281,7 +594,7 @@ FIN PARA
       <span><a href="../powerbi_paginated/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../fabric_connections/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../semantic_refresh/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

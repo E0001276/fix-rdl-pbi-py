@@ -7,7 +7,6 @@
   "failOnUnresolvedRdlVisual": true,
   "bindPaginatedReportsToSemanticModels": true,
   "failOnUnresolvedPaginatedDatasourceBinding": true,
-  "recreatePaginatedOnDefinitionMismatch": false,
   "failOnRefreshError": true,
   "refreshPollSeconds": 5,
   "refreshTimeoutSeconds": 1800

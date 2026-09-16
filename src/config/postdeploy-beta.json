@@ -12,7 +12,6 @@
   "failOnUnresolvedConnectionBinding": true,
   "bindPaginatedReportsToSemanticModels": true,
   "failOnUnresolvedPaginatedDatasourceBinding": true,
-  "recreatePaginatedOnDefinitionMismatch": false,
   "refreshSemanticModels": true,
   "waitForRefresh": false,
   "failOnRefreshError": true,

@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>main.py - fix-rdl-pbi-py - Documentación por módulo</title>
+    <title>main.py - fix-rdl-pbi-py - Documentación del código</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -30,7 +30,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
-          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación por módulo
+          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación del código
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
@@ -47,28 +47,8 @@
                 <li class="toctree-l1"><a class="reference internal" href="../arquitectura/">Arquitectura</a>
                 </li>
               </ul>
-              <p class="caption"><span class="caption-text">Módulos</span></p>
+              <p class="caption"><span class="caption-text">Módulos Python</span></p>
               <ul class="current">
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">main.py</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#dependencias">Dependencias</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#clases">Clases</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#funciones-de-modulo">Funciones de módulo</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#algoritmo-pseudocodigo">Algoritmo / pseudocódigo</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#entradas-y-salidas-principales">Entradas y salidas principales</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#relacion-con-otros-modulos">Relación con otros módulos</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#codigo-fuente-analizado">Código fuente analizado</a>
-    </li>
-    </ul>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../auth/">auth.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../config/">config.py</a>
@@ -77,23 +57,39 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../http_clients/">http_clients.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">main.py</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-del-modulo">Responsabilidad del módulo</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#dependencias">Dependencias</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#funciones">Funciones</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#build_parser">build_parser()</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_sectiontitle-str">_section(title: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#main">main()</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_mainargs-diagnostics">_main(args, diagnostics)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#archivo-fuente">Archivo fuente</a>
+    </li>
+    </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../paginated/">paginated.py</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../powerbi_paginated/">powerbi_paginated.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../remediation/">remediation.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../fabric_connections/">fabric_connections.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../gateway/">gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../repository/">repository.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
                   </li>
               </ul>
       </div>
@@ -103,14 +99,14 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
       <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="..">fix-rdl-pbi-py - Documentación por módulo</a>
+          <a href="..">fix-rdl-pbi-py - Documentación del código</a>
         
       </nav>
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">Módulos</li>
+          <li class="breadcrumb-item">Módulos Python</li>
       <li class="breadcrumb-item active">main.py</li>
     <li class="wy-breadcrumbs-aside">
     </li>
@@ -120,105 +116,102 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="mainpy"><code>main.py</code><a class="headerlink" href="#mainpy" title="Permanent link">&para;</a></h1>
-<p><strong>Rol:</strong> Orquestación</p>
-<p>Punto de entrada y orquestador del flujo target-only de post-deploy.</p>
-<h2 id="responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación<a class="headerlink" href="#responsabilidad-dentro-de-la-aplicacion" title="Permanent link">&para;</a></h2>
-<p>Coordina el orden completo del post-deploy. No contiene la lógica detallada de cada remediación; delega en los módulos especializados y mantiene el orden funcional requerido.</p>
-<h2 id="dependencias">Dependencias<a class="headerlink" href="#dependencias" title="Permanent link">&para;</a></h2>
+                <h1 id="mainpy"><code>main.py</code></h1>
+<p>Documentación del módulo Python <a href="../../src/main.py"><code>src/main.py</code></a>.</p>
+<h2 id="responsabilidad-del-modulo">Responsabilidad del módulo</h2>
+<p>Orquesta la ejecución completa del post-deploy: configuración, autenticación, descubrimiento, gateway binding, refresh, remediación de paginados y corrección de RDL Visuals.</p>
+<h2 id="dependencias">Dependencias</h2>
 <ul>
 <li><code>argparse</code></li>
-<li><code>pathlib:Path</code></li>
+<li><code>pathlib: Path</code></li>
 <li><code>truststore</code></li>
-<li><code>auth:get_access_token</code></li>
-<li><code>config:load_config</code></li>
-<li><code>diagnostics:start_diagnostics</code></li>
-<li><code>powerbi_gateway:bind_semantic_models_to_gateway</code></li>
-<li><code>semantic_refresh:refresh_semantic_models</code></li>
-<li><code>http_clients:ApiClient</code></li>
-<li><code>paginated:remediate_paginated_reports</code></li>
-<li><code>powerbi_paginated:bind_paginated_reports_to_semantic_models</code></li>
-<li><code>remediation:apply_remediation, summarize_discovery</code></li>
-<li><code>workspace:discover_paginated_report_definitions, discover_report_definitions, list_fabric_workspace_items</code></li>
+<li><code>auth: get_access_token</code></li>
+<li><code>config: load_config</code></li>
+<li><code>diagnostics: start_diagnostics</code></li>
+<li><code>powerbi_gateway: bind_semantic_models_to_gateway</code></li>
+<li><code>semantic_refresh: refresh_semantic_models</code></li>
+<li><code>http_clients: ApiClient</code></li>
+<li><code>paginated: remediate_paginated_reports</code></li>
+<li><code>powerbi_paginated: bind_paginated_reports_to_semantic_models</code></li>
+<li><code>remediation: apply_remediation, summarize_discovery</code></li>
+<li><code>workspace: discover_paginated_report_definitions, discover_report_definitions, list_fabric_workspace_items</code></li>
 </ul>
-<h2 id="clases">Clases<a class="headerlink" href="#clases" title="Permanent link">&para;</a></h2>
-<p>Este módulo no define clases.</p>
-<h2 id="funciones-de-modulo">Funciones de módulo<a class="headerlink" href="#funciones-de-modulo" title="Permanent link">&para;</a></h2>
+<h2 id="funciones">Funciones</h2>
+<h3 id="build_parser"><code>build_parser()</code></h3>
+<p>Construye el parser de argumentos de línea de comandos de la aplicación.</p>
+<p><strong>Retorno</strong></p>
+<p><code>argparse.ArgumentParser</code></p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>Path</code>.</p>
+<h3 id="_sectiontitle-str"><code>_section(title: str)</code></h3>
+<p>Imprime un encabezado visual para separar etapas de la ejecución en consola.</p>
+<p><strong>Parámetros</strong></p>
 <table>
 <thead>
 <tr>
-<th>Función</th>
-<th>Firma</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>build_parser</code></td>
-<td><code>build_parser()</code></td>
-</tr>
-<tr>
-<td><code>_section</code></td>
-<td><code>_section(title: str)</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td><code>main()</code></td>
-</tr>
-<tr>
-<td><code>_main</code></td>
-<td><code>_main(args, diagnostics)</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="algoritmo-pseudocodigo">Algoritmo / pseudocódigo<a class="headerlink" href="#algoritmo-pseudocodigo" title="Permanent link">&para;</a></h2>
-<pre><code class="language-text">INICIO
-    cargar configuración
-    iniciar diagnóstico
-    obtener token Fabric y Power BI
-    descubrir objetos del workspace destino
-    leer definiciones de Reports y Paginated Reports
-    bind Semantic Models -&gt; Gateway
-    refresh Semantic Models
-    remediar RDL paginados in-place
-    redescubrir workspace
-    bind runtime Paginated Reports -&gt; Semantic Models
-    redescubrir RDL Visuals
-    corregir itemId/workspaceId de RDL Visuals
-FIN
-</code></pre>
-<h2 id="entradas-y-salidas-principales">Entradas y salidas principales<a class="headerlink" href="#entradas-y-salidas-principales" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
+<th>Parámetro</th>
 <th>Tipo</th>
-<th>Valor</th>
+<th>Predeterminado</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Entrada</td>
-<td><code>--config</code></td>
-</tr>
-<tr>
-<td>Salida</td>
-<td>workspace remediado + logs</td>
+<td><code>title</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="relacion-con-otros-modulos">Relación con otros módulos<a class="headerlink" href="#relacion-con-otros-modulos" title="Permanent link">&para;</a></h2>
-<p><strong>Importa módulos internos:</strong> <a href="../auth/"><code>auth.py</code></a>, <a href="../config/"><code>config.py</code></a>, <a href="../diagnostics/"><code>diagnostics.py</code></a>, <a href="../http_clients/"><code>http_clients.py</code></a>, <a href="../paginated/"><code>paginated.py</code></a>, <a href="../powerbi_gateway/"><code>powerbi_gateway.py</code></a>, <a href="../powerbi_paginated/"><code>powerbi_paginated.py</code></a>, <a href="../remediation/"><code>remediation.py</code></a>, <a href="../semantic_refresh/"><code>semantic_refresh.py</code></a>, <a href="../workspace/"><code>workspace.py</code></a></p>
-<p><strong>Es utilizado por:</strong> ningún otro módulo Python detectado de forma directa.</p>
-<h2 id="codigo-fuente-analizado">Código fuente analizado<a class="headerlink" href="#codigo-fuente-analizado" title="Permanent link">&para;</a></h2>
-<p>Archivo: <code>src/main.py</code></p>
-<blockquote>
-<p>Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.</p>
-</blockquote>
+<p><strong>Retorno</strong></p>
+<p><code>None</code></p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>print</code>.
+Escribe información de diagnóstico en consola.</p>
+<h3 id="main"><code>main()</code></h3>
+<p>Punto de entrada de la aplicación; prepara argumentos, diagnósticos y manejo global de errores.</p>
+<p><strong>Retorno</strong></p>
+<p><code>None</code></p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>print</code>, <code>Path</code>.
+Escribe información de diagnóstico en consola.</p>
+<h3 id="_mainargs-diagnostics"><code>_main(args, diagnostics)</code></h3>
+<p>Orquesta el flujo completo de post-deploy sobre el workspace destino.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>args</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>diagnostics</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>None</code></p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>print</code>, <code>Path</code>.
+Escribe información de diagnóstico en consola.</p>
+<h2 id="archivo-fuente">Archivo fuente</h2>
+<p>Ruta: <code>src/main.py</code></p>
+<p>Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../arquitectura/" class="btn btn-neutral float-left" title="Arquitectura"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../auth/" class="btn btn-neutral float-right" title="auth.py">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../http_clients/" class="btn btn-neutral float-left" title="http_clients.py"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../paginated/" class="btn btn-neutral float-right" title="paginated.py">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -241,10 +234,10 @@ FIN
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../arquitectura/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../http_clients/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../auth/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../paginated/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>semantic_refresh.py - fix-rdl-pbi-py - Documentación por módulo</title>
+    <title>semantic_refresh.py - fix-rdl-pbi-py - Documentación del código</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -30,7 +30,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
-          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación por módulo
+          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación del código
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
@@ -47,10 +47,8 @@
                 <li class="toctree-l1"><a class="reference internal" href="../arquitectura/">Arquitectura</a>
                 </li>
               </ul>
-              <p class="caption"><span class="caption-text">Módulos</span></p>
+              <p class="caption"><span class="caption-text">Módulos Python</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../auth/">auth.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../config/">config.py</a>
@@ -59,43 +57,37 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../http_clients/">http_clients.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
-                  </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">semantic_refresh.py</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#dependencias">Dependencias</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#clases">Clases</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#funciones-de-modulo">Funciones de módulo</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#algoritmo-pseudocodigo">Algoritmo / pseudocódigo</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#apis-relacionadas">APIs relacionadas</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#entradas-y-salidas-principales">Entradas y salidas principales</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#relacion-con-otros-modulos">Relación con otros módulos</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#codigo-fuente-analizado">Código fuente analizado</a>
-    </li>
-    </ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../paginated/">paginated.py</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../powerbi_paginated/">powerbi_paginated.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../remediation/">remediation.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../fabric_connections/">fabric_connections.py</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">semantic_refresh.py</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-del-modulo">Responsabilidad del módulo</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#dependencias">Dependencias</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#funciones">Funciones</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#_dataset_infopowerbi-workspace_id-str-dataset_id-str">_dataset_info(powerbi, workspace_id: str, dataset_id: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_latest_refreshpowerbi-workspace_id-str-dataset_id-str">_latest_refresh(powerbi, workspace_id: str, dataset_id: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#refresh_semantic_modelspowerbi-workspace_items-config">refresh_semantic_models(powerbi, workspace_items, config)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#archivo-fuente">Archivo fuente</a>
+    </li>
+    </ul>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../gateway/">gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../repository/">repository.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
                   </li>
               </ul>
       </div>
@@ -105,14 +97,14 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
       <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="..">fix-rdl-pbi-py - Documentación por módulo</a>
+          <a href="..">fix-rdl-pbi-py - Documentación del código</a>
         
       </nav>
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">Módulos</li>
+          <li class="breadcrumb-item">Módulos Python</li>
       <li class="breadcrumb-item active">semantic_refresh.py</li>
     <li class="wy-breadcrumbs-aside">
     </li>
@@ -122,93 +114,143 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="semantic_refreshpy"><code>semantic_refresh.py</code><a class="headerlink" href="#semantic_refreshpy" title="Permanent link">&para;</a></h1>
-<p><strong>Rol:</strong> Refresh de Semantic Models</p>
-<p>Ejecución y seguimiento del refresh de Semantic Models, equivalente a “Actualizar ahora”.</p>
-<h2 id="responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación<a class="headerlink" href="#responsabilidad-dentro-de-la-aplicacion" title="Permanent link">&para;</a></h2>
-<p>Solicita el refresh después del gateway binding y, si está configurado, espera hasta conocer el resultado final.</p>
-<h2 id="dependencias">Dependencias<a class="headerlink" href="#dependencias" title="Permanent link">&para;</a></h2>
+                <h1 id="semantic_refreshpy"><code>semantic_refresh.py</code></h1>
+<p>Documentación del módulo Python <a href="../../src/semantic_refresh.py"><code>src/semantic_refresh.py</code></a>.</p>
+<h2 id="responsabilidad-del-modulo">Responsabilidad del módulo</h2>
+<p>Ejecuta y monitoriza el refresh de Semantic Models.</p>
+<h2 id="dependencias">Dependencias</h2>
 <ul>
 <li><code>time</code></li>
 </ul>
-<h2 id="clases">Clases<a class="headerlink" href="#clases" title="Permanent link">&para;</a></h2>
-<p>Este módulo no define clases.</p>
-<h2 id="funciones-de-modulo">Funciones de módulo<a class="headerlink" href="#funciones-de-modulo" title="Permanent link">&para;</a></h2>
+<h2 id="funciones">Funciones</h2>
+<h3 id="_dataset_infopowerbi-workspace_id-str-dataset_id-str"><code>_dataset_info(powerbi, workspace_id: str, dataset_id: str)</code></h3>
+<p>Obtiene las propiedades de un modelo semántico mediante Power BI REST API.</p>
+<p><strong>Parámetros</strong></p>
 <table>
 <thead>
 <tr>
-<th>Función</th>
-<th>Firma</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>_dataset_info</code></td>
-<td><code>_dataset_info(powerbi, workspace_id: str, dataset_id: str)</code></td>
-</tr>
-<tr>
-<td><code>_latest_refresh</code></td>
-<td><code>_latest_refresh(powerbi, workspace_id: str, dataset_id: str)</code></td>
-</tr>
-<tr>
-<td><code>refresh_semantic_models</code></td>
-<td><code>refresh_semantic_models(powerbi, workspace_items, config)</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="algoritmo-pseudocodigo">Algoritmo / pseudocódigo<a class="headerlink" href="#algoritmo-pseudocodigo" title="Permanent link">&para;</a></h2>
-<pre><code class="language-text">PARA CADA Semantic Model
-    consultar propiedades del dataset
-    SI isRefreshable = false
-        omitir
-    FIN SI
-    POST /refreshes
-    SI waitForRefresh = true
-        consultar último refresh periódicamente
-        salir cuando status sea terminal
-        fallar si corresponde según configuración
-    FIN SI
-FIN PARA
-</code></pre>
-<h2 id="apis-relacionadas">APIs relacionadas<a class="headerlink" href="#apis-relacionadas" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>GET /groups/{workspaceId}/datasets/{datasetId}</code></li>
-<li><code>POST /groups/{workspaceId}/datasets/{datasetId}/refreshes</code></li>
-<li><code>GET /groups/{workspaceId}/datasets/{datasetId}/refreshes?$top=1</code></li>
-</ul>
-<h2 id="entradas-y-salidas-principales">Entradas y salidas principales<a class="headerlink" href="#entradas-y-salidas-principales" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
+<th>Parámetro</th>
 <th>Tipo</th>
-<th>Valor</th>
+<th>Predeterminado</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Entrada</td>
-<td>cliente Power BI + Semantic Models + flags de refresh</td>
+<td><code>powerbi</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
 </tr>
 <tr>
-<td>Salida</td>
-<td>solicitud/estado del refresh</td>
+<td><code>workspace_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>dataset_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="relacion-con-otros-modulos">Relación con otros módulos<a class="headerlink" href="#relacion-con-otros-modulos" title="Permanent link">&para;</a></h2>
-<p><strong>Importa módulos internos:</strong> ninguno.</p>
-<p><strong>Es utilizado por:</strong> <a href="../main/"><code>main.py</code></a></p>
-<h2 id="codigo-fuente-analizado">Código fuente analizado<a class="headerlink" href="#codigo-fuente-analizado" title="Permanent link">&para;</a></h2>
-<p>Archivo: <code>src/semantic_refresh.py</code></p>
-<blockquote>
-<p>Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.</p>
-</blockquote>
+<p><strong>Retorno</strong></p>
+<p><code>dict</code></p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>powerbi.get(f'groups/{workspace_id}/datasets/{dataset_id}').json</code>, <code>powerbi.get</code>.
+Rutas/API construidas o utilizadas:
+- <code>f'groups/{workspace_id}/datasets/{dataset_id}'</code>
+- <code>groups/</code></p>
+<h3 id="_latest_refreshpowerbi-workspace_id-str-dataset_id-str"><code>_latest_refresh(powerbi, workspace_id: str, dataset_id: str)</code></h3>
+<p>Obtiene el refresh más reciente de un modelo semántico.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>powerbi</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>dataset_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>dict | None</code></p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>powerbi.get</code>.
+Rutas/API construidas o utilizadas:
+- <code>f'groups/{workspace_id}/datasets/{dataset_id}/refreshes'</code>
+- <code>groups/</code>
+- <code>/refreshes</code></p>
+<h3 id="refresh_semantic_modelspowerbi-workspace_items-config"><code>refresh_semantic_models(powerbi, workspace_items, config)</code></h3>
+<p>Solicita refresh de los modelos semánticos y, si se configura, espera su estado terminal.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>powerbi</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_items</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve lista, valor <code>results</code>.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>print</code>, <code>powerbi.post</code>, <code>time.sleep</code>.
+Rutas/API construidas o utilizadas:
+- <code>f'groups/{config.workspace_id}/datasets/{model.id}/refreshes'</code>
+- <code>groups/</code>
+- <code>/refreshes</code>
+Escribe información de diagnóstico en consola.
+Realiza espera activa entre intentos de polling.</p>
+<p><strong>Excepciones explícitas</strong></p>
+<ul>
+<li><code>RuntimeError(f'Unable to refresh {len(failures)} semantic model(s).')</code></li>
+<li><code>RuntimeError('Power BI reports isRefreshable=false for this semantic model.')</code></li>
+<li><code>TimeoutError(f'Refresh did not complete within {config.refresh_timeout_seconds} seconds.')</code></li>
+<li><code>RuntimeError(f'Refresh finished with status {status}. {error}')</code></li>
+</ul>
+<h2 id="archivo-fuente">Archivo fuente</h2>
+<p>Ruta: <code>src/semantic_refresh.py</code></p>
+<p>Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../powerbi_gateway/" class="btn btn-neutral float-left" title="powerbi_gateway.py"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../paginated/" class="btn btn-neutral float-right" title="paginated.py">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../remediation/" class="btn btn-neutral float-left" title="remediation.py"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../workspace/" class="btn btn-neutral float-right" title="workspace.py">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -231,10 +273,10 @@ FIN PARA
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../powerbi_gateway/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../remediation/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../paginated/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../workspace/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

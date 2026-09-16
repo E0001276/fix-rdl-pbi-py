@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>diagnostics.py - fix-rdl-pbi-py - Documentación por módulo</title>
+    <title>diagnostics.py - fix-rdl-pbi-py - Documentación del código</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -30,7 +30,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
-          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación por módulo
+          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación del código
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
@@ -47,59 +47,81 @@
                 <li class="toctree-l1"><a class="reference internal" href="../arquitectura/">Arquitectura</a>
                 </li>
               </ul>
-              <p class="caption"><span class="caption-text">Módulos</span></p>
+              <p class="caption"><span class="caption-text">Módulos Python</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../auth/">auth.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../config/">config.py</a>
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">diagnostics.py</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación</a>
+    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-del-modulo">Responsabilidad del módulo</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#dependencias">Dependencias</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#clases">Clases</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#_tee">_Tee</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#__init__self-original-log_file">__init__(self, original, log_file)</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#diagnosticlogger">DiagnosticLogger</a>
+    <li class="toctree-l4"><a class="reference internal" href="#writeself-text">write(self, text)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#flushself">flush(self)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#isattyself">isatty(self)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#encodingself">encoding(self)</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#funciones-de-modulo">Funciones de módulo</a>
+    <li class="toctree-l3"><a class="reference internal" href="#diagnosticlogger">DiagnosticLogger</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#__init__self-log_root-path">__init__(self, log_root: Path)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#algoritmo-pseudocodigo">Algoritmo / pseudocódigo</a>
+    <li class="toctree-l4"><a class="reference internal" href="#_write_manifestself">_write_manifest(self)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#entradas-y-salidas-principales">Entradas y salidas principales</a>
+    <li class="toctree-l4"><a class="reference internal" href="#closeself">close(self)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#relacion-con-otros-modulos">Relación con otros módulos</a>
+    <li class="toctree-l4"><a class="reference internal" href="#_safe_namevalue-str">_safe_name(value: str)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#codigo-fuente-analizado">Código fuente analizado</a>
+    <li class="toctree-l4"><a class="reference internal" href="#_redact_headersheaders-dict">_redact_headers(headers: dict)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#_quote_psvalue-str">_quote_ps(value: str)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#_extract_inline_partsself-data-destination-path">_extract_inline_parts(self, data, destination: Path)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#log_httpself-method-str-url-str-request_headers-dict-request_json-response-token_label-straccess_token">log_http(self, method: str, url: str, request_headers: dict, request_json, response, token_label: str='ACCESS_TOKEN')</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#funciones">Funciones</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#start_diagnosticsproject_root-path">start_diagnostics(project_root: Path)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#archivo-fuente">Archivo fuente</a>
     </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../http_clients/">http_clients.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../paginated/">paginated.py</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../powerbi_paginated/">powerbi_paginated.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../remediation/">remediation.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../fabric_connections/">fabric_connections.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../gateway/">gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../repository/">repository.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
                   </li>
               </ul>
       </div>
@@ -109,14 +131,14 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
       <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="..">fix-rdl-pbi-py - Documentación por módulo</a>
+          <a href="..">fix-rdl-pbi-py - Documentación del código</a>
         
       </nav>
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">Módulos</li>
+          <li class="breadcrumb-item">Módulos Python</li>
       <li class="breadcrumb-item active">diagnostics.py</li>
     <li class="wy-breadcrumbs-aside">
     </li>
@@ -126,149 +148,294 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="diagnosticspy"><code>diagnostics.py</code><a class="headerlink" href="#diagnosticspy" title="Permanent link">&para;</a></h1>
-<p><strong>Rol:</strong> Observabilidad y diagnóstico</p>
-<p>Registro de ejecución, requests/responses HTTP, payloads decodificados y comandos cURL reproducibles.</p>
-<h2 id="responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación<a class="headerlink" href="#responsabilidad-dentro-de-la-aplicacion" title="Permanent link">&para;</a></h2>
-<p>Genera evidencia auditable de cada ejecución sin persistir el token Bearer real.</p>
-<h2 id="dependencias">Dependencias<a class="headerlink" href="#dependencias" title="Permanent link">&para;</a></h2>
+                <h1 id="diagnosticspy"><code>diagnostics.py</code></h1>
+<p>Documentación del módulo Python <a href="../../src/diagnostics.py"><code>src/diagnostics.py</code></a>.</p>
+<h2 id="responsabilidad-del-modulo">Responsabilidad del módulo</h2>
+<p>Genera trazabilidad detallada de ejecución y de llamadas HTTP sin persistir tokens Bearer.</p>
+<h2 id="dependencias">Dependencias</h2>
 <ul>
 <li><code>base64</code></li>
 <li><code>json</code></li>
 <li><code>re</code></li>
 <li><code>sys</code></li>
-<li><code>datetime:datetime, timezone</code></li>
-<li><code>pathlib:Path</code></li>
+<li><code>datetime: datetime, timezone</code></li>
+<li><code>pathlib: Path</code></li>
 </ul>
-<h2 id="clases">Clases<a class="headerlink" href="#clases" title="Permanent link">&para;</a></h2>
-<h3 id="_tee"><code>_Tee</code><a class="headerlink" href="#_tee" title="Permanent link">&para;</a></h3>
+<h2 id="clases">Clases</h2>
+<h3 id="_tee"><code>_Tee</code></h3>
+<h4 id="__init__self-original-log_file"><code>__init__(self, original, log_file)</code></h4>
+<p>Inicializa la instancia y sus dependencias/estado interno.</p>
+<p><strong>Parámetros</strong></p>
 <table>
 <thead>
 <tr>
-<th>Método</th>
-<th>Firma</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>__init__</code></td>
-<td><code>__init__(self, original, log_file)</code></td>
-</tr>
-<tr>
-<td><code>write</code></td>
-<td><code>write(self, text)</code></td>
-</tr>
-<tr>
-<td><code>flush</code></td>
-<td><code>flush(self)</code></td>
-</tr>
-<tr>
-<td><code>isatty</code></td>
-<td><code>isatty(self)</code></td>
-</tr>
-<tr>
-<td><code>encoding</code></td>
-<td><code>encoding(self)</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="diagnosticlogger"><code>DiagnosticLogger</code><a class="headerlink" href="#diagnosticlogger" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Método</th>
-<th>Firma</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>__init__</code></td>
-<td><code>__init__(self, log_root: Path)</code></td>
-</tr>
-<tr>
-<td><code>_write_manifest</code></td>
-<td><code>_write_manifest(self)</code></td>
-</tr>
-<tr>
-<td><code>close</code></td>
-<td><code>close(self)</code></td>
-</tr>
-<tr>
-<td><code>_safe_name</code></td>
-<td><code>_safe_name(value: str)</code></td>
-</tr>
-<tr>
-<td><code>_redact_headers</code></td>
-<td><code>_redact_headers(headers: dict)</code></td>
-</tr>
-<tr>
-<td><code>_quote_ps</code></td>
-<td><code>_quote_ps(value: str)</code></td>
-</tr>
-<tr>
-<td><code>_extract_inline_parts</code></td>
-<td><code>_extract_inline_parts(self, data, destination: Path)</code></td>
-</tr>
-<tr>
-<td><code>log_http</code></td>
-<td><code>log_http(self, method: str, url: str, request_headers: dict, request_json, response, token_label: str='ACCESS_TOKEN')</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="funciones-de-modulo">Funciones de módulo<a class="headerlink" href="#funciones-de-modulo" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Función</th>
-<th>Firma</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>start_diagnostics</code></td>
-<td><code>start_diagnostics(project_root: Path)</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="algoritmo-pseudocodigo">Algoritmo / pseudocódigo<a class="headerlink" href="#algoritmo-pseudocodigo" title="Permanent link">&para;</a></h2>
-<pre><code class="language-text">INICIO
-    crear carpeta log/postdeploy_YYYYMMDD_HHMMSS
-    redirigir stdout/stderr a execution.log y consola
-    PARA CADA request HTTP
-        redactar Authorization
-        guardar metadata, request, response y curl
-        decodificar partes InlineBase64 cuando existan
-    FIN PARA
-    escribir manifest.json
-FIN
-</code></pre>
-<h2 id="entradas-y-salidas-principales">Entradas y salidas principales<a class="headerlink" href="#entradas-y-salidas-principales" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
+<th>Parámetro</th>
 <th>Tipo</th>
-<th>Valor</th>
+<th>Predeterminado</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Entrada</td>
-<td>requests/responses HTTP y salida de consola</td>
+<td><code>original</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
 </tr>
 <tr>
-<td>Salida</td>
-<td>carpeta <code>log/postdeploy_*</code> con evidencia</td>
+<td><code>log_file</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="relacion-con-otros-modulos">Relación con otros módulos<a class="headerlink" href="#relacion-con-otros-modulos" title="Permanent link">&para;</a></h2>
-<p><strong>Importa módulos internos:</strong> ninguno.</p>
-<p><strong>Es utilizado por:</strong> <a href="../main/"><code>main.py</code></a></p>
-<h2 id="codigo-fuente-analizado">Código fuente analizado<a class="headerlink" href="#codigo-fuente-analizado" title="Permanent link">&para;</a></h2>
-<p>Archivo: <code>src/diagnostics.py</code></p>
-<blockquote>
-<p>Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.</p>
-</blockquote>
+<p><strong>Retorno</strong></p>
+<p>No devuelve un valor explícito (<code>None</code>).</p>
+<h4 id="writeself-text"><code>write(self, text)</code></h4>
+<p>Escribe el texto tanto en el stream original como en el archivo de log.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>text</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve resultado de una llamada.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>self.original.write</code>, <code>self.log_file.write</code>, <code>self.log_file.flush</code>.
+Puede escribir archivos o crear directorios.</p>
+<h4 id="flushself"><code>flush(self)</code></h4>
+<p>Fuerza el vaciado del stream original y del archivo de log.</p>
+<p><strong>Retorno</strong></p>
+<p>No devuelve un valor explícito (<code>None</code>).</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>self.original.flush</code>, <code>self.log_file.flush</code>.</p>
+<h4 id="isattyself"><code>isatty(self)</code></h4>
+<p>Replica la capacidad TTY del stream original.</p>
+<p><strong>Retorno</strong></p>
+<p>Devuelve resultado de una llamada.</p>
+<h4 id="encodingself"><code>encoding(self)</code></h4>
+<p>Expone la codificación del stream original.</p>
+<p><strong>Retorno</strong></p>
+<p>Devuelve resultado de una llamada.</p>
+<h3 id="diagnosticlogger"><code>DiagnosticLogger</code></h3>
+<p>Detailed, replay-oriented execution and HTTP diagnostics.</p>
+<p>Authorization values are intentionally never persisted. Each HTTP request gets
+a directory containing request/response metadata, a replayable curl command,
+JSON bodies when present, and decoded InlineBase64 definition parts.</p>
+<h4 id="__init__self-log_root-path"><code>__init__(self, log_root: Path)</code></h4>
+<p>Inicializa la instancia y sus dependencias/estado interno.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>log_root</code></td>
+<td><code>Path</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>No devuelve un valor explícito (<code>None</code>).</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>self.http_dir.mkdir</code>, <code>self.execution_path.open</code>, <code>self._write_manifest</code>.
+Puede escribir archivos o crear directorios.</p>
+<h4 id="_write_manifestself"><code>_write_manifest(self)</code></h4>
+<p>Genera el <code>manifest.json</code> de la ejecución de diagnóstico.</p>
+<p><strong>Retorno</strong></p>
+<p>No devuelve un valor explícito (<code>None</code>).</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>json.dumps</code>.
+Puede escribir archivos o crear directorios.</p>
+<h4 id="closeself"><code>close(self)</code></h4>
+<p>Restaura stdout/stderr y cierra correctamente el archivo de log.</p>
+<p><strong>Retorno</strong></p>
+<p>No devuelve un valor explícito (<code>None</code>).</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>self._execution_file.flush</code>, <code>self._execution_file.close</code>.</p>
+<h4 id="_safe_namevalue-str"><code>_safe_name(value: str)</code></h4>
+<p>Convierte un valor arbitrario en un nombre de archivo seguro.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<h4 id="_redact_headersheaders-dict"><code>_redact_headers(headers: dict)</code></h4>
+<p>Redacta headers sensibles antes de persistirlos en diagnóstico.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>headers</code></td>
+<td><code>dict</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>dict</code></p>
+<h4 id="_quote_psvalue-str"><code>_quote_ps(value: str)</code></h4>
+<p>Escapa un valor para incluirlo de forma segura en un comando PowerShell.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<h4 id="_extract_inline_partsself-data-destination-path"><code>_extract_inline_parts(self, data, destination: Path)</code></h4>
+<p>Extrae y decodifica partes <code>InlineBase64</code> de requests/responses Fabric para inspección.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>destination</code></td>
+<td><code>Path</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>No devuelve un valor útil (<code>None</code>).</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>base64.b64decode</code>, <code>json.dumps</code>, <code>self._safe_name</code>.
+Puede escribir archivos o crear directorios.</p>
+<h4 id="log_httpself-method-str-url-str-request_headers-dict-request_json-response-token_label-straccess_token"><code>log_http(self, method: str, url: str, request_headers: dict, request_json, response, token_label: str='ACCESS_TOKEN')</code></h4>
+<p>Persiste metadata, request, response, curl reproducible y partes decodificadas de una llamada HTTP.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>method</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>url</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>request_headers</code></td>
+<td><code>dict</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>request_json</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>response</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>token_label</code></td>
+<td><code>str</code></td>
+<td><code>'ACCESS_TOKEN'</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>No devuelve un valor explícito (<code>None</code>).</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>self._safe_name</code>, <code>self._redact_headers</code>, <code>print</code>, <code>json.dumps</code>, <code>self._extract_inline_parts</code>, <code>self._quote_ps</code>.
+Escribe información de diagnóstico en consola.
+Puede escribir archivos o crear directorios.</p>
+<h2 id="funciones">Funciones</h2>
+<h3 id="start_diagnosticsproject_root-path"><code>start_diagnostics(project_root: Path)</code></h3>
+<p>Inicializa el sistema de diagnóstico y crea la carpeta de logs para la ejecución actual.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>project_root</code></td>
+<td><code>Path</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>DiagnosticLogger</code></p>
+<h2 id="archivo-fuente">Archivo fuente</h2>
+<p>Ruta: <code>src/diagnostics.py</code></p>
+<p>Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.</p>
               
             </div>
           </div><footer>

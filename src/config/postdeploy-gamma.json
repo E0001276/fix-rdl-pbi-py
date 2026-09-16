@@ -9,6 +9,5 @@
   "bindSemanticModelsToConnection": true,
   "failOnUnresolvedConnectionBinding": true,
   "bindPaginatedReportsToSemanticModels": true,
-  "failOnUnresolvedPaginatedDatasourceBinding": true,
-  "recreatePaginatedOnDefinitionMismatch": false
+  "failOnUnresolvedPaginatedDatasourceBinding": true
 }

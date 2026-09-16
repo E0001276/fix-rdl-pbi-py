@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>powerbi_gateway.py - fix-rdl-pbi-py - Documentación por módulo</title>
+    <title>powerbi_gateway.py - fix-rdl-pbi-py - Documentación del código</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -30,7 +30,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
-          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación por módulo
+          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación del código
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
@@ -47,10 +47,8 @@
                 <li class="toctree-l1"><a class="reference internal" href="../arquitectura/">Arquitectura</a>
                 </li>
               </ul>
-              <p class="caption"><span class="caption-text">Módulos</span></p>
+              <p class="caption"><span class="caption-text">Módulos Python</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../auth/">auth.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../config/">config.py</a>
@@ -59,11 +57,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../http_clients/">http_clients.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../paginated/">paginated.py</a>
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">powerbi_gateway.py</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación</a>
+    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-del-modulo">Responsabilidad del módulo</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#dependencias">Dependencias</a>
     </li>
@@ -73,33 +73,33 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#funciones-de-modulo">Funciones de módulo</a>
+    <li class="toctree-l2"><a class="reference internal" href="#funciones">Funciones</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#_normvalue">_norm(value)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#algoritmo-pseudocodigo">Algoritmo / pseudocódigo</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_detailsvalue">_details(value)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#apis-relacionadas">APIs relacionadas</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_matches_expected_oracledatasource-dict-expected_database-str">_matches_expected_oracle(datasource: dict, expected_database: str)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#entradas-y-salidas-principales">Entradas y salidas principales</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_get_dataset_datasourcespowerbi-workspace_id-str-dataset_id-str">_get_dataset_datasources(powerbi, workspace_id: str, dataset_id: str)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#relacion-con-otros-modulos">Relación con otros módulos</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_discover_gatewayspowerbi-workspace_id-str-dataset_id-str">_discover_gateways(powerbi, workspace_id: str, dataset_id: str)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#codigo-fuente-analizado">Código fuente analizado</a>
+    <li class="toctree-l3"><a class="reference internal" href="#bind_semantic_models_to_gatewaypowerbi-workspace_items-config">bind_semantic_models_to_gateway(powerbi, workspace_items, config)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#archivo-fuente">Archivo fuente</a>
     </li>
     </ul>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../paginated/">paginated.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../powerbi_paginated/">powerbi_paginated.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../remediation/">remediation.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../fabric_connections/">fabric_connections.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../gateway/">gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../repository/">repository.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
                   </li>
               </ul>
       </div>
@@ -109,14 +109,14 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
       <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="..">fix-rdl-pbi-py - Documentación por módulo</a>
+          <a href="..">fix-rdl-pbi-py - Documentación del código</a>
         
       </nav>
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">Módulos</li>
+          <li class="breadcrumb-item">Módulos Python</li>
       <li class="breadcrumb-item active">powerbi_gateway.py</li>
     <li class="wy-breadcrumbs-aside">
     </li>
@@ -126,105 +126,267 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="powerbi_gatewaypy"><code>powerbi_gateway.py</code><a class="headerlink" href="#powerbi_gatewaypy" title="Permanent link">&para;</a></h1>
-<p><strong>Rol:</strong> Binding activo de gateway</p>
-<p>Binding activo de Semantic Models con gateways compatibles mediante Power BI REST API.</p>
-<h2 id="responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación<a class="headerlink" href="#responsabilidad-dentro-de-la-aplicacion" title="Permanent link">&para;</a></h2>
-<p>Realiza el binding de los Semantic Models al gateway compatible antes del refresh y antes de la remediación de paginados.</p>
-<h2 id="dependencias">Dependencias<a class="headerlink" href="#dependencias" title="Permanent link">&para;</a></h2>
+                <h1 id="powerbi_gatewaypy"><code>powerbi_gateway.py</code></h1>
+<p>Documentación del módulo Python <a href="../../src/powerbi_gateway.py"><code>src/powerbi_gateway.py</code></a>.</p>
+<h2 id="responsabilidad-del-modulo">Responsabilidad del módulo</h2>
+<p>Implementa el binding activo de Semantic Models al gateway compatible mediante Power BI REST API.</p>
+<h2 id="dependencias">Dependencias</h2>
 <ul>
 <li><code>json</code></li>
-<li><code>dataclasses:dataclass</code></li>
+<li><code>dataclasses: dataclass</code></li>
 </ul>
-<h2 id="clases">Clases<a class="headerlink" href="#clases" title="Permanent link">&para;</a></h2>
-<h3 id="gatewaybindingresult"><code>GatewayBindingResult</code><a class="headerlink" href="#gatewaybindingresult" title="Permanent link">&para;</a></h3>
-<p>Clase de datos sin métodos explícitos.</p>
-<h2 id="funciones-de-modulo">Funciones de módulo<a class="headerlink" href="#funciones-de-modulo" title="Permanent link">&para;</a></h2>
+<h2 id="clases">Clases</h2>
+<h3 id="gatewaybindingresult"><code>GatewayBindingResult</code></h3>
+<p>Estructura de datos con los siguientes campos:</p>
 <table>
 <thead>
 <tr>
-<th>Función</th>
-<th>Firma</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>_norm</code></td>
-<td><code>_norm(value)</code></td>
-</tr>
-<tr>
-<td><code>_details</code></td>
-<td><code>_details(value)</code></td>
-</tr>
-<tr>
-<td><code>_matches_expected_oracle</code></td>
-<td><code>_matches_expected_oracle(datasource: dict, expected_database: str)</code></td>
-</tr>
-<tr>
-<td><code>_get_dataset_datasources</code></td>
-<td><code>_get_dataset_datasources(powerbi, workspace_id: str, dataset_id: str)</code></td>
-</tr>
-<tr>
-<td><code>_discover_gateways</code></td>
-<td><code>_discover_gateways(powerbi, workspace_id: str, dataset_id: str)</code></td>
-</tr>
-<tr>
-<td><code>bind_semantic_models_to_gateway</code></td>
-<td><code>bind_semantic_models_to_gateway(powerbi, workspace_items, config)</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="algoritmo-pseudocodigo">Algoritmo / pseudocódigo<a class="headerlink" href="#algoritmo-pseudocodigo" title="Permanent link">&para;</a></h2>
-<pre><code class="language-text">PARA CADA Semantic Model
-    obtener datasources actuales
-    identificar Oracle esperado
-    SI ya existe binding válido
-        continuar
-    FIN SI
-    DiscoverGateways
-    seleccionar gateway/datasource compatible
-    POST Default.BindToGateway
-FIN PARA
-</code></pre>
-<h2 id="apis-relacionadas">APIs relacionadas<a class="headerlink" href="#apis-relacionadas" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>GET /groups/{workspaceId}/datasets/{datasetId}/datasources</code></li>
-<li><code>GET /groups/{workspaceId}/datasets/{datasetId}/Default.DiscoverGateways</code></li>
-<li><code>POST /groups/{workspaceId}/datasets/{datasetId}/Default.BindToGateway</code></li>
-</ul>
-<h2 id="entradas-y-salidas-principales">Entradas y salidas principales<a class="headerlink" href="#entradas-y-salidas-principales" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
+<th>Campo</th>
 <th>Tipo</th>
-<th>Valor</th>
+<th>Valor predeterminado</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Entrada</td>
-<td>cliente Power BI + Semantic Models + config</td>
+<td><code>semantic_model_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
 </tr>
 <tr>
-<td>Salida</td>
-<td>binding del dataset al gateway compatible</td>
+<td><code>semantic_model_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>gateway_id</code></td>
+<td><code>str</code></td>
+<td><code>''</code></td>
+</tr>
+<tr>
+<td><code>gateway_name</code></td>
+<td><code>str</code></td>
+<td><code>''</code></td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td><code>''</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="relacion-con-otros-modulos">Relación con otros módulos<a class="headerlink" href="#relacion-con-otros-modulos" title="Permanent link">&para;</a></h2>
-<p><strong>Importa módulos internos:</strong> ninguno.</p>
-<p><strong>Es utilizado por:</strong> <a href="../main/"><code>main.py</code></a></p>
-<h2 id="codigo-fuente-analizado">Código fuente analizado<a class="headerlink" href="#codigo-fuente-analizado" title="Permanent link">&para;</a></h2>
-<p>Archivo: <code>src/powerbi_gateway.py</code></p>
-<blockquote>
-<p>Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.</p>
-</blockquote>
+<h2 id="funciones">Funciones</h2>
+<h3 id="_normvalue"><code>_norm(value)</code></h3>
+<p>Normaliza un valor textual para comparaciones tolerantes a mayúsculas/minúsculas y espacios.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<h3 id="_detailsvalue"><code>_details(value)</code></h3>
+<p>Convierte <code>connectionDetails</code> a un diccionario utilizable.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>dict</code></p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>json.loads</code>.</p>
+<h3 id="_matches_expected_oracledatasource-dict-expected_database-str"><code>_matches_expected_oracle(datasource: dict, expected_database: str)</code></h3>
+<p>Comprueba que un datasource sea Oracle y corresponda a la base esperada.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>datasource</code></td>
+<td><code>dict</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>expected_database</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>bool</code></p>
+<h3 id="_get_dataset_datasourcespowerbi-workspace_id-str-dataset_id-str"><code>_get_dataset_datasources(powerbi, workspace_id: str, dataset_id: str)</code></h3>
+<p>Obtiene los datasources registrados para un modelo semántico.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>powerbi</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>dataset_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>list[dict]</code></p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>powerbi.get</code>.
+Rutas/API construidas o utilizadas:
+- <code>f'groups/{workspace_id}/datasets/{dataset_id}/datasources'</code>
+- <code>groups/</code></p>
+<h3 id="_discover_gatewayspowerbi-workspace_id-str-dataset_id-str"><code>_discover_gateways(powerbi, workspace_id: str, dataset_id: str)</code></h3>
+<p>Obtiene los gateways compatibles que Power BI expone para un modelo semántico.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>powerbi</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>dataset_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>list[dict]</code></p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>powerbi.get</code>.
+Rutas/API construidas o utilizadas:
+- <code>f'groups/{workspace_id}/datasets/{dataset_id}/Default.DiscoverGateways'</code>
+- <code>groups/</code>
+- <code>/Default.DiscoverGateways</code></p>
+<h3 id="bind_semantic_models_to_gatewaypowerbi-workspace_items-config"><code>bind_semantic_models_to_gateway(powerbi, workspace_items, config)</code></h3>
+<p>Mirror the proven .NET BindToGateway flow using target workspace only.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>powerbi</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_items</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve lista, valor <code>results</code>.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>print</code>, <code>powerbi.post</code>.
+Rutas/API construidas o utilizadas:
+- `Mirror the proven .NET BindToGateway flow using target workspace only.</p>
+<pre><code>Resolution is target-only: inspect each target semantic model's Oracle datasource,
+ask Power BI which gateways can bind that model, require exactly one compatible
+gateway, and call Default.BindToGateway. No source workspace is consulted.
+`
+</code></pre>
+<ul>
+<li><code>Calling Default.BindToGateway...</code></li>
+<li><code>f'Default.DiscoverGateways failed: {exc}'</code></li>
+<li><code>f'groups/{config.workspace_id}/datasets/{model.id}/Default.BindToGateway'</code></li>
+<li><code>f'Default.BindToGateway failed: {exc}'</code></li>
+<li><code>Default.DiscoverGateways failed:</code></li>
+<li><code>groups/</code></li>
+<li><code>/Default.BindToGateway</code></li>
+<li><code>Default.BindToGateway failed:</code>
+Escribe información de diagnóstico en consola.</li>
+</ul>
+<p><strong>Excepciones explícitas</strong></p>
+<ul>
+<li><code>RuntimeError(f'Unable to safely bind {len(failures)} semantic model gateway relationship(s).')</code></li>
+</ul>
+<h2 id="archivo-fuente">Archivo fuente</h2>
+<p>Ruta: <code>src/powerbi_gateway.py</code></p>
+<p>Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../workspace/" class="btn btn-neutral float-left" title="workspace.py"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../semantic_refresh/" class="btn btn-neutral float-right" title="semantic_refresh.py">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../paginated/" class="btn btn-neutral float-left" title="paginated.py"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../powerbi_paginated/" class="btn btn-neutral float-right" title="powerbi_paginated.py">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -247,10 +409,10 @@ FIN PARA
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../workspace/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../paginated/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../semantic_refresh/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../powerbi_paginated/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

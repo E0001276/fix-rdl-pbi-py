@@ -31,7 +31,6 @@ Estructura de datos con los siguientes campos:
 | `fail_on_unresolved_connection_binding` | `bool` | `Requerido` |
 | `bind_paginated_reports_to_semantic_models` | `bool` | `Requerido` |
 | `fail_on_unresolved_paginated_datasource_binding` | `bool` | `Requerido` |
-| `recreate_paginated_on_definition_mismatch` | `bool` | `Requerido` |
 | `refresh_semantic_models` | `bool` | `Requerido` |
 | `wait_for_refresh` | `bool` | `Requerido` |
 | `fail_on_refresh_error` | `bool` | `Requerido` |

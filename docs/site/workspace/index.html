@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>workspace.py - fix-rdl-pbi-py - Documentación por módulo</title>
+    <title>workspace.py - fix-rdl-pbi-py - Documentación del código</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -30,7 +30,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
-          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación por módulo
+          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación del código
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
@@ -47,10 +47,8 @@
                 <li class="toctree-l1"><a class="reference internal" href="../arquitectura/">Arquitectura</a>
                 </li>
               </ul>
-              <p class="caption"><span class="caption-text">Módulos</span></p>
+              <p class="caption"><span class="caption-text">Módulos Python</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../auth/">auth.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../config/">config.py</a>
@@ -59,9 +57,21 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../http_clients/">http_clients.py</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../paginated/">paginated.py</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_paginated/">powerbi_paginated.py</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../remediation/">remediation.py</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
+                  </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">workspace.py</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación</a>
+    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-del-modulo">Responsabilidad del módulo</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#dependencias">Dependencias</a>
     </li>
@@ -74,38 +84,54 @@
     <li class="toctree-l3"><a class="reference internal" href="#paginatedreportinfo">PaginatedReportInfo</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#workspaceitems">WorkspaceItems</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#reportsself">reports(self)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#semantic_modelsself">semantic_models(self)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#paginated_reportsself">paginated_reports(self)</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#funciones-de-modulo">Funciones de módulo</a>
+        </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#algoritmo-pseudocodigo">Algoritmo / pseudocódigo</a>
+    <li class="toctree-l2"><a class="reference internal" href="#funciones">Funciones</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#_list_allclient-path-str">_list_all(client, path: str)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#apis-relacionadas">APIs relacionadas</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_print_itemitem-workspaceitem">_print_item(item: WorkspaceItem)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#entradas-y-salidas-principales">Entradas y salidas principales</a>
+    <li class="toctree-l3"><a class="reference internal" href="#list_fabric_workspace_itemsclient-workspace_id-str">list_fabric_workspace_items(client, workspace_id: str)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#relacion-con-otros-modulos">Relación con otros módulos</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_decode_partpart">_decode_part(part)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#codigo-fuente-analizado">Código fuente analizado</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_get_definitionclient-workspace_id-str-item-workspaceitem">_get_definition(client, workspace_id: str, item: WorkspaceItem)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_literal_valuenode">_literal_value(node)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_rdl_visual_parameter_namesvisual">_rdl_visual_parameter_names(visual)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#discover_report_definitionsclient-workspace_id-str-workspace_items">discover_report_definitions(client, workspace_id: str, workspace_items)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_xml_local_nametag-str">_xml_local_name(tag: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_rdl_parameter_namesxml_text-str">_rdl_parameter_names(xml_text: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#discover_paginated_report_definitionsclient-workspace_id-str-workspace_items">discover_paginated_report_definitions(client, workspace_id: str, workspace_items)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#get_report_definitionclient-workspace_id-str-report_id-str">get_report_definition(client, workspace_id: str, report_id: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#get_paginated_report_definitionclient-workspace_id-str-report_id-str">get_paginated_report_definition(client, workspace_id: str, report_id: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#update_report_definitionclient-workspace_id-str-report_id-str-definition-dict">update_report_definition(client, workspace_id: str, report_id: str, definition: dict)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#update_paginated_report_definitionclient-workspace_id-str-report_id-str-definition-dict">update_paginated_report_definition(client, workspace_id: str, report_id: str, definition: dict)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#archivo-fuente">Archivo fuente</a>
     </li>
     </ul>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../paginated/">paginated.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_paginated/">powerbi_paginated.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../remediation/">remediation.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../fabric_connections/">fabric_connections.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../gateway/">gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../repository/">repository.py</a>
                   </li>
               </ul>
       </div>
@@ -115,14 +141,14 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
       <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="..">fix-rdl-pbi-py - Documentación por módulo</a>
+          <a href="..">fix-rdl-pbi-py - Documentación del código</a>
         
       </nav>
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">Módulos</li>
+          <li class="breadcrumb-item">Módulos Python</li>
       <li class="breadcrumb-item active">workspace.py</li>
     <li class="wy-breadcrumbs-aside">
     </li>
@@ -132,181 +158,607 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="workspacepy"><code>workspace.py</code><a class="headerlink" href="#workspacepy" title="Permanent link">&para;</a></h1>
-<p><strong>Rol:</strong> Acceso y descubrimiento de objetos Fabric</p>
-<p>Descubrimiento de objetos Fabric y lectura/actualización de definiciones de Reports y Paginated Reports.</p>
-<blockquote>
-<p><strong>Restricción del tenant:</strong> <code>getDefinition</code> de Paginated Reports se invoca sin especificar explícitamente <code>format=PaginatedReportDefinition</code>.</p>
-</blockquote>
-<h2 id="responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación<a class="headerlink" href="#responsabilidad-dentro-de-la-aplicacion" title="Permanent link">&para;</a></h2>
-<p>Centraliza el inventario de objetos del workspace y el acceso a definiciones Fabric. Es la base del enfoque target-only porque obtiene IDs y definiciones directamente del destino.</p>
-<h2 id="dependencias">Dependencias<a class="headerlink" href="#dependencias" title="Permanent link">&para;</a></h2>
+                <h1 id="workspacepy"><code>workspace.py</code></h1>
+<p>Documentación del módulo Python <a href="../../src/workspace.py"><code>src/workspace.py</code></a>.</p>
+<h2 id="responsabilidad-del-modulo">Responsabilidad del módulo</h2>
+<p>Descubre items Fabric y gestiona lectura/actualización de sus definiciones.</p>
+<h2 id="dependencias">Dependencias</h2>
 <ul>
 <li><code>base64</code></li>
 <li><code>json</code></li>
 <li><code>xml.etree.ElementTree</code></li>
-<li><code>dataclasses:dataclass, field</code></li>
-<li><code>pathlib:PurePosixPath</code></li>
+<li><code>dataclasses: dataclass, field</code></li>
+<li><code>pathlib: PurePosixPath</code></li>
 </ul>
-<h2 id="clases">Clases<a class="headerlink" href="#clases" title="Permanent link">&para;</a></h2>
-<h3 id="workspaceitem"><code>WorkspaceItem</code><a class="headerlink" href="#workspaceitem" title="Permanent link">&para;</a></h3>
-<p>Clase de datos sin métodos explícitos.</p>
-<h3 id="workspacerdlvisual"><code>WorkspaceRdlVisual</code><a class="headerlink" href="#workspacerdlvisual" title="Permanent link">&para;</a></h3>
-<p>Clase de datos sin métodos explícitos.</p>
-<h3 id="paginatedreportinfo"><code>PaginatedReportInfo</code><a class="headerlink" href="#paginatedreportinfo" title="Permanent link">&para;</a></h3>
-<p>Clase de datos sin métodos explícitos.</p>
-<h3 id="workspaceitems"><code>WorkspaceItems</code><a class="headerlink" href="#workspaceitems" title="Permanent link">&para;</a></h3>
+<h2 id="clases">Clases</h2>
+<h3 id="workspaceitem"><code>WorkspaceItem</code></h3>
+<p>Estructura de datos con los siguientes campos:</p>
 <table>
 <thead>
 <tr>
-<th>Método</th>
-<th>Firma</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>reports</code></td>
-<td><code>reports(self)</code></td>
-</tr>
-<tr>
-<td><code>semantic_models</code></td>
-<td><code>semantic_models(self)</code></td>
-</tr>
-<tr>
-<td><code>paginated_reports</code></td>
-<td><code>paginated_reports(self)</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="funciones-de-modulo">Funciones de módulo<a class="headerlink" href="#funciones-de-modulo" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Función</th>
-<th>Firma</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>_list_all</code></td>
-<td><code>_list_all(client, path: str)</code></td>
-</tr>
-<tr>
-<td><code>_print_item</code></td>
-<td><code>_print_item(item: WorkspaceItem)</code></td>
-</tr>
-<tr>
-<td><code>list_fabric_workspace_items</code></td>
-<td><code>list_fabric_workspace_items(client, workspace_id: str)</code></td>
-</tr>
-<tr>
-<td><code>_decode_part</code></td>
-<td><code>_decode_part(part)</code></td>
-</tr>
-<tr>
-<td><code>_get_definition</code></td>
-<td><code>_get_definition(client, workspace_id: str, item: WorkspaceItem)</code></td>
-</tr>
-<tr>
-<td><code>_literal_value</code></td>
-<td><code>_literal_value(node)</code></td>
-</tr>
-<tr>
-<td><code>_rdl_visual_parameter_names</code></td>
-<td><code>_rdl_visual_parameter_names(visual)</code></td>
-</tr>
-<tr>
-<td><code>discover_report_definitions</code></td>
-<td><code>discover_report_definitions(client, workspace_id: str, workspace_items)</code></td>
-</tr>
-<tr>
-<td><code>_xml_local_name</code></td>
-<td><code>_xml_local_name(tag: str)</code></td>
-</tr>
-<tr>
-<td><code>_rdl_parameter_names</code></td>
-<td><code>_rdl_parameter_names(xml_text: str)</code></td>
-</tr>
-<tr>
-<td><code>discover_paginated_report_definitions</code></td>
-<td><code>discover_paginated_report_definitions(client, workspace_id: str, workspace_items)</code></td>
-</tr>
-<tr>
-<td><code>get_report_definition</code></td>
-<td><code>get_report_definition(client, workspace_id: str, report_id: str)</code></td>
-</tr>
-<tr>
-<td><code>get_paginated_report_definition</code></td>
-<td><code>get_paginated_report_definition(client, workspace_id: str, report_id: str)</code></td>
-</tr>
-<tr>
-<td><code>update_report_definition</code></td>
-<td><code>update_report_definition(client, workspace_id: str, report_id: str, definition: dict)</code></td>
-</tr>
-<tr>
-<td><code>update_paginated_report_definition</code></td>
-<td><code>update_paginated_report_definition(client, workspace_id: str, report_id: str, definition: dict)</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="algoritmo-pseudocodigo">Algoritmo / pseudocódigo<a class="headerlink" href="#algoritmo-pseudocodigo" title="Permanent link">&para;</a></h2>
-<pre><code class="language-text">INICIO
-    listar Reports, Semantic Models y Paginated Reports
-    construir WorkspaceItems
-    PARA CADA Report
-        getDefinition
-        decodificar visual.json
-        detectar rdlVisual y parámetros
-    FIN PARA
-    PARA CADA Paginated Report
-        getDefinition
-        localizar .rdl
-        extraer parámetros
-    FIN PARA
-    exponer helpers get/updateDefinition
-FIN
-</code></pre>
-<h2 id="apis-relacionadas">APIs relacionadas<a class="headerlink" href="#apis-relacionadas" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>GET /v1/workspaces/{workspaceId}/reports</code></li>
-<li><code>GET /v1/workspaces/{workspaceId}/semanticModels</code></li>
-<li><code>GET /v1/workspaces/{workspaceId}/paginatedReports</code></li>
-<li><code>POST .../getDefinition</code></li>
-<li><code>POST .../updateDefinition</code></li>
-</ul>
-<h2 id="entradas-y-salidas-principales">Entradas y salidas principales<a class="headerlink" href="#entradas-y-salidas-principales" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
+<th>Campo</th>
 <th>Tipo</th>
-<th>Valor</th>
+<th>Valor predeterminado</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Entrada</td>
-<td>cliente Fabric + workspaceId</td>
+<td><code>id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
 </tr>
 <tr>
-<td>Salida</td>
-<td>inventario, definiciones y objetos de descubrimiento</td>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>kind</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>folder_id</code></td>
+<td><code>str</code></td>
+<td><code>''</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="relacion-con-otros-modulos">Relación con otros módulos<a class="headerlink" href="#relacion-con-otros-modulos" title="Permanent link">&para;</a></h2>
-<p><strong>Importa módulos internos:</strong> ninguno.</p>
-<p><strong>Es utilizado por:</strong> <a href="../main/"><code>main.py</code></a>, <a href="../paginated/"><code>paginated.py</code></a>, <a href="../powerbi_paginated/"><code>powerbi_paginated.py</code></a>, <a href="../remediation/"><code>remediation.py</code></a></p>
-<h2 id="codigo-fuente-analizado">Código fuente analizado<a class="headerlink" href="#codigo-fuente-analizado" title="Permanent link">&para;</a></h2>
-<p>Archivo: <code>src/workspace.py</code></p>
-<blockquote>
-<p>Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.</p>
-</blockquote>
+<h3 id="workspacerdlvisual"><code>WorkspaceRdlVisual</code></h3>
+<p>Estructura de datos con los siguientes campos:</p>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Tipo</th>
+<th>Valor predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>report_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>report_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>report_folder_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>page_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>definition_part_path</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>old_item_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>old_workspace_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>parameter_names</code></td>
+<td><code>set[str]</code></td>
+<td><code>field(default_factory=set)</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="paginatedreportinfo"><code>PaginatedReportInfo</code></h3>
+<p>Estructura de datos con los siguientes campos:</p>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Tipo</th>
+<th>Valor predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item</code></td>
+<td><code>WorkspaceItem</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>parameter_names</code></td>
+<td><code>set[str]</code></td>
+<td><code>field(default_factory=set)</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="workspaceitems"><code>WorkspaceItems</code></h3>
+<h4 id="reportsself"><code>reports(self)</code></h4>
+<p>Devuelve los items del workspace cuyo tipo es Report.</p>
+<p><strong>Retorno</strong></p>
+<p>Devuelve valor calculado.</p>
+<h4 id="semantic_modelsself"><code>semantic_models(self)</code></h4>
+<p>Devuelve los items del workspace cuyo tipo es SemanticModel.</p>
+<p><strong>Retorno</strong></p>
+<p>Devuelve valor calculado.</p>
+<h4 id="paginated_reportsself"><code>paginated_reports(self)</code></h4>
+<p>Devuelve los items del workspace cuyo tipo es PaginatedReport.</p>
+<p><strong>Retorno</strong></p>
+<p>Devuelve valor calculado.</p>
+<h2 id="funciones">Funciones</h2>
+<h3 id="_list_allclient-path-str"><code>_list_all(client, path: str)</code></h3>
+<p>Obtiene todos los elementos de una colección Fabric siguiendo continuation URI/token.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>client</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>path</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve valor <code>items</code>.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>client.get</code>, <code>print</code>.
+Escribe información de diagnóstico en consola.</p>
+<h3 id="_print_itemitem-workspaceitem"><code>_print_item(item: WorkspaceItem)</code></h3>
+<p>Imprime información resumida de un item del workspace.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item</code></td>
+<td><code>WorkspaceItem</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>None</code></p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>print</code>.
+Escribe información de diagnóstico en consola.</p>
+<h3 id="list_fabric_workspace_itemsclient-workspace_id-str"><code>list_fabric_workspace_items(client, workspace_id: str)</code></h3>
+<p>Enumera Reports, Semantic Models y Paginated Reports del workspace destino.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>client</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve valor <code>items</code>.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>print</code>.
+Rutas/API construidas o utilizadas:
+- <code>f'workspaces/{workspace_id}/{endpoint}'</code>
+- <code>workspaces/</code>
+Escribe información de diagnóstico en consola.</p>
+<h3 id="_decode_partpart"><code>_decode_part(part)</code></h3>
+<p>Decodifica el payload InlineBase64 de una parte de definición Fabric.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>part</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve resultado de una llamada, valor <code>payload</code>.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>base64.b64decode</code>.</p>
+<h3 id="_get_definitionclient-workspace_id-str-item-workspaceitem"><code>_get_definition(client, workspace_id: str, item: WorkspaceItem)</code></h3>
+<p>Solicita la definición Fabric de un item y resuelve respuestas síncronas o LRO.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>client</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>item</code></td>
+<td><code>WorkspaceItem</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve resultado de una llamada.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>client.post</code>, <code>client.get_json_lro_result</code>.
+Rutas/API construidas o utilizadas:
+- <code>f'workspaces/{workspace_id}/reports/{item.id}/getDefinition'</code>
+- <code>workspaces/</code>
+- <code>f'workspaces/{workspace_id}/paginatedReports/{item.id}/getDefinition'</code></p>
+<p><strong>Excepciones explícitas</strong></p>
+<ul>
+<li><code>ValueError(f'Definitions are not loaded for item type {item.kind}.')</code></li>
+</ul>
+<h3 id="_literal_valuenode"><code>_literal_value(node)</code></h3>
+<p>Extrae de forma segura el valor de una expresión <code>Literal</code> de un JSON de Power BI.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>node</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve resultado de una llamada, str.</p>
+<h3 id="_rdl_visual_parameter_namesvisual"><code>_rdl_visual_parameter_names(visual)</code></h3>
+<p>Obtiene los nombres de parámetros configurados en un RDL Visual.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>visual</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve valor <code>result</code>.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>json.loads</code>.</p>
+<h3 id="discover_report_definitionsclient-workspace_id-str-workspace_items"><code>discover_report_definitions(client, workspace_id: str, workspace_items)</code></h3>
+<p>Lee definiciones de Reports y descubre todos los RDL Visuals presentes.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>client</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_items</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve valor <code>visuals</code>.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>print</code>, <code>json.loads</code>.
+Escribe información de diagnóstico en consola.</p>
+<h3 id="_xml_local_nametag-str"><code>_xml_local_name(tag: str)</code></h3>
+<p>Obtiene el nombre local de una etiqueta XML ignorando el namespace.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tag</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<h3 id="_rdl_parameter_namesxml_text-str"><code>_rdl_parameter_names(xml_text: str)</code></h3>
+<p>Extrae los nombres de parámetros declarados en un documento RDL.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>xml_text</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve valor <code>result</code>.</p>
+<h3 id="discover_paginated_report_definitionsclient-workspace_id-str-workspace_items"><code>discover_paginated_report_definitions(client, workspace_id: str, workspace_items)</code></h3>
+<p>Lee definiciones de informes paginados y construye metadatos utilizados para resolverlos.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>client</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_items</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve valor <code>result</code>.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>print</code>.
+Escribe información de diagnóstico en consola.</p>
+<h3 id="get_report_definitionclient-workspace_id-str-report_id-str"><code>get_report_definition(client, workspace_id: str, report_id: str)</code></h3>
+<p>Obtiene la definición Fabric de un Report específico.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>client</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>report_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve resultado de una llamada.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>client.post</code>, <code>client.get_json_lro_result</code>.
+Rutas/API construidas o utilizadas:
+- <code>f'workspaces/{workspace_id}/reports/{report_id}/getDefinition'</code>
+- <code>workspaces/</code></p>
+<h3 id="get_paginated_report_definitionclient-workspace_id-str-report_id-str"><code>get_paginated_report_definition(client, workspace_id: str, report_id: str)</code></h3>
+<p>Obtiene la definición Fabric de un Paginated Report específico sin forzar formato explícito.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>client</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>report_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve resultado de una llamada.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>client.post</code>, <code>client.get_json_lro_result</code>.
+Rutas/API construidas o utilizadas:
+- <code>f'workspaces/{workspace_id}/paginatedReports/{report_id}/getDefinition'</code>
+- <code>workspaces/</code></p>
+<h3 id="update_report_definitionclient-workspace_id-str-report_id-str-definition-dict"><code>update_report_definition(client, workspace_id: str, report_id: str, definition: dict)</code></h3>
+<p>Actualiza in-place la definición Fabric de un Report.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>client</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>report_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>definition</code></td>
+<td><code>dict</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve valor <code>status_code</code>.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>client.post</code>, <code>client.wait_for_lro_completion</code>.
+Rutas/API construidas o utilizadas:
+- <code>f'workspaces/{workspace_id}/reports/{report_id}/updateDefinition'</code>
+- <code>workspaces/</code></p>
+<h3 id="update_paginated_report_definitionclient-workspace_id-str-report_id-str-definition-dict"><code>update_paginated_report_definition(client, workspace_id: str, report_id: str, definition: dict)</code></h3>
+<p>Actualiza in-place la definición Fabric de un Paginated Report.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>client</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>report_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>definition</code></td>
+<td><code>dict</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve valor <code>status_code</code>.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>client.post</code>, <code>client.wait_for_lro_completion</code>.
+Rutas/API construidas o utilizadas:
+- <code>f'workspaces/{workspace_id}/paginatedReports/{report_id}/updateDefinition'</code>
+- <code>workspaces/</code></p>
+<h2 id="archivo-fuente">Archivo fuente</h2>
+<p>Ruta: <code>src/workspace.py</code></p>
+<p>Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../http_clients/" class="btn btn-neutral float-left" title="http_clients.py"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../powerbi_gateway/" class="btn btn-neutral float-right" title="powerbi_gateway.py">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../semantic_refresh/" class="btn btn-neutral float-left" title="semantic_refresh.py"><span class="icon icon-circle-arrow-left"></span> Previous</a>
     </div>
 
   <hr/>
@@ -329,10 +781,8 @@ FIN
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../http_clients/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../semantic_refresh/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
-    
-      <span><a href="../powerbi_gateway/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

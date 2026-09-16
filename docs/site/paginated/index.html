@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>paginated.py - fix-rdl-pbi-py - Documentación por módulo</title>
+    <title>paginated.py - fix-rdl-pbi-py - Documentación del código</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -30,7 +30,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
-          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación por módulo
+          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación del código
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
@@ -47,10 +47,8 @@
                 <li class="toctree-l1"><a class="reference internal" href="../arquitectura/">Arquitectura</a>
                 </li>
               </ul>
-              <p class="caption"><span class="caption-text">Módulos</span></p>
+              <p class="caption"><span class="caption-text">Módulos Python</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../auth/">auth.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../config/">config.py</a>
@@ -59,15 +57,11 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../http_clients/">http_clients.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">paginated.py</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación</a>
+    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-del-modulo">Responsabilidad del módulo</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#dependencias">Dependencias</a>
     </li>
@@ -77,29 +71,59 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#funciones-de-modulo">Funciones de módulo</a>
+    <li class="toctree-l2"><a class="reference internal" href="#funciones">Funciones</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#_local_nametag-str">_local_name(tag: str)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#algoritmo-pseudocodigo">Algoritmo / pseudocódigo</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_normalize_workspace_datasource_prefixworkspace_name-str">_normalize_workspace_datasource_prefix(workspace_name: str)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#apis-relacionadas">APIs relacionadas</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_target_datasource_namecurrent_name-str-workspace_name-str">_target_datasource_name(current_name: str, workspace_name: str)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#entradas-y-salidas-principales">Entradas y salidas principales</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_decode_partpart-dict">_decode_part(part: dict)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#relacion-con-otros-modulos">Relación con otros módulos</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_encode_rdlxml_text-str">_encode_rdl(xml_text: str)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#codigo-fuente-analizado">Código fuente analizado</a>
+    <li class="toctree-l3"><a class="reference internal" href="#_validate_rdl_namespacexml_text-str">_validate_rdl_namespace(xml_text: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_replace_tag_textxml_text-str-tag_name-str-transform">_replace_tag_text(xml_text: str, tag_name: str, transform)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_replace_datasource_namesxml_text-str-workspace_name-str">_replace_datasource_names(xml_text: str, workspace_name: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_find_rdl_partdefinition_response-dict">_find_rdl_part(definition_response: dict)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_extract_rdl_bindingxml_text-str">_extract_rdl_binding(xml_text: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_resolve_semantic_modelworkspace_items-paginated_item">_resolve_semantic_model(workspace_items, paginated_item)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_update_connect_stringvalue-str-target_model_id-str">_update_connect_string(value: str, target_model_id: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_patch_rdlxml_text-str-workspace_name-str-semantic_model_id-str-semantic_model_name-str">_patch_rdl(xml_text: str, workspace_name: str, semantic_model_id: str, semantic_model_name: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_is_binding_logically_correctbinding-dict-workspace_name-str-semantic_model_name-str">_is_binding_logically_correct(binding: dict, workspace_name: str, semantic_model_name: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_build_fabric_definitionoriginal_response-dict-item_name-str-xml_after-str">_build_fabric_definition(original_response: dict, item_name: str, xml_after: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_expected_datasource_nameworkspace_name-str-semantic_model_name-str">_expected_datasource_name(workspace_name: str, semantic_model_name: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_binding_matches_targetbinding-dict-workspace_name-str-model_name-str">_binding_matches_target(binding: dict, workspace_name: str, model_name: str)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#remediate_paginated_reportsfabric-workspace_items-paginated_infos-config">remediate_paginated_reports(fabric, workspace_items, paginated_infos, config)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#archivo-fuente">Archivo fuente</a>
     </li>
     </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../powerbi_paginated/">powerbi_paginated.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../remediation/">remediation.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../fabric_connections/">fabric_connections.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../gateway/">gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../repository/">repository.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
                   </li>
               </ul>
       </div>
@@ -109,14 +133,14 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
       <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="..">fix-rdl-pbi-py - Documentación por módulo</a>
+          <a href="..">fix-rdl-pbi-py - Documentación del código</a>
         
       </nav>
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">Módulos</li>
+          <li class="breadcrumb-item">Módulos Python</li>
       <li class="breadcrumb-item active">paginated.py</li>
     <li class="wy-breadcrumbs-aside">
     </li>
@@ -126,166 +150,574 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="paginatedpy"><code>paginated.py</code><a class="headerlink" href="#paginatedpy" title="Permanent link">&para;</a></h1>
-<p><strong>Rol:</strong> Remediación de definición RDL</p>
-<p>Corrección in-place del XML RDL de los informes paginados, preservando su <code>itemId</code>.</p>
-<blockquote>
-<p><strong>Restricción crítica:</strong> el flujo actualiza el mismo Paginated Report. No debe usar una estrategia create/delete/rename porque cambiaría el <code>itemId</code> y afectaría Git Integration.</p>
-</blockquote>
-<h2 id="responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación<a class="headerlink" href="#responsabilidad-dentro-de-la-aplicacion" title="Permanent link">&para;</a></h2>
-<p>Corrige referencias persistidas en el RDL sin reemplazar el objeto Fabric. La modificación se hace de forma text-preserving para minimizar cambios ajenos al binding.</p>
-<h2 id="dependencias">Dependencias<a class="headerlink" href="#dependencias" title="Permanent link">&para;</a></h2>
+                <h1 id="paginatedpy"><code>paginated.py</code></h1>
+<p>Documentación del módulo Python <a href="../../src/paginated.py"><code>src/paginated.py</code></a>.</p>
+<h2 id="responsabilidad-del-modulo">Responsabilidad del módulo</h2>
+<p>Modifica in-place el XML RDL persistido de informes paginados conservando su identidad.</p>
+<h2 id="dependencias">Dependencias</h2>
 <ul>
 <li><code>base64</code></li>
 <li><code>re</code></li>
 <li><code>xml.etree.ElementTree</code></li>
-<li><code>dataclasses:dataclass</code></li>
-<li><code>workspace:get_paginated_report_definition, update_paginated_report_definition</code></li>
+<li><code>dataclasses: dataclass</code></li>
+<li><code>workspace: get_paginated_report_definition, update_paginated_report_definition</code></li>
 </ul>
-<h2 id="clases">Clases<a class="headerlink" href="#clases" title="Permanent link">&para;</a></h2>
-<h3 id="paginatedbindingresult"><code>PaginatedBindingResult</code><a class="headerlink" href="#paginatedbindingresult" title="Permanent link">&para;</a></h3>
-<p>Clase de datos sin métodos explícitos.</p>
-<h2 id="funciones-de-modulo">Funciones de módulo<a class="headerlink" href="#funciones-de-modulo" title="Permanent link">&para;</a></h2>
+<h2 id="clases">Clases</h2>
+<h3 id="paginatedbindingresult"><code>PaginatedBindingResult</code></h3>
+<p>Estructura de datos con los siguientes campos:</p>
 <table>
 <thead>
 <tr>
-<th>Función</th>
-<th>Firma</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>_local_name</code></td>
-<td><code>_local_name(tag: str)</code></td>
-</tr>
-<tr>
-<td><code>_normalize_workspace_datasource_prefix</code></td>
-<td><code>_normalize_workspace_datasource_prefix(workspace_name: str)</code></td>
-</tr>
-<tr>
-<td><code>_target_datasource_name</code></td>
-<td><code>_target_datasource_name(current_name: str, workspace_name: str)</code></td>
-</tr>
-<tr>
-<td><code>_decode_part</code></td>
-<td><code>_decode_part(part: dict)</code></td>
-</tr>
-<tr>
-<td><code>_encode_rdl</code></td>
-<td><code>_encode_rdl(xml_text: str)</code></td>
-</tr>
-<tr>
-<td><code>_validate_rdl_namespace</code></td>
-<td><code>_validate_rdl_namespace(xml_text: str)</code></td>
-</tr>
-<tr>
-<td><code>_replace_tag_text</code></td>
-<td><code>_replace_tag_text(xml_text: str, tag_name: str, transform)</code></td>
-</tr>
-<tr>
-<td><code>_replace_datasource_names</code></td>
-<td><code>_replace_datasource_names(xml_text: str, workspace_name: str)</code></td>
-</tr>
-<tr>
-<td><code>_find_rdl_part</code></td>
-<td><code>_find_rdl_part(definition_response: dict)</code></td>
-</tr>
-<tr>
-<td><code>_extract_rdl_binding</code></td>
-<td><code>_extract_rdl_binding(xml_text: str)</code></td>
-</tr>
-<tr>
-<td><code>_resolve_semantic_model</code></td>
-<td><code>_resolve_semantic_model(workspace_items, paginated_item)</code></td>
-</tr>
-<tr>
-<td><code>_update_connect_string</code></td>
-<td><code>_update_connect_string(value: str, target_model_id: str)</code></td>
-</tr>
-<tr>
-<td><code>_patch_rdl</code></td>
-<td><code>_patch_rdl(xml_text: str, workspace_name: str, semantic_model_id: str, semantic_model_name: str)</code></td>
-</tr>
-<tr>
-<td><code>_is_binding_logically_correct</code></td>
-<td><code>_is_binding_logically_correct(binding: dict, workspace_name: str, semantic_model_name: str)</code></td>
-</tr>
-<tr>
-<td><code>_build_fabric_definition</code></td>
-<td><code>_build_fabric_definition(original_response: dict, item_name: str, xml_after: str)</code></td>
-</tr>
-<tr>
-<td><code>_expected_datasource_name</code></td>
-<td><code>_expected_datasource_name(workspace_name: str, semantic_model_name: str)</code></td>
-</tr>
-<tr>
-<td><code>_binding_matches_target</code></td>
-<td><code>_binding_matches_target(binding: dict, workspace_name: str, model_name: str)</code></td>
-</tr>
-<tr>
-<td><code>_extract_created_item_id</code></td>
-<td><code>_extract_created_item_id(client, response)</code></td>
-</tr>
-<tr>
-<td><code>remediate_paginated_reports</code></td>
-<td><code>remediate_paginated_reports(fabric, workspace_items, paginated_infos, config)</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="algoritmo-pseudocodigo">Algoritmo / pseudocódigo<a class="headerlink" href="#algoritmo-pseudocodigo" title="Permanent link">&para;</a></h2>
-<pre><code class="language-text">PARA CADA Paginated Report
-    localizar parte .rdl de la definición
-    decodificar InlineBase64
-    extraer binding actual
-    resolver Semantic Model destino de la misma carpeta
-    calcular datasourceName esperado
-    actualizar PowerBIWorkspaceName
-    actualizar PowerBIDatasetName
-    actualizar connect string con semanticModelId
-    validar XML y binding lógico
-    SI hubo cambios
-        updateDefinition sobre el mismo itemId
-    FIN SI
-FIN PARA
-</code></pre>
-<h2 id="apis-relacionadas">APIs relacionadas<a class="headerlink" href="#apis-relacionadas" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>POST /v1/workspaces/{workspaceId}/paginatedReports/{id}/getDefinition</code></li>
-<li><code>POST /v1/workspaces/{workspaceId}/paginatedReports/{id}/updateDefinition</code></li>
-</ul>
-<h2 id="entradas-y-salidas-principales">Entradas y salidas principales<a class="headerlink" href="#entradas-y-salidas-principales" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
+<th>Campo</th>
 <th>Tipo</th>
-<th>Valor</th>
+<th>Valor predeterminado</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Entrada</td>
-<td>definiciones RDL + workspace_items + config</td>
+<td><code>paginated_report_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
 </tr>
 <tr>
-<td>Salida</td>
-<td>RDL actualizado sobre el mismo itemId</td>
+<td><code>paginated_report_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>semantic_model_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>semantic_model_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td><code>''</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="relacion-con-otros-modulos">Relación con otros módulos<a class="headerlink" href="#relacion-con-otros-modulos" title="Permanent link">&para;</a></h2>
-<p><strong>Importa módulos internos:</strong> <a href="../workspace/"><code>workspace.py</code></a></p>
-<p><strong>Es utilizado por:</strong> <a href="../main/"><code>main.py</code></a>, <a href="../powerbi_paginated/"><code>powerbi_paginated.py</code></a></p>
-<h2 id="codigo-fuente-analizado">Código fuente analizado<a class="headerlink" href="#codigo-fuente-analizado" title="Permanent link">&para;</a></h2>
-<p>Archivo: <code>src/paginated.py</code></p>
-<blockquote>
-<p>Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.</p>
-</blockquote>
+<h2 id="funciones">Funciones</h2>
+<h3 id="_local_nametag-str"><code>_local_name(tag: str)</code></h3>
+<p>Obtiene el nombre local de una etiqueta XML eliminando el namespace.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tag</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<h3 id="_normalize_workspace_datasource_prefixworkspace_name-str"><code>_normalize_workspace_datasource_prefix(workspace_name: str)</code></h3>
+<p>Normaliza el nombre del workspace para formar el prefijo de datasource utilizado en RDL.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<h3 id="_target_datasource_namecurrent_name-str-workspace_name-str"><code>_target_datasource_name(current_name: str, workspace_name: str)</code></h3>
+<p>Target-only equivalent of the .NET workspace-prefix replacement.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>current_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<h3 id="_decode_partpart-dict"><code>_decode_part(part: dict)</code></h3>
+<p>Decodifica el payload InlineBase64 de una parte de definición Fabric.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>part</code></td>
+<td><code>dict</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>base64.b64decode</code>.</p>
+<h3 id="_encode_rdlxml_text-str"><code>_encode_rdl(xml_text: str)</code></h3>
+<p>Codifica el XML RDL en Base64 para enviarlo a <code>updateDefinition</code>.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>xml_text</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>base64.b64encode</code>.</p>
+<h3 id="_validate_rdl_namespacexml_text-str"><code>_validate_rdl_namespace(xml_text: str)</code></h3>
+<p>Fail fast if the RDL root no longer declares the report namespace as default.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>xml_text</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>None</code></p>
+<p><strong>Excepciones explícitas</strong></p>
+<ul>
+<li><code>RuntimeError('RDL root &lt;Report&gt; element was not found.')</code></li>
+<li><code>RuntimeError('RDL root Report element does not preserve the expected 2016/01 reportdefinition default namespace.')</code></li>
+<li><code>RuntimeError('RDL root was namespace-rewritten (for example ns0:Report). The post-deploy refuses to upload a rewritten RDL.')</code></li>
+</ul>
+<h3 id="_replace_tag_textxml_text-str-tag_name-str-transform"><code>_replace_tag_text(xml_text: str, tag_name: str, transform)</code></h3>
+<p>Reemplaza selectivamente el contenido textual de etiquetas XML sin reserializar por completo el RDL.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>xml_text</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>tag_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>transform</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>tuple[str, bool]</code></p>
+<h3 id="_replace_datasource_namesxml_text-str-workspace_name-str"><code>_replace_datasource_names(xml_text: str, workspace_name: str)</code></h3>
+<p>Actualiza los nombres de datasource del RDL para que correspondan al workspace destino.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>xml_text</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve tupla, valor calculado.</p>
+<h3 id="_find_rdl_partdefinition_response-dict"><code>_find_rdl_part(definition_response: dict)</code></h3>
+<p>Localiza la parte <code>.rdl</code> dentro de una respuesta de definición Fabric.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>definition_response</code></td>
+<td><code>dict</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>dict</code></p>
+<p><strong>Excepciones explícitas</strong></p>
+<ul>
+<li><code>RuntimeError(f'Expected exactly one RDL definition part, found {len(rdl_parts)}.')</code></li>
+</ul>
+<h3 id="_extract_rdl_bindingxml_text-str"><code>_extract_rdl_binding(xml_text: str)</code></h3>
+<p>Extrae del XML RDL la información de workspace, modelo semántico, datasource y cadena de conexión.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>xml_text</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>dict</code></p>
+<h3 id="_resolve_semantic_modelworkspace_items-paginated_item"><code>_resolve_semantic_model(workspace_items, paginated_item)</code></h3>
+<p>Resuelve el modelo semántico destino asociado al informe paginado usando el contexto del workspace.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_items</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>paginated_item</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve tupla.</p>
+<h3 id="_update_connect_stringvalue-str-target_model_id-str"><code>_update_connect_string(value: str, target_model_id: str)</code></h3>
+<p>Sustituye en la cadena de conexión el identificador virtual del modelo semántico.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>target_model_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<h3 id="_patch_rdlxml_text-str-workspace_name-str-semantic_model_id-str-semantic_model_name-str"><code>_patch_rdl(xml_text: str, workspace_name: str, semantic_model_id: str, semantic_model_name: str)</code></h3>
+<p>Patch only the binding values while preserving the original RDL XML.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>xml_text</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>semantic_model_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>semantic_model_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve tupla, valor calculado.</p>
+<p><strong>Excepciones explícitas</strong></p>
+<ul>
+<li><code>RuntimeError('RDL root default namespace was changed to AnalysisServices/QueryDefinition.')</code></li>
+</ul>
+<h3 id="_is_binding_logically_correctbinding-dict-workspace_name-str-semantic_model_name-str"><code>_is_binding_logically_correct(binding: dict, workspace_name: str, semantic_model_name: str)</code></h3>
+<p>Match the .NET logical rule without consulting a source workspace.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>binding</code></td>
+<td><code>dict</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>semantic_model_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>bool</code></p>
+<h3 id="_build_fabric_definitionoriginal_response-dict-item_name-str-xml_after-str"><code>_build_fabric_definition(original_response: dict, item_name: str, xml_after: str)</code></h3>
+<p>Build the smallest supported PaginatedReportDefinition payload.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>original_response</code></td>
+<td><code>dict</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>xml_after</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>dict</code></p>
+<p><strong>Excepciones explícitas</strong></p>
+<ul>
+<li><code>RuntimeError('The Fabric paginated definition did not contain an RDL part.')</code></li>
+</ul>
+<h3 id="_expected_datasource_nameworkspace_name-str-semantic_model_name-str"><code>_expected_datasource_name(workspace_name: str, semantic_model_name: str)</code></h3>
+<p>Calcula el nombre de datasource esperado para un modelo semántico del workspace destino.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workspace_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>semantic_model_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>str</code></p>
+<h3 id="_binding_matches_targetbinding-dict-workspace_name-str-model_name-str"><code>_binding_matches_target(binding: dict, workspace_name: str, model_name: str)</code></h3>
+<p>Comprueba que el binding extraído del RDL coincide con el destino esperado.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>binding</code></td>
+<td><code>dict</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>model_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>bool</code></p>
+<h3 id="remediate_paginated_reportsfabric-workspace_items-paginated_infos-config"><code>remediate_paginated_reports(fabric, workspace_items, paginated_infos, config)</code></h3>
+<p>Corrige in-place las definiciones de los informes paginados sin recrear los items.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fabric</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>workspace_items</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>paginated_infos</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td><code>No especificado</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p>Devuelve lista, valor <code>results</code>.</p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>print</code>.
+Escribe información de diagnóstico en consola.</p>
+<p><strong>Excepciones explícitas</strong></p>
+<ul>
+<li><code>RuntimeError(f'Unable to safely remediate {len(failures)} paginated report relationship(s).')</code></li>
+</ul>
+<h2 id="archivo-fuente">Archivo fuente</h2>
+<p>Ruta: <code>src/paginated.py</code></p>
+<p>Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../semantic_refresh/" class="btn btn-neutral float-left" title="semantic_refresh.py"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../powerbi_paginated/" class="btn btn-neutral float-right" title="powerbi_paginated.py">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../main/" class="btn btn-neutral float-left" title="main.py"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../powerbi_gateway/" class="btn btn-neutral float-right" title="powerbi_gateway.py">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -308,10 +740,10 @@ FIN PARA
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../semantic_refresh/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../main/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../powerbi_paginated/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../powerbi_gateway/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

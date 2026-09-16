@@ -5,7 +5,6 @@ import unicodedata
 
 from workspace import get_report_definition, update_report_definition
 
-
 _GENERIC_PAGE_WORDS = {"reporte", "report", "paginado", "paginada", "paginated"}
 
 _CANONICAL_WORDS = {
@@ -51,7 +50,9 @@ def _folder_candidates(paginated_infos, visual):
     if not visual.report_folder_id:
         return list(paginated_infos)
     same_folder = [
-        info for info in paginated_infos if info.item.folder_id == visual.report_folder_id
+        info
+        for info in paginated_infos
+        if info.item.folder_id == visual.report_folder_id
     ]
     return same_folder or list(paginated_infos)
 
@@ -73,7 +74,9 @@ def _resolve_by_page_label(candidates, visual):
     scored = []
     page_set = set(page_tokens)
     for info in candidates:
-        suffix_tokens = _tokens(_strip_report_prefix(info.item.name, visual.report_name))
+        suffix_tokens = _tokens(
+            _strip_report_prefix(info.item.name, visual.report_name)
+        )
         score = len(page_set & set(suffix_tokens))
         if score:
             scored.append((score, info))
@@ -121,7 +124,9 @@ def _resolve_by_parameters(candidates, visual):
 
 def _resolve_paginated(paginated_infos, visual):
     candidates = _folder_candidates(paginated_infos, visual)
-    used_folder = bool(visual.report_folder_id) and len(candidates) < len(paginated_infos)
+    used_folder = bool(visual.report_folder_id) and len(candidates) < len(
+        paginated_infos
+    )
 
     if len(candidates) == 1:
         return candidates[0], (
@@ -185,8 +190,8 @@ def _encode_json_part(data: dict) -> str:
     return base64.b64encode(text.encode("utf-8")).decode("ascii")
 
 
-def _set_literal_value(node: dict, value: str) -> None:
-    node.setdefault("expr", {}).setdefault("Literal", {})["Value"] = f"'{value}'"
+# def _set_literal_value(node: dict, value: str) -> None:
+#     node.setdefault("expr", {}).setdefault("Literal", {})["Value"] = f"'{value}'"
 
 
 def _patch_rdl_visual_part(part: dict, target_item_id: str, target_workspace_id: str):
@@ -214,9 +219,7 @@ def _patch_rdl_visual_part(part: dict, target_item_id: str, target_workspace_id:
         properties["reference"] = {
             "kind": "ItemLocation",
             "byReference": {
-                "itemId": {
-                    "expr": {"Literal": {"Value": f"'{target_item_id}'"}}
-                },
+                "itemId": {"expr": {"Literal": {"Value": f"'{target_item_id}'"}}},
                 "workspaceId": {
                     "expr": {"Literal": {"Value": f"'{target_workspace_id}'"}}
                 },
@@ -239,7 +242,9 @@ def _read_reference_from_definition(definition_response: dict, part_path: str):
         raw = base64.b64decode(part.get("payload", "")).decode("utf-8-sig")
         data = json.loads(raw)
         try:
-            ref = data["visual"]["objects"]["reportInfo"][0]["properties"]["reference"]["byReference"]
+            ref = data["visual"]["objects"]["reportInfo"][0]["properties"]["reference"][
+                "byReference"
+            ]
             item_id = ref["itemId"]["expr"]["Literal"]["Value"].strip("'")
             workspace_id = ref["workspaceId"]["expr"]["Literal"]["Value"].strip("'")
             return item_id, workspace_id
@@ -282,10 +287,19 @@ def apply_remediation(fabric, rdl_visuals, paginated_infos, workspace_items, con
         print(f"  Target report      : {paginated.item.name}")
         print(f"  Target report Id   : {paginated.item.id}")
         print(f"  Resolution reason  : {reason}")
-        print("  Current reference  : " + ("MATCHES TARGET" if already_points_to_target else "DIFFERS FROM TARGET"))
-        print("  Workspace reference: " + ("CURRENT" if workspace_is_current else "DIFFERS FROM TARGET"))
+        print(
+            "  Current reference  : "
+            + ("MATCHES TARGET" if already_points_to_target else "DIFFERS FROM TARGET")
+        )
+        print(
+            "  Workspace reference: "
+            + ("CURRENT" if workspace_is_current else "DIFFERS FROM TARGET")
+        )
         print("  Resolution status  : TARGET IDENTIFIED")
-        print("  Apply status       : " + ("NOT REQUIRED" if not needs_update else "PENDING"))
+        print(
+            "  Apply status       : "
+            + ("NOT REQUIRED" if not needs_update else "PENDING")
+        )
         print()
 
     if unresolved and config.fail_on_unresolved_rdl_visual:
@@ -308,7 +322,9 @@ def apply_remediation(fabric, rdl_visuals, paginated_infos, workspace_items, con
         for report_id, changes in by_report.items():
             report_name = changes[0][0].report_name
             print(f"[REPORT] {report_name} [{report_id}]")
-            definition_response = get_report_definition(fabric, config.workspace_id, report_id)
+            definition_response = get_report_definition(
+                fabric, config.workspace_id, report_id
+            )
             definition = definition_response.get("definition", {})
             parts = definition.get("parts", [])
             parts_by_path = {part.get("path"): part for part in parts}
@@ -379,4 +395,3 @@ def apply_remediation(fabric, rdl_visuals, paginated_infos, workspace_items, con
         print("RDL Visual report definitions updated and verified where required.")
     else:
         print("RDL Visual apply phase was disabled.")
-

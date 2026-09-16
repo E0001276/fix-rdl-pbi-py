@@ -311,25 +311,6 @@ Comprueba que el binding extraído del RDL coincide con el destino esperado.
 
 `bool`
 
-### `_extract_created_item_id(client, response)`
-
-Extrae un identificador de item de una respuesta Fabric cuando existe.
-
-**Parámetros**
-
-| Parámetro | Tipo | Predeterminado |
-|---|---|---|
-| `client` | `No especificado` | `Requerido` |
-| `response` | `No especificado` | `Requerido` |
-
-**Retorno**
-
-Devuelve NoneType, valor calculado.
-
-**Comportamiento y efectos**
-
-Llamadas relevantes: `client.get_json_lro_result`.
-
 ### `remediate_paginated_reports(fabric, workspace_items, paginated_infos, config)`
 
 Corrige in-place las definiciones de los informes paginados sin recrear los items.

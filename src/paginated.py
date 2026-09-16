@@ -3,7 +3,10 @@ import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 
-from workspace import get_paginated_report_definition, update_paginated_report_definition
+from workspace import (
+    get_paginated_report_definition,
+    update_paginated_report_definition,
+)
 
 
 @dataclass
@@ -115,9 +118,7 @@ def _replace_datasource_names(xml_text: str, workspace_name: str):
 
 def _find_rdl_part(definition_response: dict) -> dict:
     parts = definition_response.get("definition", {}).get("parts", [])
-    rdl_parts = [
-        p for p in parts if str(p.get("path", "")).lower().endswith(".rdl")
-    ]
+    rdl_parts = [p for p in parts if str(p.get("path", "")).lower().endswith(".rdl")]
     if len(rdl_parts) != 1:
         raise RuntimeError(
             f"Expected exactly one RDL definition part, found {len(rdl_parts)}."
@@ -234,9 +235,10 @@ def _patch_rdl(
     _validate_rdl_namespace(result)
 
     # Guard against the exact namespace corruption observed in v15 diagnostics.
-    if 'xmlns="http://schemas.microsoft.com/AnalysisServices/QueryDefinition"' in re.search(
-        r"<Report\b[^>]*>", result, flags=re.DOTALL
-    ).group(0):
+    if (
+        'xmlns="http://schemas.microsoft.com/AnalysisServices/QueryDefinition"'
+        in re.search(r"<Report\b[^>]*>", result, flags=re.DOTALL).group(0)
+    ):
         raise RuntimeError(
             "RDL root default namespace was changed to AnalysisServices/QueryDefinition."
         )
@@ -269,8 +271,7 @@ def _is_binding_logically_correct(
 
     expected_set = {name.casefold() for name in expected_names if name}
     dataset_refs_ok = bool(binding["dataset_datasource_names"]) and all(
-        name.casefold() in expected_set
-        for name in binding["dataset_datasource_names"]
+        name.casefold() in expected_set for name in binding["dataset_datasource_names"]
     )
     workspace_ok = bool(binding["workspace_names"]) and all(
         name.casefold() == workspace_name.casefold()
@@ -283,7 +284,9 @@ def _is_binding_logically_correct(
     return datasource_names_ok and dataset_refs_ok and workspace_ok and dataset_ok
 
 
-def _build_fabric_definition(original_response: dict, item_name: str, xml_after: str) -> dict:
+def _build_fabric_definition(
+    original_response: dict, item_name: str, xml_after: str
+) -> dict:
     """Build the smallest supported PaginatedReportDefinition payload.
 
     Microsoft documents the RDL part as required and the .platform part as optional.
@@ -297,7 +300,9 @@ def _build_fabric_definition(original_response: dict, item_name: str, xml_after:
     original = original_response.get("definition", {})
     original_parts = original.get("parts", [])
     if not any(str(p.get("path", "")).lower().endswith(".rdl") for p in original_parts):
-        raise RuntimeError("The Fabric paginated definition did not contain an RDL part.")
+        raise RuntimeError(
+            "The Fabric paginated definition did not contain an RDL part."
+        )
 
     return {
         "parts": [
@@ -310,14 +315,15 @@ def _build_fabric_definition(original_response: dict, item_name: str, xml_after:
     }
 
 
-
 def _expected_datasource_name(workspace_name: str, semantic_model_name: str) -> str:
     workspace_prefix = re.sub(r"[\s-]+", "", workspace_name or "")
     model_suffix = re.sub(r"[\s-]+", "", semantic_model_name or "")
     return f"{workspace_prefix}_{model_suffix}"
 
 
-def _binding_matches_target(binding: dict, workspace_name: str, model_name: str) -> bool:
+def _binding_matches_target(
+    binding: dict, workspace_name: str, model_name: str
+) -> bool:
     expected_ds = _expected_datasource_name(workspace_name, model_name).lower()
     ds_names = [str(x).strip().lower() for x in binding.get("datasource_names", [])]
     ws_names = [str(x).strip().lower() for x in binding.get("workspace_names", [])]
@@ -332,15 +338,15 @@ def _binding_matches_target(binding: dict, workspace_name: str, model_name: str)
     )
 
 
-def _extract_created_item_id(client, response):
-    if response.status_code == 201:
-        body = response.json()
-        return body.get("id") or body.get("itemId")
-    if response.status_code == 202:
-        result = client.get_json_lro_result(response)
-        if isinstance(result, dict):
-            return result.get("id") or result.get("itemId")
-    return None
+# def _extract_created_item_id(client, response):
+#     if response.status_code == 201:
+#         body = response.json()
+#         return body.get("id") or body.get("itemId")
+#     if response.status_code == 202:
+#         result = client.get_json_lro_result(response)
+#         if isinstance(result, dict):
+#             return result.get("id") or result.get("itemId")
+#     return None
 
 
 def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config):
@@ -371,7 +377,9 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
             print(f"  Reason            : {message}")
             failures.append(message)
             results.append(
-                PaginatedBindingResult(item.id, item.name, "", "", "UNRESOLVED", message)
+                PaginatedBindingResult(
+                    item.id, item.name, "", "", "UNRESOLVED", message
+                )
             )
             continue
 
@@ -384,19 +392,35 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
         binding_before = _extract_rdl_binding(xml_before)
 
         print("  Current RDL binding:")
-        print("    DataSource Name  : " + (", ".join(binding_before["datasource_names"]) or "(none)"))
-        print("    Workspace         : " + (", ".join(binding_before["workspace_names"]) or "(none)"))
-        print("    Semantic Model    : " + (", ".join(binding_before["dataset_names"]) or "(none)"))
-        print("    Connect String    : " + (" | ".join(binding_before["connect_strings"]) or "(none)"))
+        print(
+            "    DataSource Name  : "
+            + (", ".join(binding_before["datasource_names"]) or "(none)")
+        )
+        print(
+            "    Workspace         : "
+            + (", ".join(binding_before["workspace_names"]) or "(none)")
+        )
+        print(
+            "    Semantic Model    : "
+            + (", ".join(binding_before["dataset_names"]) or "(none)")
+        )
+        print(
+            "    Connect String    : "
+            + (" | ".join(binding_before["connect_strings"]) or "(none)")
+        )
 
         if _is_binding_logically_correct(
             binding_before, config.workspace_name, model.name
         ):
             print("  Logical RDL binding: ALREADY CORRECT")
-            print("  Note               : virtual database GUID is handled by Power BI runtime binding")
+            print(
+                "  Note               : virtual database GUID is handled by Power BI runtime binding"
+            )
             print("  Status             : ALREADY CORRECT")
             results.append(
-                PaginatedBindingResult(item.id, item.name, model.id, model.name, "UNCHANGED")
+                PaginatedBindingResult(
+                    item.id, item.name, model.id, model.name, "UNCHANGED"
+                )
             )
             continue
 
@@ -412,7 +436,9 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
             print(f"  Reason             : {message}")
             failures.append(message)
             results.append(
-                PaginatedBindingResult(item.id, item.name, model.id, model.name, "PATCH_FAILED", message)
+                PaginatedBindingResult(
+                    item.id, item.name, model.id, model.name, "PATCH_FAILED", message
+                )
             )
             continue
 
@@ -420,28 +446,51 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
         if not _is_binding_logically_correct(
             patched_binding, config.workspace_name, model.name
         ):
-            message = "Local RDL validation failed before calling Fabric updateDefinition."
+            message = (
+                "Local RDL validation failed before calling Fabric updateDefinition."
+            )
             print("  Status             : LOCAL_VERIFY_FAILED")
             print(f"  Reason             : {message}")
             failures.append(message)
             results.append(
-                PaginatedBindingResult(item.id, item.name, model.id, model.name, "LOCAL_VERIFY_FAILED", message)
+                PaginatedBindingResult(
+                    item.id,
+                    item.name,
+                    model.id,
+                    model.name,
+                    "LOCAL_VERIFY_FAILED",
+                    message,
+                )
             )
             continue
 
         print("  XML patch strategy  : TEXT-PRESERVING (no XML re-serialization)")
         print("  Namespace integrity : VALID")
         print("  Patched RDL binding (local validation):")
-        print("    DataSource Name  : " + (", ".join(patched_binding["datasource_names"]) or "(none)"))
-        print("    Workspace         : " + (", ".join(patched_binding["workspace_names"]) or "(none)"))
-        print("    Semantic Model    : " + (", ".join(patched_binding["dataset_names"]) or "(none)"))
-        print("    Connect String    : " + (" | ".join(patched_binding["connect_strings"]) or "(none)"))
+        print(
+            "    DataSource Name  : "
+            + (", ".join(patched_binding["datasource_names"]) or "(none)")
+        )
+        print(
+            "    Workspace         : "
+            + (", ".join(patched_binding["workspace_names"]) or "(none)")
+        )
+        print(
+            "    Semantic Model    : "
+            + (", ".join(patched_binding["dataset_names"]) or "(none)")
+        )
+        print(
+            "    Connect String    : "
+            + (" | ".join(patched_binding["connect_strings"]) or "(none)")
+        )
 
         definition = _build_fabric_definition(before, item.name, xml_after)
         print("  Updating RDL definition with Fabric REST...")
         print("  Definition format : default (PaginatedReportDefinition)")
         print(f"  RDL part path      : {item.name}.rdl")
-        print(f"  Definition parts  : {len(definition['parts'])} (RDL only; .platform omitted)")
+        print(
+            f"  Definition parts  : {len(definition['parts'])} (RDL only; .platform omitted)"
+        )
 
         try:
             status = update_paginated_report_definition(
@@ -454,7 +503,9 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
             print(f"  Reason             : {message}")
             failures.append(message)
             results.append(
-                PaginatedBindingResult(item.id, item.name, model.id, model.name, "UPDATE_FAILED", message)
+                PaginatedBindingResult(
+                    item.id, item.name, model.id, model.name, "UPDATE_FAILED", message
+                )
             )
             continue
 
@@ -489,19 +540,26 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
                 )
             else:
                 print("  RDL verification   : NOT REFLECTED (NON-BLOCKING)")
-                print("  Persisted DataSource: " + (
-                    ", ".join(persisted_binding["datasource_names"]) or "(none)"
-                ))
-                print("  Persisted Workspace : " + (
-                    ", ".join(persisted_binding["workspace_names"]) or "(none)"
-                ))
+                print(
+                    "  Persisted DataSource: "
+                    + (", ".join(persisted_binding["datasource_names"]) or "(none)")
+                )
+                print(
+                    "  Persisted Workspace : "
+                    + (", ".join(persisted_binding["workspace_names"]) or "(none)")
+                )
                 print("  Item identity      : PRESERVED")
                 print("  Recreation         : DISABLED")
-                print("  Status             : UPDATED (HTTP ACCEPTED; RUNTIME BINDING NEXT)")
+                print(
+                    "  Status             : UPDATED (HTTP ACCEPTED; RUNTIME BINDING NEXT)"
+                )
                 results.append(
                     PaginatedBindingResult(
-                        item.id, item.name, model.id, model.name,
-                        "UPDATED_RUNTIME_BINDING_PENDING"
+                        item.id,
+                        item.name,
+                        model.id,
+                        model.name,
+                        "UPDATED_RUNTIME_BINDING_PENDING",
                     )
                 )
         except Exception as exc:
@@ -509,11 +567,16 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
             print(f"  Verification reason: {exc}")
             print("  Item identity      : PRESERVED")
             print("  Recreation         : DISABLED")
-            print("  Status             : UPDATED (HTTP ACCEPTED; RUNTIME BINDING NEXT)")
+            print(
+                "  Status             : UPDATED (HTTP ACCEPTED; RUNTIME BINDING NEXT)"
+            )
             results.append(
                 PaginatedBindingResult(
-                    item.id, item.name, model.id, model.name,
-                    "UPDATED_RUNTIME_BINDING_PENDING"
+                    item.id,
+                    item.name,
+                    model.id,
+                    model.name,
+                    "UPDATED_RUNTIME_BINDING_PENDING",
                 )
             )
 

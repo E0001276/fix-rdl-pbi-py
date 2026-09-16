@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="None" />
       <link rel="shortcut icon" href="img/favicon.ico" />
-    <title>fix-rdl-pbi-py - Documentación por módulo</title>
+    <title>fix-rdl-pbi-py - Documentación del código</title>
     <link rel="stylesheet" href="css/theme.css" />
     <link rel="stylesheet" href="css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -30,7 +30,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
-          <a href="." class="icon icon-home"> fix-rdl-pbi-py - Documentación por módulo
+          <a href="." class="icon icon-home"> fix-rdl-pbi-py - Documentación del código
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
@@ -42,9 +42,7 @@
               <ul class="current">
                 <li class="toctree-l1 current"><a class="reference internal current" href="#">Inicio</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#navegacion">Navegación</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#como-usar-el-panel-lateral">Cómo usar el panel lateral</a>
+    <li class="toctree-l2"><a class="reference internal" href="#modulos">Módulos</a>
     </li>
     </ul>
                 </li>
@@ -53,10 +51,8 @@
                 <li class="toctree-l1"><a class="reference internal" href="arquitectura/">Arquitectura</a>
                 </li>
               </ul>
-              <p class="caption"><span class="caption-text">Módulos</span></p>
+              <p class="caption"><span class="caption-text">Módulos Python</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="main/">main.py</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="auth/">auth.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="config/">config.py</a>
@@ -65,23 +61,19 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="http_clients/">http_clients.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="workspace/">workspace.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="powerbi_gateway/">powerbi_gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="semantic_refresh/">semantic_refresh.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="main/">main.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="paginated/">paginated.py</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="powerbi_gateway/">powerbi_gateway.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="powerbi_paginated/">powerbi_paginated.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="remediation/">remediation.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="fabric_connections/">fabric_connections.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="semantic_refresh/">semantic_refresh.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="gateway/">gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="repository/">repository.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="workspace/">workspace.py</a>
                   </li>
               </ul>
       </div>
@@ -91,7 +83,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
       <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href=".">fix-rdl-pbi-py - Documentación por módulo</a>
+          <a href=".">fix-rdl-pbi-py - Documentación del código</a>
         
       </nav>
       <div class="wy-nav-content">
@@ -107,102 +99,37 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="documentacion-por-modulo">Documentación por módulo<a class="headerlink" href="#documentacion-por-modulo" title="Permanent link">&para;</a></h1>
-<p>Esta documentación se generó a partir del código Python actual de <code>fix-rdl-pbi-py</code>.</p>
-<h2 id="navegacion">Navegación<a class="headerlink" href="#navegacion" title="Permanent link">&para;</a></h2>
-<p>Use el panel izquierdo del sitio para cambiar de módulo. También puede usar la tabla siguiente.</p>
-<table>
-<thead>
-<tr>
-<th>Archivo</th>
-<th>Rol</th>
-<th>Descripción</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="auth/"><code>auth.py</code></a></td>
-<td>Infraestructura / autenticación</td>
-<td>Obtención del access token mediante Azure CLI para Fabric y Power BI.</td>
-</tr>
-<tr>
-<td><a href="config/"><code>config.py</code></a></td>
-<td>Configuración</td>
-<td>Carga y modelado de la configuración de post-deploy mediante <code>PostDeployConfig</code>.</td>
-</tr>
-<tr>
-<td><a href="diagnostics/"><code>diagnostics.py</code></a></td>
-<td>Observabilidad y diagnóstico</td>
-<td>Registro de ejecución, requests/responses HTTP, payloads decodificados y comandos cURL reproducibles.</td>
-</tr>
-<tr>
-<td><a href="fabric_connections/"><code>fabric_connections.py</code></a></td>
-<td>Binding auxiliar de conexiones Fabric</td>
-<td>Resolución auxiliar de conexiones Fabric Oracle y binding de Semantic Models mediante Fabric Connections.</td>
-</tr>
-<tr>
-<td><a href="gateway/"><code>gateway.py</code></a></td>
-<td>Binding auxiliar de gateway Power BI</td>
-<td>Implementación auxiliar y más detallada de descubrimiento, selección y verificación de gateway/datasource Power BI.</td>
-</tr>
-<tr>
-<td><a href="http_clients/"><code>http_clients.py</code></a></td>
-<td>Infraestructura HTTP</td>
-<td>Cliente HTTP común para Fabric y Power BI, manejo de errores y operaciones de larga duración (LRO).</td>
-</tr>
-<tr>
-<td><a href="main/"><code>main.py</code></a></td>
-<td>Orquestación</td>
-<td>Punto de entrada y orquestador del flujo target-only de post-deploy.</td>
-</tr>
-<tr>
-<td><a href="paginated/"><code>paginated.py</code></a></td>
-<td>Remediación de definición RDL</td>
-<td>Corrección in-place del XML RDL de los informes paginados, preservando su <code>itemId</code>.</td>
-</tr>
-<tr>
-<td><a href="powerbi_gateway/"><code>powerbi_gateway.py</code></a></td>
-<td>Binding activo de gateway</td>
-<td>Binding activo de Semantic Models con gateways compatibles mediante Power BI REST API.</td>
-</tr>
-<tr>
-<td><a href="powerbi_paginated/"><code>powerbi_paginated.py</code></a></td>
-<td>Binding runtime de paginados</td>
-<td>Binding runtime de informes paginados hacia los Semantic Models reales del workspace destino.</td>
-</tr>
-<tr>
-<td><a href="remediation/"><code>remediation.py</code></a></td>
-<td>Remediación de RDL Visuals</td>
-<td>Resolución de Paginated Reports y corrección de <code>itemId</code>/<code>workspaceId</code> en los RDL Visuals.</td>
-</tr>
-<tr>
-<td><a href="repository/"><code>repository.py</code></a></td>
-<td>Descubrimiento local auxiliar</td>
-<td>Descubrimiento auxiliar de elementos y RDL Visuals a partir de un repositorio local.</td>
-</tr>
-<tr>
-<td><a href="semantic_refresh/"><code>semantic_refresh.py</code></a></td>
-<td>Refresh de Semantic Models</td>
-<td>Ejecución y seguimiento del refresh de Semantic Models, equivalente a “Actualizar ahora”.</td>
-</tr>
-<tr>
-<td><a href="workspace/"><code>workspace.py</code></a></td>
-<td>Acceso y descubrimiento de objetos Fabric</td>
-<td>Descubrimiento de objetos Fabric y lectura/actualización de definiciones de Reports y Paginated Reports.</td>
-</tr>
-</tbody>
-</table>
-<h2 id="como-usar-el-panel-lateral">Cómo usar el panel lateral<a class="headerlink" href="#como-usar-el-panel-lateral" title="Permanent link">&para;</a></h2>
-<p>El paquete incluye <code>mkdocs.yml</code> con el tema integrado <strong>Read the Docs</strong>, que genera un panel de navegación lateral.</p>
-<p>Desde la carpeta raíz de este paquete:</p>
-<pre><code class="language-powershell">pip install mkdocs
-mkdocs serve
-</code></pre>
-<p>Después abra la URL local mostrada por MkDocs, normalmente <code>http://127.0.0.1:8000/</code>.</p>
-<p>También puede generar HTML estático con:</p>
-<pre><code class="language-powershell">mkdocs build
-</code></pre>
-<p>La salida queda en <code>site/</code>.</p>
+                <h1 id="documentacion-de-fix-rdl-pbi-py">Documentación de <code>fix-rdl-pbi-py</code></h1>
+<p>Esta documentación está organizada <strong>por archivo Python</strong>. Use el panel lateral para abrir el módulo que desea consultar.</p>
+<p>Cada página documenta:</p>
+<ul>
+<li>responsabilidad del archivo;</li>
+<li>dependencias;</li>
+<li>clases y estructuras de datos;</li>
+<li><strong>cada función y método definido en el archivo</strong>;</li>
+<li>parámetros y valores predeterminados;</li>
+<li>retorno;</li>
+<li>llamadas relevantes y efectos secundarios;</li>
+<li>endpoints construidos por el método, cuando aplica;</li>
+<li>excepciones explícitas.</li>
+</ul>
+<h2 id="modulos">Módulos</h2>
+<ul>
+<li><a href="auth/"><code>auth.py</code></a></li>
+<li><a href="config/"><code>config.py</code></a></li>
+<li><a href="diagnostics/"><code>diagnostics.py</code></a></li>
+<li><a href="fabric_connections.md"><code>fabric_connections.py</code></a></li>
+<li><a href="gateway.md"><code>gateway.py</code></a></li>
+<li><a href="http_clients/"><code>http_clients.py</code></a></li>
+<li><a href="main/"><code>main.py</code></a></li>
+<li><a href="paginated/"><code>paginated.py</code></a></li>
+<li><a href="powerbi_gateway/"><code>powerbi_gateway.py</code></a></li>
+<li><a href="powerbi_paginated/"><code>powerbi_paginated.py</code></a></li>
+<li><a href="remediation/"><code>remediation.py</code></a></li>
+<li><a href="repository.md"><code>repository.py</code></a></li>
+<li><a href="semantic_refresh/"><code>semantic_refresh.py</code></a></li>
+<li><a href="workspace/"><code>workspace.py</code></a></li>
+</ul>
               
             </div>
           </div><footer>
@@ -251,5 +178,5 @@ mkdocs serve
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2026-09-16 00:35:01.136797+00:00
+Build Date UTC : 2026-09-16 01:04:23.016617+00:00
 -->

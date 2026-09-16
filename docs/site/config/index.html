@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>config.py - fix-rdl-pbi-py - Documentación por módulo</title>
+    <title>config.py - fix-rdl-pbi-py - Documentación del código</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -30,7 +30,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
-          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación por módulo
+          <a href=".." class="icon icon-home"> fix-rdl-pbi-py - Documentación del código
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
@@ -47,15 +47,13 @@
                 <li class="toctree-l1"><a class="reference internal" href="../arquitectura/">Arquitectura</a>
                 </li>
               </ul>
-              <p class="caption"><span class="caption-text">Módulos</span></p>
+              <p class="caption"><span class="caption-text">Módulos Python</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../auth/">auth.py</a>
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">config.py</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación</a>
+    <li class="toctree-l2"><a class="reference internal" href="#responsabilidad-del-modulo">Responsabilidad del módulo</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#dependencias">Dependencias</a>
     </li>
@@ -65,15 +63,13 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#funciones-de-modulo">Funciones de módulo</a>
+    <li class="toctree-l2"><a class="reference internal" href="#funciones">Funciones</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#load_configpath-str">load_config(path: str)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#algoritmo-pseudocodigo">Algoritmo / pseudocódigo</a>
+        </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#entradas-y-salidas-principales">Entradas y salidas principales</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#relacion-con-otros-modulos">Relación con otros módulos</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#codigo-fuente-analizado">Código fuente analizado</a>
+    <li class="toctree-l2"><a class="reference internal" href="#archivo-fuente">Archivo fuente</a>
     </li>
     </ul>
                   </li>
@@ -81,23 +77,19 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../http_clients/">http_clients.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../main/">main.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../paginated/">paginated.py</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../powerbi_gateway/">powerbi_gateway.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../powerbi_paginated/">powerbi_paginated.py</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../remediation/">remediation.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../fabric_connections/">fabric_connections.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../semantic_refresh/">semantic_refresh.py</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../gateway/">gateway.py</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../repository/">repository.py</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../workspace/">workspace.py</a>
                   </li>
               </ul>
       </div>
@@ -107,14 +99,14 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
       <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="..">fix-rdl-pbi-py - Documentación por módulo</a>
+          <a href="..">fix-rdl-pbi-py - Documentación del código</a>
         
       </nav>
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">Módulos</li>
+          <li class="breadcrumb-item">Módulos Python</li>
       <li class="breadcrumb-item active">config.py</li>
     <li class="wy-breadcrumbs-aside">
     </li>
@@ -124,71 +116,137 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="configpy"><code>config.py</code><a class="headerlink" href="#configpy" title="Permanent link">&para;</a></h1>
-<p><strong>Rol:</strong> Configuración</p>
-<p>Carga y modelado de la configuración de post-deploy mediante <code>PostDeployConfig</code>.</p>
-<h2 id="responsabilidad-dentro-de-la-aplicacion">Responsabilidad dentro de la aplicación<a class="headerlink" href="#responsabilidad-dentro-de-la-aplicacion" title="Permanent link">&para;</a></h2>
-<p>Define el contrato de configuración consumido por el resto de módulos.</p>
-<h2 id="dependencias">Dependencias<a class="headerlink" href="#dependencias" title="Permanent link">&para;</a></h2>
+                <h1 id="configpy"><code>config.py</code></h1>
+<p>Documentación del módulo Python <a href="../../src/config.py"><code>src/config.py</code></a>.</p>
+<h2 id="responsabilidad-del-modulo">Responsabilidad del módulo</h2>
+<p>Define y carga la configuración funcional del post-deploy.</p>
+<h2 id="dependencias">Dependencias</h2>
 <ul>
 <li><code>json</code></li>
-<li><code>dataclasses:dataclass</code></li>
-<li><code>pathlib:Path</code></li>
+<li><code>dataclasses: dataclass</code></li>
+<li><code>pathlib: Path</code></li>
 </ul>
-<h2 id="clases">Clases<a class="headerlink" href="#clases" title="Permanent link">&para;</a></h2>
-<h3 id="postdeployconfig"><code>PostDeployConfig</code><a class="headerlink" href="#postdeployconfig" title="Permanent link">&para;</a></h3>
-<p>Clase de datos sin métodos explícitos.</p>
-<h2 id="funciones-de-modulo">Funciones de módulo<a class="headerlink" href="#funciones-de-modulo" title="Permanent link">&para;</a></h2>
+<h2 id="clases">Clases</h2>
+<h3 id="postdeployconfig"><code>PostDeployConfig</code></h3>
+<p>Estructura de datos con los siguientes campos:</p>
 <table>
 <thead>
 <tr>
-<th>Función</th>
-<th>Firma</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>load_config</code></td>
-<td><code>load_config(path: str)</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="algoritmo-pseudocodigo">Algoritmo / pseudocódigo<a class="headerlink" href="#algoritmo-pseudocodigo" title="Permanent link">&para;</a></h2>
-<pre><code class="language-text">INICIO
-    abrir archivo JSON de configuración
-    leer workspaceId y workspaceName
-    leer flags de remediación, gateway y refresh
-    construir PostDeployConfig
-    devolver configuración
-FIN
-</code></pre>
-<h2 id="entradas-y-salidas-principales">Entradas y salidas principales<a class="headerlink" href="#entradas-y-salidas-principales" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
+<th>Campo</th>
 <th>Tipo</th>
-<th>Valor</th>
+<th>Valor predeterminado</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Entrada</td>
-<td>ruta del JSON de ambiente</td>
+<td><code>workspace_id</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
 </tr>
 <tr>
-<td>Salida</td>
-<td>instancia <code>PostDeployConfig</code></td>
+<td><code>workspace_name</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>expected_oracle_database</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>fail_on_unresolved_rdl_visual</code></td>
+<td><code>bool</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>apply_rdl_visual_fix</code></td>
+<td><code>bool</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>apply_paginated_report_fix</code></td>
+<td><code>bool</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>fail_on_unresolved_paginated_report</code></td>
+<td><code>bool</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>bind_semantic_models_to_connection</code></td>
+<td><code>bool</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>fail_on_unresolved_connection_binding</code></td>
+<td><code>bool</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>bind_paginated_reports_to_semantic_models</code></td>
+<td><code>bool</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>fail_on_unresolved_paginated_datasource_binding</code></td>
+<td><code>bool</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>refresh_semantic_models</code></td>
+<td><code>bool</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>wait_for_refresh</code></td>
+<td><code>bool</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>fail_on_refresh_error</code></td>
+<td><code>bool</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>refresh_poll_seconds</code></td>
+<td><code>int</code></td>
+<td><code>Requerido</code></td>
+</tr>
+<tr>
+<td><code>refresh_timeout_seconds</code></td>
+<td><code>int</code></td>
+<td><code>Requerido</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="relacion-con-otros-modulos">Relación con otros módulos<a class="headerlink" href="#relacion-con-otros-modulos" title="Permanent link">&para;</a></h2>
-<p><strong>Importa módulos internos:</strong> ninguno.</p>
-<p><strong>Es utilizado por:</strong> <a href="../main/"><code>main.py</code></a></p>
-<h2 id="codigo-fuente-analizado">Código fuente analizado<a class="headerlink" href="#codigo-fuente-analizado" title="Permanent link">&para;</a></h2>
-<p>Archivo: <code>src/config.py</code></p>
-<blockquote>
-<p>Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.</p>
-</blockquote>
+<h2 id="funciones">Funciones</h2>
+<h3 id="load_configpath-str"><code>load_config(path: str)</code></h3>
+<p>Lee el archivo JSON de configuración y construye una instancia de <code>PostDeployConfig</code>.</p>
+<p><strong>Parámetros</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Tipo</th>
+<th>Predeterminado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>path</code></td>
+<td><code>str</code></td>
+<td><code>Requerido</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retorno</strong></p>
+<p><code>PostDeployConfig</code></p>
+<p><strong>Comportamiento y efectos</strong></p>
+<p>Llamadas relevantes: <code>json.loads</code>, <code>Path</code>.</p>
+<h2 id="archivo-fuente">Archivo fuente</h2>
+<p>Ruta: <code>src/config.py</code></p>
+<p>Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.</p>
               
             </div>
           </div><footer>
