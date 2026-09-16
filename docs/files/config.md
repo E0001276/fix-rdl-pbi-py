@@ -1,58 +1,65 @@
 # `config.py`
 
-**Rol:** Configuración
+Documentación del módulo Python [`src/config.py`](../../src/config.py).
 
-Carga y modelado de la configuración de post-deploy mediante `PostDeployConfig`.
+## Responsabilidad del módulo
 
-## Responsabilidad dentro de la aplicación
-
-Define el contrato de configuración consumido por el resto de módulos.
+Define y carga la configuración funcional del post-deploy.
 
 ## Dependencias
 
 - `json`
-- `dataclasses:dataclass`
-- `pathlib:Path`
+- `dataclasses: dataclass`
+- `pathlib: Path`
 
 ## Clases
 
 ### `PostDeployConfig`
 
-Clase de datos sin métodos explícitos.
+Estructura de datos con los siguientes campos:
 
-## Funciones de módulo
+| Campo | Tipo | Valor predeterminado |
+|---|---|---|
+| `workspace_id` | `str` | `Requerido` |
+| `workspace_name` | `str` | `Requerido` |
+| `expected_oracle_database` | `str` | `Requerido` |
+| `fail_on_unresolved_rdl_visual` | `bool` | `Requerido` |
+| `apply_rdl_visual_fix` | `bool` | `Requerido` |
+| `apply_paginated_report_fix` | `bool` | `Requerido` |
+| `fail_on_unresolved_paginated_report` | `bool` | `Requerido` |
+| `bind_semantic_models_to_connection` | `bool` | `Requerido` |
+| `fail_on_unresolved_connection_binding` | `bool` | `Requerido` |
+| `bind_paginated_reports_to_semantic_models` | `bool` | `Requerido` |
+| `fail_on_unresolved_paginated_datasource_binding` | `bool` | `Requerido` |
+| `recreate_paginated_on_definition_mismatch` | `bool` | `Requerido` |
+| `refresh_semantic_models` | `bool` | `Requerido` |
+| `wait_for_refresh` | `bool` | `Requerido` |
+| `fail_on_refresh_error` | `bool` | `Requerido` |
+| `refresh_poll_seconds` | `int` | `Requerido` |
+| `refresh_timeout_seconds` | `int` | `Requerido` |
 
-| Función | Firma |
-|---|---|
-| `load_config` | `load_config(path: str)` |
+## Funciones
 
-## Algoritmo / pseudocódigo
+### `load_config(path: str)`
 
-```text
-INICIO
-    abrir archivo JSON de configuración
-    leer workspaceId y workspaceName
-    leer flags de remediación, gateway y refresh
-    construir PostDeployConfig
-    devolver configuración
-FIN
-```
+Lee el archivo JSON de configuración y construye una instancia de `PostDeployConfig`.
 
-## Entradas y salidas principales
+**Parámetros**
 
-| Tipo | Valor |
-|---|---|
-| Entrada | ruta del JSON de ambiente |
-| Salida | instancia `PostDeployConfig` |
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `path` | `str` | `Requerido` |
 
-## Relación con otros módulos
+**Retorno**
 
-**Importa módulos internos:** ninguno.
+`PostDeployConfig`
 
-**Es utilizado por:** [`main.py`](main.md)
+**Comportamiento y efectos**
 
-## Código fuente analizado
+Llamadas relevantes: `json.loads`, `Path`.
 
-Archivo: `src/config.py`
+## Archivo fuente
 
-> Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.
+Ruta: `src/config.py`
+
+Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.

@@ -1,71 +1,169 @@
 # `powerbi_gateway.py`
 
-**Rol:** Binding activo de gateway
+Documentación del módulo Python [`src/powerbi_gateway.py`](../../src/powerbi_gateway.py).
 
-Binding activo de Semantic Models con gateways compatibles mediante Power BI REST API.
+## Responsabilidad del módulo
 
-## Responsabilidad dentro de la aplicación
-
-Realiza el binding de los Semantic Models al gateway compatible antes del refresh y antes de la remediación de paginados.
+Implementa el binding activo de Semantic Models al gateway compatible mediante Power BI REST API.
 
 ## Dependencias
 
 - `json`
-- `dataclasses:dataclass`
+- `dataclasses: dataclass`
 
 ## Clases
 
 ### `GatewayBindingResult`
 
-Clase de datos sin métodos explícitos.
+Estructura de datos con los siguientes campos:
 
-## Funciones de módulo
+| Campo | Tipo | Valor predeterminado |
+|---|---|---|
+| `semantic_model_id` | `str` | `Requerido` |
+| `semantic_model_name` | `str` | `Requerido` |
+| `status` | `str` | `Requerido` |
+| `gateway_id` | `str` | `''` |
+| `gateway_name` | `str` | `''` |
+| `message` | `str` | `''` |
 
-| Función | Firma |
-|---|---|
-| `_norm` | `_norm(value)` |
-| `_details` | `_details(value)` |
-| `_matches_expected_oracle` | `_matches_expected_oracle(datasource: dict, expected_database: str)` |
-| `_get_dataset_datasources` | `_get_dataset_datasources(powerbi, workspace_id: str, dataset_id: str)` |
-| `_discover_gateways` | `_discover_gateways(powerbi, workspace_id: str, dataset_id: str)` |
-| `bind_semantic_models_to_gateway` | `bind_semantic_models_to_gateway(powerbi, workspace_items, config)` |
+## Funciones
 
-## Algoritmo / pseudocódigo
+### `_norm(value)`
 
-```text
-PARA CADA Semantic Model
-    obtener datasources actuales
-    identificar Oracle esperado
-    SI ya existe binding válido
-        continuar
-    FIN SI
-    DiscoverGateways
-    seleccionar gateway/datasource compatible
-    POST Default.BindToGateway
-FIN PARA
-```
+Normaliza un valor textual para comparaciones tolerantes a mayúsculas/minúsculas y espacios.
 
-## APIs relacionadas
+**Parámetros**
 
-- `GET /groups/{workspaceId}/datasets/{datasetId}/datasources`
-- `GET /groups/{workspaceId}/datasets/{datasetId}/Default.DiscoverGateways`
-- `POST /groups/{workspaceId}/datasets/{datasetId}/Default.BindToGateway`
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `value` | `No especificado` | `Requerido` |
 
-## Entradas y salidas principales
+**Retorno**
 
-| Tipo | Valor |
-|---|---|
-| Entrada | cliente Power BI + Semantic Models + config |
-| Salida | binding del dataset al gateway compatible |
+`str`
 
-## Relación con otros módulos
+### `_details(value)`
 
-**Importa módulos internos:** ninguno.
+Convierte `connectionDetails` a un diccionario utilizable.
 
-**Es utilizado por:** [`main.py`](main.md)
+**Parámetros**
 
-## Código fuente analizado
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `value` | `No especificado` | `Requerido` |
 
-Archivo: `src/powerbi_gateway.py`
+**Retorno**
 
-> Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.
+`dict`
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `json.loads`.
+
+### `_matches_expected_oracle(datasource: dict, expected_database: str)`
+
+Comprueba que un datasource sea Oracle y corresponda a la base esperada.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `datasource` | `dict` | `Requerido` |
+| `expected_database` | `str` | `Requerido` |
+
+**Retorno**
+
+`bool`
+
+### `_get_dataset_datasources(powerbi, workspace_id: str, dataset_id: str)`
+
+Obtiene los datasources registrados para un modelo semántico.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `powerbi` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+| `dataset_id` | `str` | `Requerido` |
+
+**Retorno**
+
+`list[dict]`
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `powerbi.get`.
+Rutas/API construidas o utilizadas:
+- `f'groups/{workspace_id}/datasets/{dataset_id}/datasources'`
+- `groups/`
+
+### `_discover_gateways(powerbi, workspace_id: str, dataset_id: str)`
+
+Obtiene los gateways compatibles que Power BI expone para un modelo semántico.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `powerbi` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+| `dataset_id` | `str` | `Requerido` |
+
+**Retorno**
+
+`list[dict]`
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `powerbi.get`.
+Rutas/API construidas o utilizadas:
+- `f'groups/{workspace_id}/datasets/{dataset_id}/Default.DiscoverGateways'`
+- `groups/`
+- `/Default.DiscoverGateways`
+
+### `bind_semantic_models_to_gateway(powerbi, workspace_items, config)`
+
+Mirror the proven .NET BindToGateway flow using target workspace only.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `powerbi` | `No especificado` | `Requerido` |
+| `workspace_items` | `No especificado` | `Requerido` |
+| `config` | `No especificado` | `Requerido` |
+
+**Retorno**
+
+Devuelve lista, valor `results`.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `print`, `powerbi.post`.
+Rutas/API construidas o utilizadas:
+- `Mirror the proven .NET BindToGateway flow using target workspace only.
+
+    Resolution is target-only: inspect each target semantic model's Oracle datasource,
+    ask Power BI which gateways can bind that model, require exactly one compatible
+    gateway, and call Default.BindToGateway. No source workspace is consulted.
+    `
+- `  Calling Default.BindToGateway...`
+- `f'Default.DiscoverGateways failed: {exc}'`
+- `f'groups/{config.workspace_id}/datasets/{model.id}/Default.BindToGateway'`
+- `f'Default.BindToGateway failed: {exc}'`
+- `Default.DiscoverGateways failed: `
+- `groups/`
+- `/Default.BindToGateway`
+- `Default.BindToGateway failed: `
+Escribe información de diagnóstico en consola.
+
+**Excepciones explícitas**
+
+- `RuntimeError(f'Unable to safely bind {len(failures)} semantic model gateway relationship(s).')`
+
+## Archivo fuente
+
+Ruta: `src/powerbi_gateway.py`
+
+Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.

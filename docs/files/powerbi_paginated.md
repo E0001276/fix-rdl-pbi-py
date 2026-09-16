@@ -1,73 +1,203 @@
 # `powerbi_paginated.py`
 
-**Rol:** Binding runtime de paginados
+Documentación del módulo Python [`src/powerbi_paginated.py`](../../src/powerbi_paginated.py).
 
-Binding runtime de informes paginados hacia los Semantic Models reales del workspace destino.
+## Responsabilidad del módulo
 
-## Responsabilidad dentro de la aplicación
-
-Corrige la conexión efectiva que Power BI mantiene para un informe paginado. Esta fase complementa el cambio del XML RDL y opera sobre el datasource runtime del servicio.
+Corrige el datasource runtime de los informes paginados para apuntar al Semantic Model destino.
 
 ## Dependencias
 
-- `paginated:_extract_rdl_binding, _find_rdl_part, _decode_part, _resolve_semantic_model`
-- `workspace:get_paginated_report_definition`
+- `paginated: _extract_rdl_binding, _find_rdl_part, _decode_part, _resolve_semantic_model`
+- `workspace: get_paginated_report_definition`
 
-## Clases
+## Funciones
 
-Este módulo no define clases.
+### `_norm(value)`
 
-## Funciones de módulo
+Normaliza un valor textual para comparaciones tolerantes a mayúsculas/minúsculas y espacios.
 
-| Función | Firma |
-|---|---|
-| `_norm` | `_norm(value)` |
-| `_datasources` | `_datasources(payload: dict)` |
-| `_connection_details` | `_connection_details(datasource: dict)` |
-| `_runtime_name` | `_runtime_name(datasource: dict)` |
-| `_target_database` | `_target_database(semantic_model_id: str)` |
-| `get_paginated_report_datasources` | `get_paginated_report_datasources(powerbi, workspace_id: str, report_id: str)` |
-| `_get_persisted_rdl_datasource_names` | `_get_persisted_rdl_datasource_names(fabric, workspace_id: str, report_id: str)` |
-| `_find_runtime_for_rdl` | `_find_runtime_for_rdl(runtime_datasources: list[dict], rdl_name: str)` |
-| `_build_update_details` | `_build_update_details(runtime_datasources: list[dict], rdl_names: list[str], semantic_model_id: str)` |
-| `bind_paginated_reports_to_semantic_models` | `bind_paginated_reports_to_semantic_models(powerbi, fabric, workspace_items, paginated_infos, config)` |
+**Parámetros**
 
-## Algoritmo / pseudocódigo
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `value` | `No especificado` | `Requerido` |
 
-```text
-PARA CADA Paginated Report
-    obtener datasource runtime actual
-    leer datasourceName persistido en el RDL
-    resolver Semantic Model destino
-    conservar connectionDetails.server
-    database <- "sobe_wowvirtualserver-" + semanticModelId
-    POST Default.TakeOver
-    POST Default.UpdateDatasources
-    volver a consultar datasources y validar
-FIN PARA
-```
+**Retorno**
 
-## APIs relacionadas
+`str`
 
-- `GET /groups/{workspaceId}/reports/{reportId}/datasources`
-- `POST /groups/{workspaceId}/reports/{reportId}/Default.TakeOver`
-- `POST /groups/{workspaceId}/reports/{reportId}/Default.UpdateDatasources`
+### `_datasources(payload: dict)`
 
-## Entradas y salidas principales
+Extrae la lista `value` de un payload de datasources de Power BI.
 
-| Tipo | Valor |
-|---|---|
-| Entrada | clientes Power BI/Fabric + paginados + config |
-| Salida | datasource runtime apuntando al Semantic Model destino |
+**Parámetros**
 
-## Relación con otros módulos
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `payload` | `dict` | `Requerido` |
 
-**Importa módulos internos:** [`paginated.py`](paginated.md), [`workspace.py`](workspace.md)
+**Retorno**
 
-**Es utilizado por:** [`main.py`](main.md)
+`list[dict]`
 
-## Código fuente analizado
+### `_connection_details(datasource: dict)`
 
-Archivo: `src/powerbi_paginated.py`
+Obtiene de forma segura el diccionario `connectionDetails` de un datasource.
 
-> Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `datasource` | `dict` | `Requerido` |
+
+**Retorno**
+
+`dict`
+
+### `_runtime_name(datasource: dict)`
+
+Obtiene el nombre runtime del datasource del informe paginado.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `datasource` | `dict` | `Requerido` |
+
+**Retorno**
+
+`str`
+
+### `_target_database(semantic_model_id: str)`
+
+Construye el nombre de base virtual `sobe_wowvirtualserver-{semanticModelId}`.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `semantic_model_id` | `str` | `Requerido` |
+
+**Retorno**
+
+`str`
+
+### `get_paginated_report_datasources(powerbi, workspace_id: str, report_id: str)`
+
+Consulta los datasources runtime actuales de un informe paginado.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `powerbi` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+| `report_id` | `str` | `Requerido` |
+
+**Retorno**
+
+`list[dict]`
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `powerbi.get`.
+Rutas/API construidas o utilizadas:
+- `f'groups/{workspace_id}/reports/{report_id}/datasources'`
+- `groups/`
+
+### `_get_persisted_rdl_datasource_names(fabric, workspace_id: str, report_id: str)`
+
+Lee la definición persistida del RDL y obtiene sus nombres de datasource.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `fabric` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+| `report_id` | `str` | `Requerido` |
+
+**Retorno**
+
+`list[str]`
+
+### `_find_runtime_for_rdl(runtime_datasources: list[dict], rdl_name: str)`
+
+Relaciona un datasource persistido en RDL con el datasource runtime correspondiente.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `runtime_datasources` | `list[dict]` | `Requerido` |
+| `rdl_name` | `str` | `Requerido` |
+
+**Retorno**
+
+Devuelve valor calculado.
+
+### `_build_update_details(runtime_datasources: list[dict], rdl_names: list[str], semantic_model_id: str)`
+
+Construye la colección `updateDetails` requerida por `Default.UpdateDatasources`.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `runtime_datasources` | `list[dict]` | `Requerido` |
+| `rdl_names` | `list[str]` | `Requerido` |
+| `semantic_model_id` | `str` | `Requerido` |
+
+**Retorno**
+
+Devuelve valor `details`.
+
+### `bind_paginated_reports_to_semantic_models(powerbi, fabric, workspace_items, paginated_infos, config)`
+
+Mirror the proven .NET paginated runtime remediation, target-only.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `powerbi` | `No especificado` | `Requerido` |
+| `fabric` | `No especificado` | `Requerido` |
+| `workspace_items` | `No especificado` | `Requerido` |
+| `paginated_infos` | `No especificado` | `Requerido` |
+| `config` | `No especificado` | `Requerido` |
+
+**Retorno**
+
+Devuelve lista, valor `results`.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `print`, `powerbi.post`.
+Rutas/API construidas o utilizadas:
+- `Mirror the proven .NET paginated runtime remediation, target-only.
+
+    The target semantic model is resolved from the target workspace folder.
+    The persisted target RDL supplies datasourceName. Power BI GET /datasources
+    supplies the current server. Only the virtual database semantic-model ID is
+    replaced. TakeOver is executed before Default.UpdateDatasources, exactly as
+    in the working .NET application.
+    `
+- `  Calling Default.TakeOver...`
+- `f'groups/{config.workspace_id}/reports/{item.id}/Default.TakeOver'`
+- `  Calling Default.UpdateDatasources...`
+- `f'groups/{config.workspace_id}/reports/{item.id}/Default.UpdateDatasources'`
+- `groups/`
+- `/Default.TakeOver`
+- `/Default.UpdateDatasources`
+Escribe información de diagnóstico en consola.
+
+**Excepciones explícitas**
+
+- `RuntimeError(f'Unable to safely bind {len(failures)} paginated report runtime datasource(s).')`
+
+## Archivo fuente
+
+Ruta: `src/powerbi_paginated.py`
+
+Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.

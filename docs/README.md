@@ -1,34 +1,30 @@
-# Documentación navegable de fix-rdl-pbi-py
+# Documentación MkDocs
 
-Se generó un archivo Markdown por cada archivo `.py` encontrado en `src/`.
-
-## Ver con panel de navegación
-
-1. Abra una terminal en esta carpeta.
-2. Instale MkDocs:
-
-```powershell
-pip install mkdocs
-```
-
-3. Ejecute:
-
-```powershell
-mkdocs serve
-```
-
-4. Abra la URL indicada, normalmente:
+La estructura se conserva de esta forma:
 
 ```text
-http://127.0.0.1:8000/
+docs/
+├── mkdocs.yml
+├── README.md
+└── files/
+    ├── index.md
+    ├── arquitectura.md
+    ├── auth.md
+    ├── config.md
+    └── ...
 ```
 
-El tema `readthedocs` crea un panel lateral. Al hacer clic en cada archivo Python se muestra su Markdown correspondiente.
-
-## Generar sitio estático
+Desde la carpeta `docs`:
 
 ```powershell
 mkdocs build
+mkdocs serve
 ```
 
-Esto crea la carpeta `site/`.
+`mkdocs.yml` usa:
+
+```yaml
+docs_dir: files
+```
+
+El sitio generado se crea en `docs/site/`.

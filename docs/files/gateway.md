@@ -1,82 +1,266 @@
 # `gateway.py`
 
-**Rol:** Binding auxiliar de gateway Power BI
+Documentación del módulo Python [`src/gateway.py`](../../src/gateway.py).
 
-Implementación auxiliar y más detallada de descubrimiento, selección y verificación de gateway/datasource Power BI.
+## Responsabilidad del módulo
 
-> **Nota:** este módulo contiene una implementación auxiliar/alternativa. El flujo activo de `main.py` importa `bind_semantic_models_to_gateway` desde `powerbi_gateway.py`.
-
-## Responsabilidad dentro de la aplicación
-
-Contiene una estrategia auxiliar con mayor verificación explícita de gateway y datasource.
+Contiene una implementación auxiliar de binding explícito a gateway/datasource y validación por polling.
 
 ## Dependencias
 
 - `json`
 - `time`
-- `dataclasses:dataclass`
+- `dataclasses: dataclass`
 - `requests`
 
 ## Clases
 
 ### `GatewayBindingResult`
 
-Clase de datos sin métodos explícitos.
+Estructura de datos con los siguientes campos:
 
-## Funciones de módulo
+| Campo | Tipo | Valor predeterminado |
+|---|---|---|
+| `semantic_model_id` | `str` | `Requerido` |
+| `semantic_model_name` | `str` | `Requerido` |
+| `status` | `str` | `Requerido` |
+| `gateway_id` | `str` | `''` |
+| `gateway_name` | `str` | `''` |
+| `datasource_id` | `str` | `''` |
+| `datasource_name` | `str` | `''` |
+| `message` | `str` | `''` |
 
-| Función | Firma |
-|---|---|
-| `_normalize` | `_normalize(value)` |
-| `_connection_details` | `_connection_details(value)` |
-| `_oracle_matches_expected` | `_oracle_matches_expected(datasource, expected_database: str)` |
-| `_describe_details` | `_describe_details(datasource)` |
-| `_get_dataset_datasources` | `_get_dataset_datasources(powerbi, workspace_id: str, dataset_id: str)` |
-| `_discover_gateways` | `_discover_gateways(powerbi, workspace_id: str, dataset_id: str)` |
-| `_get_gateway_datasources` | `_get_gateway_datasources(powerbi, gateway_id: str)` |
-| `_bind_to_gateway` | `_bind_to_gateway(powerbi, workspace_id: str, dataset_id: str, gateway_id: str, datasource_id: str)` |
-| `_verify_gateway_binding` | `_verify_gateway_binding(powerbi, workspace_id: str, dataset_id: str, expected_gateway_id: str, expected_datasource_id: str, expected_database: str, max_attempts: int=10, delay_seconds: int=3)` |
-| `_find_matching_gateway_datasources` | `_find_matching_gateway_datasources(powerbi, gateways, expected_database: str)` |
-| `bind_semantic_models_to_gateway` | `bind_semantic_models_to_gateway(powerbi, workspace_items, config)` |
+## Funciones
 
-## Algoritmo / pseudocódigo
+### `_normalize(value)`
 
-```text
-INICIO
-    PARA CADA Semantic Model
-        obtener datasources del dataset
-        validar si ya apunta al Oracle esperado
-        descubrir gateways compatibles
-        listar datasources del gateway
-        seleccionar datasource Oracle esperado
-        BindToGateway
-        verificar binding mediante reintentos
-    FIN PARA
-FIN
-```
+Implementa la responsabilidad interna `_normalize` del módulo `gateway.py`.
 
-## APIs relacionadas
+**Parámetros**
 
-- `GET /groups/{workspaceId}/datasets/{datasetId}/datasources`
-- `GET /groups/{workspaceId}/datasets/{datasetId}/Default.DiscoverGateways`
-- `GET /gateways/{gatewayId}/datasources`
-- `POST /groups/{workspaceId}/datasets/{datasetId}/Default.BindToGateway`
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `value` | `No especificado` | `Requerido` |
 
-## Entradas y salidas principales
+**Retorno**
 
-| Tipo | Valor |
-|---|---|
-| Entrada | cliente Power BI, workspace_items y config |
-| Salida | resultado de binding y verificación |
+`str`
 
-## Relación con otros módulos
+### `_connection_details(value)`
 
-**Importa módulos internos:** ninguno.
+Obtiene de forma segura el diccionario `connectionDetails` de un datasource.
 
-**Es utilizado por:** ningún otro módulo Python detectado de forma directa.
+**Parámetros**
 
-## Código fuente analizado
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `value` | `No especificado` | `Requerido` |
 
-Archivo: `src/gateway.py`
+**Retorno**
 
-> Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.
+Devuelve diccionario, valor `value`, valor calculado.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `json.loads`.
+
+### `_oracle_matches_expected(datasource, expected_database: str)`
+
+Implementa la responsabilidad interna `_oracle_matches_expected` del módulo `gateway.py`.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `datasource` | `No especificado` | `Requerido` |
+| `expected_database` | `str` | `Requerido` |
+
+**Retorno**
+
+`bool`
+
+### `_describe_details(datasource)`
+
+Implementa la responsabilidad interna `_describe_details` del módulo `gateway.py`.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `datasource` | `No especificado` | `Requerido` |
+
+**Retorno**
+
+`str`
+
+### `_get_dataset_datasources(powerbi, workspace_id: str, dataset_id: str)`
+
+Obtiene los datasources registrados para un modelo semántico.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `powerbi` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+| `dataset_id` | `str` | `Requerido` |
+
+**Retorno**
+
+Devuelve resultado de una llamada.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `powerbi.get`.
+Rutas/API construidas o utilizadas:
+- `f'groups/{workspace_id}/datasets/{dataset_id}/datasources'`
+- `groups/`
+
+### `_discover_gateways(powerbi, workspace_id: str, dataset_id: str)`
+
+Obtiene los gateways compatibles que Power BI expone para un modelo semántico.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `powerbi` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+| `dataset_id` | `str` | `Requerido` |
+
+**Retorno**
+
+Devuelve resultado de una llamada.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `powerbi.get`.
+Rutas/API construidas o utilizadas:
+- `f'groups/{workspace_id}/datasets/{dataset_id}/Default.DiscoverGateways'`
+- `groups/`
+- `/Default.DiscoverGateways`
+
+### `_get_gateway_datasources(powerbi, gateway_id: str)`
+
+Implementa la responsabilidad interna `_get_gateway_datasources` del módulo `gateway.py`.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `powerbi` | `No especificado` | `Requerido` |
+| `gateway_id` | `str` | `Requerido` |
+
+**Retorno**
+
+Devuelve resultado de una llamada.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `powerbi.get`.
+
+### `_bind_to_gateway(powerbi, workspace_id: str, dataset_id: str, gateway_id: str, datasource_id: str)`
+
+Envía la solicitud de vinculación del modelo semántico con un gateway y datasource específicos.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `powerbi` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+| `dataset_id` | `str` | `Requerido` |
+| `gateway_id` | `str` | `Requerido` |
+| `datasource_id` | `str` | `Requerido` |
+
+**Retorno**
+
+Devuelve resultado de una llamada.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `powerbi.post`.
+Rutas/API construidas o utilizadas:
+- `f'groups/{workspace_id}/datasets/{dataset_id}/Default.BindToGateway'`
+- `groups/`
+- `/Default.BindToGateway`
+
+### `_verify_gateway_binding(powerbi, workspace_id: str, dataset_id: str, expected_gateway_id: str, expected_datasource_id: str, expected_database: str, max_attempts: int=10, delay_seconds: int=3)`
+
+Poll dataset datasources until the expected gateway binding is visible.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `powerbi` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+| `dataset_id` | `str` | `Requerido` |
+| `expected_gateway_id` | `str` | `Requerido` |
+| `expected_datasource_id` | `str` | `Requerido` |
+| `expected_database` | `str` | `Requerido` |
+| `max_attempts` | `int` | `10` |
+| `delay_seconds` | `int` | `3` |
+
+**Retorno**
+
+Devuelve tupla.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `print`, `time.sleep`.
+Escribe información de diagnóstico en consola.
+Realiza espera activa entre intentos de polling.
+
+### `_find_matching_gateway_datasources(powerbi, gateways, expected_database: str)`
+
+Localiza datasources de gateway Oracle que coinciden con la base esperada.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `powerbi` | `No especificado` | `Requerido` |
+| `gateways` | `No especificado` | `Requerido` |
+| `expected_database` | `str` | `Requerido` |
+
+**Retorno**
+
+Devuelve tupla.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `print`.
+Escribe información de diagnóstico en consola.
+
+### `bind_semantic_models_to_gateway(powerbi, workspace_items, config)`
+
+Orquesta la vinculación de los modelos semánticos del workspace con el gateway Oracle esperado.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `powerbi` | `No especificado` | `Requerido` |
+| `workspace_items` | `No especificado` | `Requerido` |
+| `config` | `No especificado` | `Requerido` |
+
+**Retorno**
+
+Devuelve valor `results`.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `print`.
+Escribe información de diagnóstico en consola.
+
+**Excepciones explícitas**
+
+- `RuntimeError('expectedOracleDatabase is required for safe automatic gateway binding.')`
+- `RuntimeError(f'Unable to safely bind {len(failures)} semantic model gateway relationship(s).')`
+
+## Archivo fuente
+
+Ruta: `src/gateway.py`
+
+Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.

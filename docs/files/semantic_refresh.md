@@ -1,67 +1,99 @@
 # `semantic_refresh.py`
 
-**Rol:** Refresh de Semantic Models
+Documentación del módulo Python [`src/semantic_refresh.py`](../../src/semantic_refresh.py).
 
-Ejecución y seguimiento del refresh de Semantic Models, equivalente a “Actualizar ahora”.
+## Responsabilidad del módulo
 
-## Responsabilidad dentro de la aplicación
-
-Solicita el refresh después del gateway binding y, si está configurado, espera hasta conocer el resultado final.
+Ejecuta y monitoriza el refresh de Semantic Models.
 
 ## Dependencias
 
 - `time`
 
-## Clases
+## Funciones
 
-Este módulo no define clases.
+### `_dataset_info(powerbi, workspace_id: str, dataset_id: str)`
 
-## Funciones de módulo
+Obtiene las propiedades de un modelo semántico mediante Power BI REST API.
 
-| Función | Firma |
-|---|---|
-| `_dataset_info` | `_dataset_info(powerbi, workspace_id: str, dataset_id: str)` |
-| `_latest_refresh` | `_latest_refresh(powerbi, workspace_id: str, dataset_id: str)` |
-| `refresh_semantic_models` | `refresh_semantic_models(powerbi, workspace_items, config)` |
+**Parámetros**
 
-## Algoritmo / pseudocódigo
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `powerbi` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+| `dataset_id` | `str` | `Requerido` |
 
-```text
-PARA CADA Semantic Model
-    consultar propiedades del dataset
-    SI isRefreshable = false
-        omitir
-    FIN SI
-    POST /refreshes
-    SI waitForRefresh = true
-        consultar último refresh periódicamente
-        salir cuando status sea terminal
-        fallar si corresponde según configuración
-    FIN SI
-FIN PARA
-```
+**Retorno**
 
-## APIs relacionadas
+`dict`
 
-- `GET /groups/{workspaceId}/datasets/{datasetId}`
-- `POST /groups/{workspaceId}/datasets/{datasetId}/refreshes`
-- `GET /groups/{workspaceId}/datasets/{datasetId}/refreshes?$top=1`
+**Comportamiento y efectos**
 
-## Entradas y salidas principales
+Llamadas relevantes: `powerbi.get(f'groups/{workspace_id}/datasets/{dataset_id}').json`, `powerbi.get`.
+Rutas/API construidas o utilizadas:
+- `f'groups/{workspace_id}/datasets/{dataset_id}'`
+- `groups/`
 
-| Tipo | Valor |
-|---|---|
-| Entrada | cliente Power BI + Semantic Models + flags de refresh |
-| Salida | solicitud/estado del refresh |
+### `_latest_refresh(powerbi, workspace_id: str, dataset_id: str)`
 
-## Relación con otros módulos
+Obtiene el refresh más reciente de un modelo semántico.
 
-**Importa módulos internos:** ninguno.
+**Parámetros**
 
-**Es utilizado por:** [`main.py`](main.md)
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `powerbi` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+| `dataset_id` | `str` | `Requerido` |
 
-## Código fuente analizado
+**Retorno**
 
-Archivo: `src/semantic_refresh.py`
+`dict | None`
 
-> Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.
+**Comportamiento y efectos**
+
+Llamadas relevantes: `powerbi.get`.
+Rutas/API construidas o utilizadas:
+- `f'groups/{workspace_id}/datasets/{dataset_id}/refreshes'`
+- `groups/`
+- `/refreshes`
+
+### `refresh_semantic_models(powerbi, workspace_items, config)`
+
+Solicita refresh de los modelos semánticos y, si se configura, espera su estado terminal.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `powerbi` | `No especificado` | `Requerido` |
+| `workspace_items` | `No especificado` | `Requerido` |
+| `config` | `No especificado` | `Requerido` |
+
+**Retorno**
+
+Devuelve lista, valor `results`.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `print`, `powerbi.post`, `time.sleep`.
+Rutas/API construidas o utilizadas:
+- `f'groups/{config.workspace_id}/datasets/{model.id}/refreshes'`
+- `groups/`
+- `/refreshes`
+Escribe información de diagnóstico en consola.
+Realiza espera activa entre intentos de polling.
+
+**Excepciones explícitas**
+
+- `RuntimeError(f'Unable to refresh {len(failures)} semantic model(s).')`
+- `RuntimeError('Power BI reports isRefreshable=false for this semantic model.')`
+- `TimeoutError(f'Refresh did not complete within {config.refresh_timeout_seconds} seconds.')`
+- `RuntimeError(f'Refresh finished with status {status}. {error}')`
+
+## Archivo fuente
+
+Ruta: `src/semantic_refresh.py`
+
+Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.

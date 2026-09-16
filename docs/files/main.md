@@ -1,76 +1,95 @@
 # `main.py`
 
-**Rol:** Orquestación
+Documentación del módulo Python [`src/main.py`](../../src/main.py).
 
-Punto de entrada y orquestador del flujo target-only de post-deploy.
+## Responsabilidad del módulo
 
-## Responsabilidad dentro de la aplicación
-
-Coordina el orden completo del post-deploy. No contiene la lógica detallada de cada remediación; delega en los módulos especializados y mantiene el orden funcional requerido.
+Orquesta la ejecución completa del post-deploy: configuración, autenticación, descubrimiento, gateway binding, refresh, remediación de paginados y corrección de RDL Visuals.
 
 ## Dependencias
 
 - `argparse`
-- `pathlib:Path`
+- `pathlib: Path`
 - `truststore`
-- `auth:get_access_token`
-- `config:load_config`
-- `diagnostics:start_diagnostics`
-- `powerbi_gateway:bind_semantic_models_to_gateway`
-- `semantic_refresh:refresh_semantic_models`
-- `http_clients:ApiClient`
-- `paginated:remediate_paginated_reports`
-- `powerbi_paginated:bind_paginated_reports_to_semantic_models`
-- `remediation:apply_remediation, summarize_discovery`
-- `workspace:discover_paginated_report_definitions, discover_report_definitions, list_fabric_workspace_items`
+- `auth: get_access_token`
+- `config: load_config`
+- `diagnostics: start_diagnostics`
+- `powerbi_gateway: bind_semantic_models_to_gateway`
+- `semantic_refresh: refresh_semantic_models`
+- `http_clients: ApiClient`
+- `paginated: remediate_paginated_reports`
+- `powerbi_paginated: bind_paginated_reports_to_semantic_models`
+- `remediation: apply_remediation, summarize_discovery`
+- `workspace: discover_paginated_report_definitions, discover_report_definitions, list_fabric_workspace_items`
 
-## Clases
+## Funciones
 
-Este módulo no define clases.
+### `build_parser()`
 
-## Funciones de módulo
+Construye el parser de argumentos de línea de comandos de la aplicación.
 
-| Función | Firma |
-|---|---|
-| `build_parser` | `build_parser()` |
-| `_section` | `_section(title: str)` |
-| `main` | `main()` |
-| `_main` | `_main(args, diagnostics)` |
+**Retorno**
 
-## Algoritmo / pseudocódigo
+`argparse.ArgumentParser`
 
-```text
-INICIO
-    cargar configuración
-    iniciar diagnóstico
-    obtener token Fabric y Power BI
-    descubrir objetos del workspace destino
-    leer definiciones de Reports y Paginated Reports
-    bind Semantic Models -> Gateway
-    refresh Semantic Models
-    remediar RDL paginados in-place
-    redescubrir workspace
-    bind runtime Paginated Reports -> Semantic Models
-    redescubrir RDL Visuals
-    corregir itemId/workspaceId de RDL Visuals
-FIN
-```
+**Comportamiento y efectos**
 
-## Entradas y salidas principales
+Llamadas relevantes: `Path`.
 
-| Tipo | Valor |
-|---|---|
-| Entrada | `--config` |
-| Salida | workspace remediado + logs |
+### `_section(title: str)`
 
-## Relación con otros módulos
+Imprime un encabezado visual para separar etapas de la ejecución en consola.
 
-**Importa módulos internos:** [`auth.py`](auth.md), [`config.py`](config.md), [`diagnostics.py`](diagnostics.md), [`http_clients.py`](http_clients.md), [`paginated.py`](paginated.md), [`powerbi_gateway.py`](powerbi_gateway.md), [`powerbi_paginated.py`](powerbi_paginated.md), [`remediation.py`](remediation.md), [`semantic_refresh.py`](semantic_refresh.md), [`workspace.py`](workspace.md)
+**Parámetros**
 
-**Es utilizado por:** ningún otro módulo Python detectado de forma directa.
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `title` | `str` | `Requerido` |
 
-## Código fuente analizado
+**Retorno**
 
-Archivo: `src/main.py`
+`None`
 
-> Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.
+**Comportamiento y efectos**
+
+Llamadas relevantes: `print`.
+Escribe información de diagnóstico en consola.
+
+### `main()`
+
+Punto de entrada de la aplicación; prepara argumentos, diagnósticos y manejo global de errores.
+
+**Retorno**
+
+`None`
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `print`, `Path`.
+Escribe información de diagnóstico en consola.
+
+### `_main(args, diagnostics)`
+
+Orquesta el flujo completo de post-deploy sobre el workspace destino.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `args` | `No especificado` | `Requerido` |
+| `diagnostics` | `No especificado` | `Requerido` |
+
+**Retorno**
+
+`None`
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `print`, `Path`.
+Escribe información de diagnóstico en consola.
+
+## Archivo fuente
+
+Ruta: `src/main.py`
+
+Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.

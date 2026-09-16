@@ -1,74 +1,209 @@
 # `fabric_connections.py`
 
-**Rol:** Binding auxiliar de conexiones Fabric
+Documentación del módulo Python [`src/fabric_connections.py`](../../src/fabric_connections.py).
 
-Resolución auxiliar de conexiones Fabric Oracle y binding de Semantic Models mediante Fabric Connections.
+## Responsabilidad del módulo
 
-> **Nota:** este módulo existe como implementación auxiliar. El flujo activo de `main.py` usa `powerbi_gateway.py` para el binding principal.
-
-## Responsabilidad dentro de la aplicación
-
-Implementa una estrategia de binding usando conexiones Fabric, separada del flujo activo de gateway Power BI.
+Contiene el flujo auxiliar para descubrir y seleccionar conexiones Fabric Oracle y vincular modelos semánticos mediante conexiones Fabric.
 
 ## Dependencias
 
-- `dataclasses:dataclass`
+- `dataclasses: dataclass`
 
 ## Clases
 
 ### `ConnectionMatch`
 
-Clase de datos sin métodos explícitos.
+Estructura de datos con los siguientes campos:
 
-## Funciones de módulo
+| Campo | Tipo | Valor predeterminado |
+|---|---|---|
+| `id` | `str` | `Requerido` |
+| `display_name` | `str` | `Requerido` |
+| `gateway_id` | `str` | `Requerido` |
+| `connectivity_type` | `str` | `Requerido` |
+| `connection_type` | `str` | `Requerido` |
+| `path` | `str` | `Requerido` |
+| `raw` | `dict` | `Requerido` |
 
-| Función | Firma |
-|---|---|
-| `_list_all_connections` | `_list_all_connections(fabric)` |
-| `_normalize` | `_normalize(value)` |
-| `_safe_display_name` | `_safe_display_name(connection: dict)` |
-| `_is_oracle` | `_is_oracle(connection: dict)` |
-| `_is_on_premises_gateway` | `_is_on_premises_gateway(connection: dict)` |
-| `_matches_expected_exact` | `_matches_expected_exact(connection: dict, expected: str)` |
-| `_as_match` | `_as_match(connection: dict)` |
-| `_format_candidate` | `_format_candidate(connection: dict)` |
-| `_resolve_connection` | `_resolve_connection(fabric, expected_oracle_database: str)` |
-| `bind_semantic_models_to_connections` | `bind_semantic_models_to_connections(fabric, workspace_items, config)` |
+## Funciones
 
-## Algoritmo / pseudocódigo
+### `_list_all_connections(fabric)`
 
-```text
-INICIO
-    listar conexiones Fabric disponibles
-    filtrar conexiones Oracle
-    priorizar OnPremisesGateway
-    buscar coincidencia exacta con expectedOracleDatabase
-    PARA CADA Semantic Model
-        bindConnection hacia la conexión seleccionada
-    FIN PARA
-FIN
-```
+Enumera todas las conexiones Fabric visibles para el usuario, siguiendo la paginación.
 
-## APIs relacionadas
+**Parámetros**
 
-- `GET /v1/connections`
-- `POST /v1/workspaces/{workspaceId}/semanticModels/{semanticModelId}/bindConnection`
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `fabric` | `No especificado` | `Requerido` |
 
-## Entradas y salidas principales
+**Retorno**
 
-| Tipo | Valor |
-|---|---|
-| Entrada | cliente Fabric, workspace_items y config |
-| Salida | binding de Semantic Models o error de resolución |
+Devuelve valor `items`.
 
-## Relación con otros módulos
+**Comportamiento y efectos**
 
-**Importa módulos internos:** ninguno.
+Llamadas relevantes: `fabric.get`.
+Rutas/API construidas o utilizadas:
+- `connections`
 
-**Es utilizado por:** ningún otro módulo Python detectado de forma directa.
+### `_normalize(value)`
 
-## Código fuente analizado
+Implementa la responsabilidad interna `_normalize` del módulo `fabric_connections.py`.
 
-Archivo: `src/fabric_connections.py`
+**Parámetros**
 
-> Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `value` | `No especificado` | `Requerido` |
+
+**Retorno**
+
+`str`
+
+### `_safe_display_name(connection: dict)`
+
+Implementa la responsabilidad interna `_safe_display_name` del módulo `fabric_connections.py`.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `connection` | `dict` | `Requerido` |
+
+**Retorno**
+
+`str`
+
+### `_is_oracle(connection: dict)`
+
+Implementa la responsabilidad interna `_is_oracle` del módulo `fabric_connections.py`.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `connection` | `dict` | `Requerido` |
+
+**Retorno**
+
+`bool`
+
+### `_is_on_premises_gateway(connection: dict)`
+
+Implementa la responsabilidad interna `_is_on_premises_gateway` del módulo `fabric_connections.py`.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `connection` | `dict` | `Requerido` |
+
+**Retorno**
+
+`bool`
+
+### `_matches_expected_exact(connection: dict, expected: str)`
+
+Require the shared Oracle connection to match by BOTH name and path.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `connection` | `dict` | `Requerido` |
+| `expected` | `str` | `Requerido` |
+
+**Retorno**
+
+`bool`
+
+### `_as_match(connection: dict)`
+
+Implementa la responsabilidad interna `_as_match` del módulo `fabric_connections.py`.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `connection` | `dict` | `Requerido` |
+
+**Retorno**
+
+`ConnectionMatch`
+
+### `_format_candidate(connection: dict)`
+
+Implementa la responsabilidad interna `_format_candidate` del módulo `fabric_connections.py`.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `connection` | `dict` | `Requerido` |
+
+**Retorno**
+
+`str`
+
+### `_resolve_connection(fabric, expected_oracle_database: str)`
+
+Resuelve la conexión Oracle on-premises que coincide exactamente con la base esperada.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `fabric` | `No especificado` | `Requerido` |
+| `expected_oracle_database` | `str` | `Requerido` |
+
+**Retorno**
+
+`ConnectionMatch`
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `print`.
+Escribe información de diagnóstico en consola.
+
+**Excepciones explícitas**
+
+- `RuntimeError(f"Unable to safely resolve exactly one OnPremisesGateway Oracle connection for '{expected_oracle_database}'. Candidates: {candidates}.")`
+
+### `bind_semantic_models_to_connections(fabric, workspace_items, config)`
+
+Vincula modelos semánticos con una conexión Fabric cuando este flujo auxiliar está habilitado.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `fabric` | `No especificado` | `Requerido` |
+| `workspace_items` | `No especificado` | `Requerido` |
+| `config` | `No especificado` | `Requerido` |
+
+**Retorno**
+
+Devuelve lista, valor `results`.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `print`, `fabric.post`.
+Rutas/API construidas o utilizadas:
+- `f'workspaces/{config.workspace_id}/semanticModels/{model.id}/bindConnection'`
+- `workspaces/`
+Escribe información de diagnóstico en consola.
+
+**Excepciones explícitas**
+
+- `RuntimeError('expectedOracleDatabase is required for Fabric connection binding.')`
+- `RuntimeError('The resolved Fabric connection is missing required metadata.')`
+- `RuntimeError('The resolved Fabric connection is not an OnPremisesGateway connection.')`
+- `RuntimeError(f'Unable to bind {len(failures)} semantic model connection(s) with Fabric REST.')`
+
+## Archivo fuente
+
+Ruta: `src/fabric_connections.py`
+
+Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.

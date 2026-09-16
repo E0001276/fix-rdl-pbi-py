@@ -1,81 +1,268 @@
 # `http_clients.py`
 
-**Rol:** Infraestructura HTTP
+Documentación del módulo Python [`src/http_clients.py`](../../src/http_clients.py).
 
-Cliente HTTP común para Fabric y Power BI, manejo de errores y operaciones de larga duración (LRO).
+## Responsabilidad del módulo
 
-## Responsabilidad dentro de la aplicación
-
-Uniforma autenticación Bearer, construcción de URLs, logging HTTP, propagación de errores y polling de operaciones Fabric.
+Implementa el cliente HTTP compartido y el manejo de operaciones Fabric de larga duración.
 
 ## Dependencias
 
 - `time`
-- `urllib.parse:urljoin`
+- `urllib.parse: urljoin`
 - `requests`
 
 ## Clases
 
 ### `ApiClient`
 
-| Método | Firma |
-|---|---|
-| `__init__` | `__init__(self, base_url: str, token: str, diagnostics=None, token_label: str='ACCESS_TOKEN')` |
-| `_url` | `_url(self, path_or_url: str)` |
-| `_raise_for_status_with_body` | `_raise_for_status_with_body(response)` |
-| `_log` | `_log(self, method: str, url: str, request_json, response)` |
-| `get` | `get(self, path_or_url: str, params=None)` |
-| `post` | `post(self, path_or_url: str, json=None, params=None)` |
-| `patch` | `patch(self, path_or_url: str, json=None, params=None)` |
-| `delete` | `delete(self, path_or_url: str, params=None)` |
-| `_fabric_operation_path` | `_fabric_operation_path(operation_id: str)` |
-| `_fabric_result_path` | `_fabric_result_path(operation_id: str)` |
-| `wait_for_lro_completion` | `wait_for_lro_completion(self, response, timeout_seconds: int=300)` |
-| `get_json_lro_result` | `get_json_lro_result(self, response, timeout_seconds: int=300)` |
+#### `__init__(self, base_url: str, token: str, diagnostics=None, token_label: str='ACCESS_TOKEN')`
 
-## Funciones de módulo
+Inicializa la instancia y sus dependencias/estado interno.
 
-No define funciones de módulo.
+**Parámetros**
 
-## Algoritmo / pseudocódigo
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `base_url` | `str` | `Requerido` |
+| `token` | `str` | `Requerido` |
+| `diagnostics` | `No especificado` | `None` |
+| `token_label` | `str` | `'ACCESS_TOKEN'` |
 
-```text
-INICIO
-    construir URL absoluta
-    agregar Authorization Bearer
-    ejecutar GET/POST/PATCH/DELETE
-    registrar diagnóstico
-    SI status no exitoso
-        incluir body en HTTPError
-    FIN SI
-    SI operación Fabric devuelve 202
-        obtener x-ms-operation-id
-        consultar /operations/{id} hasta estado terminal
-        obtener /result cuando corresponda
-    FIN SI
-FIN
-```
+**Retorno**
 
-## APIs relacionadas
+No devuelve un valor explícito (`None`).
 
-- `GET /v1/operations/{operationId}`
-- `GET /v1/operations/{operationId}/result`
+**Comportamiento y efectos**
 
-## Entradas y salidas principales
+Llamadas relevantes: `self.session.headers.update`.
 
-| Tipo | Valor |
-|---|---|
-| Entrada | base URL, token y request |
-| Salida | `requests.Response` o resultado LRO |
+#### `_url(self, path_or_url: str)`
 
-## Relación con otros módulos
+Convierte una ruta relativa en una URL absoluta usando la URL base del cliente.
 
-**Importa módulos internos:** ninguno.
+**Parámetros**
 
-**Es utilizado por:** [`main.py`](main.md)
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `path_or_url` | `str` | `Requerido` |
 
-## Código fuente analizado
+**Retorno**
 
-Archivo: `src/http_clients.py`
+`str`
 
-> Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.
+#### `_raise_for_status_with_body(response)`
+
+Eleva un `HTTPError` enriquecido con el body de respuesta cuando la solicitud no fue exitosa.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `response` | `No especificado` | `Requerido` |
+
+**Retorno**
+
+No devuelve un valor útil (`None`).
+
+**Excepciones explícitas**
+
+- `requests.HTTPError(f'{response.status_code} {response.reason} for {response.url}; response={body}', response=response)`
+
+#### `_log(self, method: str, url: str, request_json, response)`
+
+Envía request y response al registrador de diagnósticos, si está habilitado.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `method` | `str` | `Requerido` |
+| `url` | `str` | `Requerido` |
+| `request_json` | `No especificado` | `Requerido` |
+| `response` | `No especificado` | `Requerido` |
+
+**Retorno**
+
+No devuelve un valor explícito (`None`).
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `self.diagnostics.log_http`.
+
+#### `get(self, path_or_url: str, params=None)`
+
+Ejecuta una solicitud HTTP GET autenticada y registra la respuesta.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `path_or_url` | `str` | `Requerido` |
+| `params` | `No especificado` | `None` |
+
+**Retorno**
+
+Devuelve valor `response`.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `self._url`, `self.session.get`, `self._log`, `self._raise_for_status_with_body`.
+
+#### `post(self, path_or_url: str, json=None, params=None)`
+
+Ejecuta una solicitud HTTP POST autenticada y registra la respuesta.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `path_or_url` | `str` | `Requerido` |
+| `json` | `No especificado` | `None` |
+| `params` | `No especificado` | `None` |
+
+**Retorno**
+
+Devuelve valor `response`.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `self._url`, `self.session.post`, `self._log`, `self._raise_for_status_with_body`.
+
+#### `patch(self, path_or_url: str, json=None, params=None)`
+
+Ejecuta una solicitud HTTP PATCH autenticada y registra la respuesta.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `path_or_url` | `str` | `Requerido` |
+| `json` | `No especificado` | `None` |
+| `params` | `No especificado` | `None` |
+
+**Retorno**
+
+Devuelve valor `response`.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `self._url`, `self.session.patch`, `self._log`, `self._raise_for_status_with_body`.
+
+#### `delete(self, path_or_url: str, params=None)`
+
+Ejecuta una solicitud HTTP DELETE autenticada y registra la respuesta.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `path_or_url` | `str` | `Requerido` |
+| `params` | `No especificado` | `None` |
+
+**Retorno**
+
+Devuelve valor `response`.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `self._url`, `self.session.delete`, `self._log`, `self._raise_for_status_with_body`.
+
+#### `_fabric_operation_path(operation_id: str)`
+
+Implementa la responsabilidad interna `_fabric_operation_path` del módulo `http_clients.py`.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `operation_id` | `str` | `Requerido` |
+
+**Retorno**
+
+`str`
+
+**Comportamiento y efectos**
+
+Rutas/API construidas o utilizadas:
+- `f'operations/{operation_id}'`
+- `operations/`
+
+#### `_fabric_result_path(operation_id: str)`
+
+Implementa la responsabilidad interna `_fabric_result_path` del módulo `http_clients.py`.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `operation_id` | `str` | `Requerido` |
+
+**Retorno**
+
+`str`
+
+**Comportamiento y efectos**
+
+Rutas/API construidas o utilizadas:
+- `f'operations/{operation_id}/result'`
+- `operations/`
+
+#### `wait_for_lro_completion(self, response, timeout_seconds: int=300)`
+
+Espera la finalización de una operación Fabric de larga duración (LRO).
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `response` | `No especificado` | `Requerido` |
+| `timeout_seconds` | `int` | `300` |
+
+**Retorno**
+
+No devuelve un valor útil (`None`).
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `time.sleep`, `self.get`, `self._fabric_operation_path`.
+Realiza espera activa entre intentos de polling.
+
+**Excepciones explícitas**
+
+- `RuntimeError('Fabric returned HTTP 202 without x-ms-operation-id or Location.')`
+- `TimeoutError(f'Fabric operation did not finish within {timeout_seconds} seconds.')`
+- `RuntimeError(f"Fabric operation {operation_id or ''} finished with status {status}: {state}")`
+
+#### `get_json_lro_result(self, response, timeout_seconds: int=300)`
+
+Return JSON for an immediate response or poll a Fabric LRO to completion.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `response` | `No especificado` | `Requerido` |
+| `timeout_seconds` | `int` | `300` |
+
+**Retorno**
+
+Devuelve resultado de una llamada.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `time.sleep`, `self.get`, `self._fabric_operation_path`, `self.get(result_url).json`, `self.get(self._fabric_result_path(operation_id)).json`, `self._fabric_result_path`.
+Realiza espera activa entre intentos de polling.
+
+**Excepciones explícitas**
+
+- `RuntimeError('Fabric returned HTTP 202 without x-ms-operation-id or Location.')`
+- `TimeoutError(f'Fabric operation did not finish within {timeout_seconds} seconds.')`
+- `RuntimeError(f"Fabric operation {operation_id or ''} finished with status {status}: {state}")`
+- `RuntimeError('Fabric LRO succeeded but no operation id or result Location was available.')`
+
+## Archivo fuente
+
+Ruta: `src/http_clients.py`
+
+Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.

@@ -1,12 +1,10 @@
 # `auth.py`
 
-**Rol:** Infraestructura / autenticación
+Documentación del módulo Python [`src/auth.py`](../../src/auth.py).
 
-Obtención del access token mediante Azure CLI para Fabric y Power BI.
+## Responsabilidad del módulo
 
-## Responsabilidad dentro de la aplicación
-
-Aísla la dependencia de Azure CLI y devuelve únicamente el token requerido por los clientes HTTP.
+Gestiona la autenticación mediante Azure CLI y entrega access tokens para Fabric REST API y Power BI REST API.
 
 ## Dependencias
 
@@ -14,46 +12,46 @@ Aísla la dependencia de Azure CLI y devuelve únicamente el token requerido por
 - `os`
 - `shutil`
 - `subprocess`
-- `pathlib:Path`
+- `pathlib: Path`
 
-## Clases
+## Funciones
 
-Este módulo no define clases.
+### `_find_azure_cli()`
 
-## Funciones de módulo
+Return an Azure CLI command that works on Windows and Linux.
 
-| Función | Firma |
-|---|---|
-| `_find_azure_cli` | `_find_azure_cli()` |
-| `get_access_token` | `get_access_token(resource: str)` |
+**Retorno**
 
-## Algoritmo / pseudocódigo
+`str`
 
-```text
-INICIO
-    localizar ejecutable de Azure CLI
-    ejecutar: az account get-access-token --resource <resource>
-    validar código de salida
-    parsear JSON
-    devolver accessToken
-FIN
-```
+**Comportamiento y efectos**
 
-## Entradas y salidas principales
+Llamadas relevantes: `shutil.which`, `Path`.
 
-| Tipo | Valor |
-|---|---|
-| Entrada | resource URL de Azure AD |
-| Salida | access token como `str` |
+**Excepciones explícitas**
 
-## Relación con otros módulos
+- `FileNotFoundError("Azure CLI was not found. Install Azure CLI and make sure 'az' is available in PATH.")`
 
-**Importa módulos internos:** ninguno.
+### `get_access_token(resource: str)`
 
-**Es utilizado por:** [`main.py`](main.md)
+Obtiene un access token mediante Azure CLI para el recurso solicitado.
 
-## Código fuente analizado
+**Parámetros**
 
-Archivo: `src/auth.py`
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `resource` | `str` | `Requerido` |
 
-> Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.
+**Retorno**
+
+`str`
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `subprocess.run`, `json.loads`.
+
+## Archivo fuente
+
+Ruta: `src/auth.py`
+
+Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.

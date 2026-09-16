@@ -1,108 +1,390 @@
 # `workspace.py`
 
-**Rol:** Acceso y descubrimiento de objetos Fabric
+Documentación del módulo Python [`src/workspace.py`](../../src/workspace.py).
 
-Descubrimiento de objetos Fabric y lectura/actualización de definiciones de Reports y Paginated Reports.
+## Responsabilidad del módulo
 
-> **Restricción del tenant:** `getDefinition` de Paginated Reports se invoca sin especificar explícitamente `format=PaginatedReportDefinition`.
-
-## Responsabilidad dentro de la aplicación
-
-Centraliza el inventario de objetos del workspace y el acceso a definiciones Fabric. Es la base del enfoque target-only porque obtiene IDs y definiciones directamente del destino.
+Descubre items Fabric y gestiona lectura/actualización de sus definiciones.
 
 ## Dependencias
 
 - `base64`
 - `json`
 - `xml.etree.ElementTree`
-- `dataclasses:dataclass, field`
-- `pathlib:PurePosixPath`
+- `dataclasses: dataclass, field`
+- `pathlib: PurePosixPath`
 
 ## Clases
 
 ### `WorkspaceItem`
 
-Clase de datos sin métodos explícitos.
+Estructura de datos con los siguientes campos:
+
+| Campo | Tipo | Valor predeterminado |
+|---|---|---|
+| `id` | `str` | `Requerido` |
+| `name` | `str` | `Requerido` |
+| `kind` | `str` | `Requerido` |
+| `folder_id` | `str` | `''` |
 
 ### `WorkspaceRdlVisual`
 
-Clase de datos sin métodos explícitos.
+Estructura de datos con los siguientes campos:
+
+| Campo | Tipo | Valor predeterminado |
+|---|---|---|
+| `report_id` | `str` | `Requerido` |
+| `report_name` | `str` | `Requerido` |
+| `report_folder_id` | `str` | `Requerido` |
+| `page_name` | `str` | `Requerido` |
+| `definition_part_path` | `str` | `Requerido` |
+| `old_item_id` | `str` | `Requerido` |
+| `old_workspace_id` | `str` | `Requerido` |
+| `parameter_names` | `set[str]` | `field(default_factory=set)` |
 
 ### `PaginatedReportInfo`
 
-Clase de datos sin métodos explícitos.
+Estructura de datos con los siguientes campos:
+
+| Campo | Tipo | Valor predeterminado |
+|---|---|---|
+| `item` | `WorkspaceItem` | `Requerido` |
+| `parameter_names` | `set[str]` | `field(default_factory=set)` |
 
 ### `WorkspaceItems`
 
-| Método | Firma |
-|---|---|
-| `reports` | `reports(self)` |
-| `semantic_models` | `semantic_models(self)` |
-| `paginated_reports` | `paginated_reports(self)` |
+#### `reports(self)`
 
-## Funciones de módulo
+Devuelve los items del workspace cuyo tipo es Report.
 
-| Función | Firma |
-|---|---|
-| `_list_all` | `_list_all(client, path: str)` |
-| `_print_item` | `_print_item(item: WorkspaceItem)` |
-| `list_fabric_workspace_items` | `list_fabric_workspace_items(client, workspace_id: str)` |
-| `_decode_part` | `_decode_part(part)` |
-| `_get_definition` | `_get_definition(client, workspace_id: str, item: WorkspaceItem)` |
-| `_literal_value` | `_literal_value(node)` |
-| `_rdl_visual_parameter_names` | `_rdl_visual_parameter_names(visual)` |
-| `discover_report_definitions` | `discover_report_definitions(client, workspace_id: str, workspace_items)` |
-| `_xml_local_name` | `_xml_local_name(tag: str)` |
-| `_rdl_parameter_names` | `_rdl_parameter_names(xml_text: str)` |
-| `discover_paginated_report_definitions` | `discover_paginated_report_definitions(client, workspace_id: str, workspace_items)` |
-| `get_report_definition` | `get_report_definition(client, workspace_id: str, report_id: str)` |
-| `get_paginated_report_definition` | `get_paginated_report_definition(client, workspace_id: str, report_id: str)` |
-| `update_report_definition` | `update_report_definition(client, workspace_id: str, report_id: str, definition: dict)` |
-| `update_paginated_report_definition` | `update_paginated_report_definition(client, workspace_id: str, report_id: str, definition: dict)` |
+**Retorno**
 
-## Algoritmo / pseudocódigo
+Devuelve valor calculado.
 
-```text
-INICIO
-    listar Reports, Semantic Models y Paginated Reports
-    construir WorkspaceItems
-    PARA CADA Report
-        getDefinition
-        decodificar visual.json
-        detectar rdlVisual y parámetros
-    FIN PARA
-    PARA CADA Paginated Report
-        getDefinition
-        localizar .rdl
-        extraer parámetros
-    FIN PARA
-    exponer helpers get/updateDefinition
-FIN
-```
+#### `semantic_models(self)`
 
-## APIs relacionadas
+Devuelve los items del workspace cuyo tipo es SemanticModel.
 
-- `GET /v1/workspaces/{workspaceId}/reports`
-- `GET /v1/workspaces/{workspaceId}/semanticModels`
-- `GET /v1/workspaces/{workspaceId}/paginatedReports`
-- `POST .../getDefinition`
-- `POST .../updateDefinition`
+**Retorno**
 
-## Entradas y salidas principales
+Devuelve valor calculado.
 
-| Tipo | Valor |
-|---|---|
-| Entrada | cliente Fabric + workspaceId |
-| Salida | inventario, definiciones y objetos de descubrimiento |
+#### `paginated_reports(self)`
 
-## Relación con otros módulos
+Devuelve los items del workspace cuyo tipo es PaginatedReport.
 
-**Importa módulos internos:** ninguno.
+**Retorno**
 
-**Es utilizado por:** [`main.py`](main.md), [`paginated.py`](paginated.md), [`powerbi_paginated.py`](powerbi_paginated.md), [`remediation.py`](remediation.md)
+Devuelve valor calculado.
 
-## Código fuente analizado
+## Funciones
 
-Archivo: `src/workspace.py`
+### `_list_all(client, path: str)`
 
-> Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.
+Obtiene todos los elementos de una colección Fabric siguiendo continuation URI/token.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `client` | `No especificado` | `Requerido` |
+| `path` | `str` | `Requerido` |
+
+**Retorno**
+
+Devuelve valor `items`.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `client.get`, `print`.
+Escribe información de diagnóstico en consola.
+
+### `_print_item(item: WorkspaceItem)`
+
+Imprime información resumida de un item del workspace.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `item` | `WorkspaceItem` | `Requerido` |
+
+**Retorno**
+
+`None`
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `print`.
+Escribe información de diagnóstico en consola.
+
+### `list_fabric_workspace_items(client, workspace_id: str)`
+
+Enumera Reports, Semantic Models y Paginated Reports del workspace destino.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `client` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+
+**Retorno**
+
+Devuelve valor `items`.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `print`.
+Rutas/API construidas o utilizadas:
+- `f'workspaces/{workspace_id}/{endpoint}'`
+- `workspaces/`
+Escribe información de diagnóstico en consola.
+
+### `_decode_part(part)`
+
+Decodifica el payload InlineBase64 de una parte de definición Fabric.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `part` | `No especificado` | `Requerido` |
+
+**Retorno**
+
+Devuelve resultado de una llamada, valor `payload`.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `base64.b64decode`.
+
+### `_get_definition(client, workspace_id: str, item: WorkspaceItem)`
+
+Solicita la definición Fabric de un item y resuelve respuestas síncronas o LRO.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `client` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+| `item` | `WorkspaceItem` | `Requerido` |
+
+**Retorno**
+
+Devuelve resultado de una llamada.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `client.post`, `client.get_json_lro_result`.
+Rutas/API construidas o utilizadas:
+- `f'workspaces/{workspace_id}/reports/{item.id}/getDefinition'`
+- `workspaces/`
+- `f'workspaces/{workspace_id}/paginatedReports/{item.id}/getDefinition'`
+
+**Excepciones explícitas**
+
+- `ValueError(f'Definitions are not loaded for item type {item.kind}.')`
+
+### `_literal_value(node)`
+
+Extrae de forma segura el valor de una expresión `Literal` de un JSON de Power BI.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `node` | `No especificado` | `Requerido` |
+
+**Retorno**
+
+Devuelve resultado de una llamada, str.
+
+### `_rdl_visual_parameter_names(visual)`
+
+Obtiene los nombres de parámetros configurados en un RDL Visual.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `visual` | `No especificado` | `Requerido` |
+
+**Retorno**
+
+Devuelve valor `result`.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `json.loads`.
+
+### `discover_report_definitions(client, workspace_id: str, workspace_items)`
+
+Lee definiciones de Reports y descubre todos los RDL Visuals presentes.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `client` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+| `workspace_items` | `No especificado` | `Requerido` |
+
+**Retorno**
+
+Devuelve valor `visuals`.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `print`, `json.loads`.
+Escribe información de diagnóstico en consola.
+
+### `_xml_local_name(tag: str)`
+
+Obtiene el nombre local de una etiqueta XML ignorando el namespace.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `tag` | `str` | `Requerido` |
+
+**Retorno**
+
+`str`
+
+### `_rdl_parameter_names(xml_text: str)`
+
+Extrae los nombres de parámetros declarados en un documento RDL.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `xml_text` | `str` | `Requerido` |
+
+**Retorno**
+
+Devuelve valor `result`.
+
+### `discover_paginated_report_definitions(client, workspace_id: str, workspace_items)`
+
+Lee definiciones de informes paginados y construye metadatos utilizados para resolverlos.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `client` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+| `workspace_items` | `No especificado` | `Requerido` |
+
+**Retorno**
+
+Devuelve valor `result`.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `print`.
+Escribe información de diagnóstico en consola.
+
+### `get_report_definition(client, workspace_id: str, report_id: str)`
+
+Obtiene la definición Fabric de un Report específico.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `client` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+| `report_id` | `str` | `Requerido` |
+
+**Retorno**
+
+Devuelve resultado de una llamada.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `client.post`, `client.get_json_lro_result`.
+Rutas/API construidas o utilizadas:
+- `f'workspaces/{workspace_id}/reports/{report_id}/getDefinition'`
+- `workspaces/`
+
+### `get_paginated_report_definition(client, workspace_id: str, report_id: str)`
+
+Obtiene la definición Fabric de un Paginated Report específico sin forzar formato explícito.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `client` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+| `report_id` | `str` | `Requerido` |
+
+**Retorno**
+
+Devuelve resultado de una llamada.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `client.post`, `client.get_json_lro_result`.
+Rutas/API construidas o utilizadas:
+- `f'workspaces/{workspace_id}/paginatedReports/{report_id}/getDefinition'`
+- `workspaces/`
+
+### `update_report_definition(client, workspace_id: str, report_id: str, definition: dict)`
+
+Actualiza in-place la definición Fabric de un Report.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `client` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+| `report_id` | `str` | `Requerido` |
+| `definition` | `dict` | `Requerido` |
+
+**Retorno**
+
+Devuelve valor `status_code`.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `client.post`, `client.wait_for_lro_completion`.
+Rutas/API construidas o utilizadas:
+- `f'workspaces/{workspace_id}/reports/{report_id}/updateDefinition'`
+- `workspaces/`
+
+### `update_paginated_report_definition(client, workspace_id: str, report_id: str, definition: dict)`
+
+Actualiza in-place la definición Fabric de un Paginated Report.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `client` | `No especificado` | `Requerido` |
+| `workspace_id` | `str` | `Requerido` |
+| `report_id` | `str` | `Requerido` |
+| `definition` | `dict` | `Requerido` |
+
+**Retorno**
+
+Devuelve valor `status_code`.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `client.post`, `client.wait_for_lro_completion`.
+Rutas/API construidas o utilizadas:
+- `f'workspaces/{workspace_id}/paginatedReports/{report_id}/updateDefinition'`
+- `workspaces/`
+
+## Archivo fuente
+
+Ruta: `src/workspace.py`
+
+Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.

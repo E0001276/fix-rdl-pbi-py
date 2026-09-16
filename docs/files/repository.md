@@ -1,66 +1,86 @@
 # `repository.py`
 
-**Rol:** Descubrimiento local auxiliar
+Documentación del módulo Python [`src/repository.py`](../../src/repository.py).
 
-Descubrimiento auxiliar de elementos y RDL Visuals a partir de un repositorio local.
+## Responsabilidad del módulo
 
-> **Nota:** este módulo trabaja sobre archivos locales del repositorio. El flujo target-only activo de `main.py` descubre objetos directamente en Fabric mediante `workspace.py`.
-
-## Responsabilidad dentro de la aplicación
-
-Permite inventariar definiciones desde disco y modelarlas en estructuras simples.
+Descubre objetos y RDL Visuals desde una copia local del repositorio; es una utilidad auxiliar.
 
 ## Dependencias
 
 - `json`
-- `dataclasses:dataclass`
-- `pathlib:Path`
+- `dataclasses: dataclass`
+- `pathlib: Path`
 
 ## Clases
 
 ### `RepoItem`
 
-Clase de datos sin métodos explícitos.
+Estructura de datos con los siguientes campos:
+
+| Campo | Tipo | Valor predeterminado |
+|---|---|---|
+| `kind` | `str` | `Requerido` |
+| `display_name` | `str` | `Requerido` |
+| `path` | `Path` | `Requerido` |
 
 ### `RdlVisual`
 
-Clase de datos sin métodos explícitos.
+Estructura de datos con los siguientes campos:
 
-## Funciones de módulo
+| Campo | Tipo | Valor predeterminado |
+|---|---|---|
+| `report_name` | `str` | `Requerido` |
+| `page_name` | `str` | `Requerido` |
+| `report_path` | `Path` | `Requerido` |
+| `visual_path` | `Path` | `Requerido` |
+| `old_item_id` | `str` | `Requerido` |
+| `old_workspace_id` | `str` | `Requerido` |
 
-| Función | Firma |
-|---|---|
-| `_platform_display_name` | `_platform_display_name(path: Path)` |
-| `discover_repository` | `discover_repository(repository_root: str)` |
+## Funciones
 
-## Algoritmo / pseudocódigo
+### `_platform_display_name(path: Path)`
 
-```text
-INICIO
-    recorrer repositorio local
-    descubrir .platform y nombres de elementos
-    abrir visual.json
-    detectar visualType = rdlVisual
-    construir objetos RepoItem y RdlVisual
-    devolver inventario local
-FIN
-```
+Lee `.platform` y obtiene el `displayName` del item del repositorio.
 
-## Entradas y salidas principales
+**Parámetros**
 
-| Tipo | Valor |
-|---|---|
-| Entrada | ruta de repositorio local |
-| Salida | inventario de `RepoItem`/`RdlVisual` |
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `path` | `Path` | `Requerido` |
 
-## Relación con otros módulos
+**Retorno**
 
-**Importa módulos internos:** ninguno.
+`str`
 
-**Es utilizado por:** ningún otro módulo Python detectado de forma directa.
+**Comportamiento y efectos**
 
-## Código fuente analizado
+Llamadas relevantes: `json.loads`.
 
-Archivo: `src/repository.py`
+### `discover_repository(repository_root: str)`
 
-> Esta página documenta el comportamiento observado en el archivo fuente actual. No describe comportamiento que no esté representado por este código.
+Descubre Reports, Semantic Models, Paginated Reports y RDL Visuals directamente desde el repositorio local.
+
+**Parámetros**
+
+| Parámetro | Tipo | Predeterminado |
+|---|---|---|
+| `repository_root` | `str` | `Requerido` |
+
+**Retorno**
+
+Devuelve tupla.
+
+**Comportamiento y efectos**
+
+Llamadas relevantes: `Path`, `json.loads`.
+
+**Excepciones explícitas**
+
+- `FileNotFoundError(f'Repository root not found: {root}')`
+
+## Archivo fuente
+
+Ruta: `src/repository.py`
+
+Esta página documenta las clases, funciones y métodos definidos directamente en el archivo. No sustituye el código fuente como referencia de implementación.

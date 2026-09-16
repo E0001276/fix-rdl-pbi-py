@@ -1,27 +1,24 @@
-site_name: fix-rdl-pbi-py - Documentación por módulo
+site_name: fix-rdl-pbi-py - Documentación del código
 docs_dir: files
+
 theme:
   name: readthedocs
+
 nav:
   - Inicio: index.md
   - Arquitectura: arquitectura.md
-  - Módulos:
-      - main.py: main.md
+  - Módulos Python:
       - auth.py: auth.md
       - config.py: config.md
       - diagnostics.py: diagnostics.md
-      - http_clients.py: http_clients.md
-      - workspace.py: workspace.md
-      - powerbi_gateway.py: powerbi_gateway.md
-      - semantic_refresh.py: semantic_refresh.md
-      - paginated.py: paginated.md
-      - powerbi_paginated.py: powerbi_paginated.md
-      - remediation.py: remediation.md
       - fabric_connections.py: fabric_connections.md
       - gateway.py: gateway.md
+      - http_clients.py: http_clients.md
+      - main.py: main.md
+      - paginated.py: paginated.md
+      - powerbi_gateway.py: powerbi_gateway.md
+      - powerbi_paginated.py: powerbi_paginated.md
+      - remediation.py: remediation.md
       - repository.py: repository.md
-markdown_extensions:
-  - tables
-  - fenced_code
-  - toc:
-      permalink: true
+      - semantic_refresh.py: semantic_refresh.md
+      - workspace.py: workspace.md
