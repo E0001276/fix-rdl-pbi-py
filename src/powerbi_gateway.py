@@ -59,6 +59,10 @@ def _discover_gateways(powerbi, workspace_id: str, dataset_id: str) -> list[dict
     return list(unique.values())
 
 
+def _take_over_dataset(powerbi, workspace_id: str, dataset_id: str):
+    return powerbi.post(f"groups/{workspace_id}/datasets/{dataset_id}/Default.TakeOver")
+
+
 def bind_semantic_models_to_gateway(powerbi, workspace_items, config):
     """Mirror the proven .NET BindToGateway flow using target workspace only.
 
@@ -76,7 +80,9 @@ def bind_semantic_models_to_gateway(powerbi, workspace_items, config):
 
     print(f"Workspace: {config.workspace_name} [{config.workspace_id}]")
     print(f"Semantic Models to inspect: {len(models)}")
-    print(f"Expected Oracle source    : {config.expected_oracle_database or '(not configured)'}")
+    print(
+        f"Expected Oracle source    : {config.expected_oracle_database or '(not configured)'}"
+    )
     print("API: Power BI REST API v1.0 (same operation used by the .NET application)")
 
     for index, model in enumerate(models, start=1):
@@ -87,16 +93,21 @@ def bind_semantic_models_to_gateway(powerbi, workspace_items, config):
         print(f"  Folder Id         : {model.folder_id or '(root)'}")
 
         try:
-            datasources = _get_dataset_datasources(powerbi, config.workspace_id, model.id)
+            datasources = _get_dataset_datasources(
+                powerbi, config.workspace_id, model.id
+            )
         except Exception as exc:
             message = f"GET dataset datasources failed: {exc}"
             print(f"  Status            : ERROR\n  Reason            : {message}")
             failures.append(message)
-            results.append(GatewayBindingResult(model.id, model.name, "ERROR", message=message))
+            results.append(
+                GatewayBindingResult(model.id, model.name, "ERROR", message=message)
+            )
             continue
 
         oracle_sources = [
-            ds for ds in datasources
+            ds
+            for ds in datasources
             if _matches_expected_oracle(ds, config.expected_oracle_database)
         ]
         print(f"  Matching Oracle sources: {len(oracle_sources)}")
@@ -114,7 +125,9 @@ def bind_semantic_models_to_gateway(powerbi, workspace_items, config):
             )
             print(f"  Status            : ERROR\n  Reason            : {message}")
             failures.append(message)
-            results.append(GatewayBindingResult(model.id, model.name, "ERROR", message=message))
+            results.append(
+                GatewayBindingResult(model.id, model.name, "ERROR", message=message)
+            )
             continue
 
         # Same pragmatic rule as the .NET app: a target datasource already exposing
@@ -140,12 +153,16 @@ def bind_semantic_models_to_gateway(powerbi, workspace_items, config):
             message = f"Default.DiscoverGateways failed: {exc}"
             print(f"  Status            : ERROR\n  Reason            : {message}")
             failures.append(message)
-            results.append(GatewayBindingResult(model.id, model.name, "ERROR", message=message))
+            results.append(
+                GatewayBindingResult(model.id, model.name, "ERROR", message=message)
+            )
             continue
 
         print(f"  Compatible gateways: {len(gateways)}")
         for gateway in gateways:
-            print(f"    - {gateway.get('name') or '(unnamed)'} [{gateway.get('id') or ''}]")
+            print(
+                f"    - {gateway.get('name') or '(unnamed)'} [{gateway.get('id') or ''}]"
+            )
 
         if len(gateways) != 1:
             message = (
@@ -154,7 +171,9 @@ def bind_semantic_models_to_gateway(powerbi, workspace_items, config):
             )
             print(f"  Status            : AMBIGUOUS\n  Reason            : {message}")
             failures.append(message)
-            results.append(GatewayBindingResult(model.id, model.name, "AMBIGUOUS", message=message))
+            results.append(
+                GatewayBindingResult(model.id, model.name, "AMBIGUOUS", message=message)
+            )
             continue
 
         gateway = gateways[0]
@@ -165,6 +184,31 @@ def bind_semantic_models_to_gateway(powerbi, workspace_items, config):
             "datasourceObjectIds": None,
         }
         print(f"  Target gateway    : {gateway_name or '(unnamed)'} [{gateway_id}]")
+
+        print("  Calling Default.TakeOver...")
+        try:
+            takeover_response = _take_over_dataset(
+                powerbi,
+                config.workspace_id,
+                model.id,
+            )
+            print(f"  TakeOver          : HTTP {takeover_response.status_code}")
+        except Exception as exc:
+            message = f"Default.TakeOver failed: {exc}"
+            print(f"  Status            : ERROR\n  Reason            : {message}")
+            failures.append(message)
+            results.append(
+                GatewayBindingResult(
+                    model.id,
+                    model.name,
+                    "ERROR",
+                    gateway_id=gateway_id,
+                    gateway_name=gateway_name,
+                    message=message,
+                )
+            )
+            continue
+
         print("  Calling Default.BindToGateway...")
         try:
             response = powerbi.post(
