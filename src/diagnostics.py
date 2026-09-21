@@ -42,6 +42,8 @@ class DiagnosticLogger:
         self.run_dir = log_root / f"postdeploy_{stamp}"
         self.http_dir = self.run_dir / "http"
         self.http_dir.mkdir(parents=True, exist_ok=True)
+        self.rdl_dir = self.run_dir / "rdl"
+        self.rdl_dir.mkdir(parents=True, exist_ok=True)
         self.execution_path = self.run_dir / "execution.log"
         self._execution_file = self.execution_path.open("w", encoding="utf-8", buffering=1)
         self._counter = 0
@@ -137,6 +139,15 @@ class DiagnosticLogger:
             (destination / "index.json").write_text(
                 json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8"
             )
+
+    def log_rdl(self, report_name: str, report_id: str, stage: str, xml_text: str):
+        filename = (
+            f"{self._safe_name(report_name)}_{self._safe_name(report_id)}_"
+            f"{self._safe_name(stage)}.rdl"
+        )
+        target = self.rdl_dir / filename
+        target.write_text(xml_text, encoding="utf-8")
+        print(f"[RDL] {stage}: {target}")
 
     def log_http(self, method: str, url: str, request_headers: dict, request_json, response, token_label: str = "ACCESS_TOKEN"):
         self._counter += 1

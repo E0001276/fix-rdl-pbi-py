@@ -389,6 +389,8 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
         before = get_paginated_report_definition(fabric, config.workspace_id, item.id)
         part = _find_rdl_part(before)
         xml_before = _decode_part(part)
+        if getattr(fabric, "diagnostics", None) is not None:
+            fabric.diagnostics.log_rdl(item.name, item.id, "before", xml_before)
         binding_before = _extract_rdl_binding(xml_before)
 
         print("  Current RDL binding:")
@@ -412,6 +414,8 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
         if _is_binding_logically_correct(
             binding_before, config.workspace_name, model.name
         ):
+            if getattr(fabric, "diagnostics", None) is not None:
+                fabric.diagnostics.log_rdl(item.name, item.id, "after", xml_before)
             print("  Logical RDL binding: ALREADY CORRECT")
             print(
                 "  Note               : virtual database GUID is handled by Power BI runtime binding"
@@ -430,6 +434,8 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
             model.id,
             model.name,
         )
+        if getattr(fabric, "diagnostics", None) is not None:
+            fabric.diagnostics.log_rdl(item.name, item.id, "after", xml_after)
         if not changed:
             message = "The RDL was not already correct but no patchable binding fields changed."
             print("  Status             : PATCH_FAILED")

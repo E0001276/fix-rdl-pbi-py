@@ -27,7 +27,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--config",
-        default=str(Path(__file__).parent / "config" / "postdeploy-delta.json"),
+        default=str(Path(__file__).parent / "config" / "postdeploy-uat.json"),
         help="Path to the environment configuration JSON.",
     )
     return parser

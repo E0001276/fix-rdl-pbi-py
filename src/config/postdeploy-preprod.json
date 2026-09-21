@@ -1,0 +1,13 @@
+{
+  "workspaceId": "70fb2c13-3d00-4b2a-a3ff-c5062b5a90fa",
+  "workspaceName": "ws-preprod",
+  "expectedOracleDatabase": "NCI_QA_DB",
+  "failOnUnresolvedRdlVisual": true,
+  "applyRdlVisualFix": true,
+  "applyPaginatedReportFix": true,
+  "failOnUnresolvedPaginatedReport": true,
+  "bindSemanticModelsToConnection": true,
+  "failOnUnresolvedConnectionBinding": true,
+  "bindPaginatedReportsToSemanticModels": true,
+  "failOnUnresolvedPaginatedDatasourceBinding": true
+}
