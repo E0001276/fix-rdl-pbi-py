@@ -101,15 +101,6 @@ def replace_tag_text(xml_text: str, tag_name: str, transform) -> tuple[str, bool
 
 
 
-def find_rdl_part(definition_response: dict) -> dict:
-    parts = definition_response.get("definition", {}).get("parts", [])
-    rdl_parts = [p for p in parts if str(p.get("path", "")).lower().endswith(".rdl")]
-    if len(rdl_parts) != 1:
-        raise RuntimeError(
-            f"Expected exactly one RDL definition part, found {len(rdl_parts)}."
-        )
-    return rdl_parts[0]
-
 
 def extract_rdl_binding(xml_text: str) -> dict:
     result = {

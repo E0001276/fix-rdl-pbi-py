@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 
 import truststore
@@ -5,12 +6,10 @@ import truststore
 from application import run_post_deploy
 from console import print_http_request_summary
 from diagnostics import start_diagnostics
-import argparse
-from pathlib import Path
 
 truststore.inject_into_ssl()
 
-DEFAULT_CONFIG_PATH = Path(__file__).parent / "config" / "delta.yaml"
+DEFAULT_CONFIG_PATH = Path(__file__).parent / "config" / "dev-cicd.yaml"
 
 
 def build_argument_parser() -> argparse.ArgumentParser:
@@ -26,7 +25,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def parse_arguments():
+def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments."""
     return build_argument_parser().parse_args()
 
