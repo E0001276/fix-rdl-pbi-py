@@ -1,6 +1,10 @@
-import json
 from dataclasses import dataclass
 from pathlib import Path
+
+from yaml_utils import load_yaml_mapping
+
+
+REPORTS_MAPPING_PATH = Path(__file__).resolve().parent / "config" / "reports.yaml"
 
 
 @dataclass
@@ -21,15 +25,17 @@ class PostDeployConfig:
     fail_on_refresh_error: bool
     refresh_poll_seconds: int
     refresh_timeout_seconds: int
+    reports_mapping_path: Path
 
 
 def load_config(path: str) -> PostDeployConfig:
-    config_path = Path(path).expanduser().resolve()
-    data = json.loads(config_path.read_text(encoding="utf-8"))
+    """Load one environment configuration from YAML."""
+    config_path, data = load_yaml_mapping(path, "Post-deploy configuration")
+
     return PostDeployConfig(
-        workspace_id=data["workspaceId"],
-        workspace_name=data["workspaceName"],
-        expected_oracle_database=data.get("expectedOracleDatabase", ""),
+        workspace_id=require_text(data, "workspaceId", config_path),
+        workspace_name=require_text(data, "workspaceName", config_path),
+        expected_oracle_database=str(data.get("expectedOracleDatabase", "")).strip(),
         fail_on_unresolved_rdl_visual=data.get("failOnUnresolvedRdlVisual", True),
         apply_rdl_visual_fix=data.get("applyRdlVisualFix", True),
         apply_paginated_report_fix=data.get("applyPaginatedReportFix", True),
@@ -55,4 +61,14 @@ def load_config(path: str) -> PostDeployConfig:
         fail_on_refresh_error=data.get("failOnRefreshError", True),
         refresh_poll_seconds=int(data.get("refreshPollSeconds", 5)),
         refresh_timeout_seconds=int(data.get("refreshTimeoutSeconds", 1800)),
+        reports_mapping_path=REPORTS_MAPPING_PATH,
     )
+
+
+def require_text(data: dict, key: str, config_path: Path) -> str:
+    value = data.get(key)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(
+            f"'{key}' must be a non-empty string in configuration '{config_path}'."
+        )
+    return value.strip()

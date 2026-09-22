@@ -1,4 +1,4 @@
-from paginated import _resolve_semantic_models_for_rdl
+from paginated import resolve_semantic_models_for_rdl
 from workspace import (
     get_paginated_report_definition,
     update_paginated_info_definition,
@@ -8,34 +8,34 @@ from workspace import (
 DEFAULT_POWER_BI_SERVER = "pbiazure://api.powerbi.com/"
 
 
-def _norm(value) -> str:
+def normalize_text(value) -> str:
     return str(value or "").strip().rstrip("/").casefold()
 
 
-def _datasources(payload: dict) -> list[dict]:
+def extract_datasources(payload: dict) -> list[dict]:
     values = payload.get("value", []) if isinstance(payload, dict) else []
     return [item for item in values if isinstance(item, dict)]
 
 
-def _connection_details(datasource: dict) -> dict:
+def parse_connection_details(datasource: dict) -> dict:
     details = datasource.get("connectionDetails")
     return details if isinstance(details, dict) else {}
 
 
-def _runtime_name(datasource: dict) -> str:
+def get_runtime_datasource_name(datasource: dict) -> str:
     return str(datasource.get("name") or datasource.get("datasourceName") or "").strip()
 
 
-def _target_database(semantic_model_id: str) -> str:
+def build_target_database_name(semantic_model_id: str) -> str:
     return f"sobe_wowvirtualserver-{semantic_model_id}"
 
 
 def get_paginated_report_datasources(powerbi, workspace_id: str, report_id: str) -> list[dict]:
     response = powerbi.get(f"groups/{workspace_id}/reports/{report_id}/datasources")
-    return _datasources(response.json())
+    return extract_datasources(response.json())
 
 
-def _get_persisted_rdl_datasource_names(
+def get_persisted_rdl_datasource_names(
     fabric, workspace_id: str, info
 ) -> list[str]:
     """Return persisted RDL datasource names with targeted cache refresh.
@@ -56,8 +56,8 @@ def _get_persisted_rdl_datasource_names(
     return list(info.datasource_names)
 
 
-def _find_runtime_for_rdl(runtime_datasources: list[dict], rdl_name: str):
-    exact = [ds for ds in runtime_datasources if _norm(_runtime_name(ds)) == _norm(rdl_name)]
+def find_runtime_datasource_for_rdl(runtime_datasources: list[dict], rdl_name: str):
+    exact = [ds for ds in runtime_datasources if normalize_text(get_runtime_datasource_name(ds)) == normalize_text(rdl_name)]
     if len(exact) == 1:
         return exact[0]
     # Safe legacy fallback only when Power BI exposes a single datasource.
@@ -66,37 +66,37 @@ def _find_runtime_for_rdl(runtime_datasources: list[dict], rdl_name: str):
     return None
 
 
-def _build_update_details(runtime_datasources: list[dict], datasource_models: dict):
+def build_update_details(runtime_datasources: list[dict], datasource_models: dict):
     details = []
     unresolved_runtime = []
     for rdl_name, model in datasource_models.items():
-        runtime = _find_runtime_for_rdl(runtime_datasources, rdl_name)
+        runtime = find_runtime_datasource_for_rdl(runtime_datasources, rdl_name)
         if runtime is None and len(runtime_datasources) > 1:
             unresolved_runtime.append(rdl_name)
             continue
-        current_server = _connection_details(runtime or {}).get("server") or ""
+        current_server = parse_connection_details(runtime or {}).get("server") or ""
         target_server = current_server or DEFAULT_POWER_BI_SERVER
         details.append(
             {
                 "datasourceName": rdl_name,
                 "connectionDetails": {
                     "server": target_server,
-                    "database": _target_database(model.id),
+                    "database": build_target_database_name(model.id),
                 },
             }
         )
     return details, unresolved_runtime
 
 
-def _runtime_matches_target(runtime_datasources: list[dict], datasource_models: dict) -> bool:
+def runtime_matches_target(runtime_datasources: list[dict], datasource_models: dict) -> bool:
     if not runtime_datasources or not datasource_models:
         return False
     for rdl_name, model in datasource_models.items():
-        runtime = _find_runtime_for_rdl(runtime_datasources, rdl_name)
+        runtime = find_runtime_datasource_for_rdl(runtime_datasources, rdl_name)
         if runtime is None:
             return False
-        database = _connection_details(runtime).get("database")
-        if _norm(database) != _norm(_target_database(model.id)):
+        database = parse_connection_details(runtime).get("database")
+        if normalize_text(database) != normalize_text(build_target_database_name(model.id)):
             return False
     return True
 
@@ -138,7 +138,7 @@ def bind_paginated_reports_to_semantic_models(
             runtime_datasources = get_paginated_report_datasources(
                 powerbi, config.workspace_id, item.id
             )
-            rdl_names = _get_persisted_rdl_datasource_names(
+            rdl_names = get_persisted_rdl_datasource_names(
                 fabric, config.workspace_id, info
             )
         except Exception as exc:
@@ -148,7 +148,7 @@ def bind_paginated_reports_to_semantic_models(
             results.append((item.name, "GET_FAILED"))
             continue
 
-        datasource_resolution, resolution_failures = _resolve_semantic_models_for_rdl(
+        datasource_resolution, resolution_failures = resolve_semantic_models_for_rdl(
             workspace_items, item, rdl_names
         )
         if resolution_failures:
@@ -165,8 +165,8 @@ def bind_paginated_reports_to_semantic_models(
 
         print(f"  Runtime datasources: {len(runtime_datasources)}")
         for ds in runtime_datasources:
-            details = _connection_details(ds)
-            print(f"    - Name           : {_runtime_name(ds) or '(none)'}")
+            details = parse_connection_details(ds)
+            print(f"    - Name           : {get_runtime_datasource_name(ds) or '(none)'}")
             print(f"      Type           : {ds.get('datasourceType') or '(none)'}")
             print(f"      Server         : {details.get('server') or '(none)'}")
             print(f"      Database       : {details.get('database') or '(none)'}")
@@ -191,12 +191,12 @@ def bind_paginated_reports_to_semantic_models(
             results.append((item.name, "ERROR"))
             continue
 
-        if _runtime_matches_target(runtime_datasources, datasource_models):
+        if runtime_matches_target(runtime_datasources, datasource_models):
             print("  Status             : ALREADY CORRECT")
             results.append((item.name, "UNCHANGED"))
             continue
 
-        update_details, unresolved_runtime = _build_update_details(
+        update_details, unresolved_runtime = build_update_details(
             runtime_datasources, datasource_models
         )
         if unresolved_runtime:
@@ -245,17 +245,17 @@ def bind_paginated_reports_to_semantic_models(
             results.append((item.name, "VERIFY_FAILED"))
             continue
 
-        persisted_ok = _runtime_matches_target(persisted, datasource_models)
+        persisted_ok = runtime_matches_target(persisted, datasource_models)
         print("  Runtime verification: " + ("VERIFIED PER DATASOURCE" if persisted_ok else "FAILED"))
         if not persisted_ok:
             observed = " | ".join(
-                f"name={_runtime_name(ds) or '(none)'}; "
-                f"server={_connection_details(ds).get('server')}; "
-                f"database={_connection_details(ds).get('database')}"
+                f"name={get_runtime_datasource_name(ds) or '(none)'}; "
+                f"server={parse_connection_details(ds).get('server')}; "
+                f"database={parse_connection_details(ds).get('database')}"
                 for ds in persisted
             )
             expected = " | ".join(
-                f"{name}={_target_database(model.id)}"
+                f"{name}={build_target_database_name(model.id)}"
                 for name, model in datasource_models.items()
             )
             message = (

@@ -52,7 +52,7 @@ class WorkspaceItems(list):
         return [item for item in self if item.kind == "PaginatedReport"]
 
 
-def _list_all(client, path: str):
+def list_all_items(client, path: str):
     items = []
     next_url = path
     page_number = 1
@@ -77,7 +77,7 @@ def _list_all(client, path: str):
     return items
 
 
-def _print_item(item: WorkspaceItem) -> None:
+def print_workspace_item(item: WorkspaceItem) -> None:
     print(f"    - {item.name}")
     print(f"      Id      : {item.id}")
     print(f"      FolderId: {item.folder_id or '(root)'}")
@@ -93,7 +93,7 @@ def list_fabric_workspace_items(client, workspace_id: str):
 
     for endpoint, kind, label in endpoints:
         print(f"[DISCOVERY] Loading {label}...")
-        values = _list_all(client, f"workspaces/{workspace_id}/{endpoint}")
+        values = list_all_items(client, f"workspaces/{workspace_id}/{endpoint}")
         print(f"  Found: {len(values)}")
 
         for value in values:
@@ -104,21 +104,21 @@ def list_fabric_workspace_items(client, workspace_id: str):
                 folder_id=value.get("folderId") or "",
             )
             items.append(item)
-            _print_item(item)
+            print_workspace_item(item)
 
         print()
 
     return items
 
 
-def _decode_part(part):
+def decode_definition_part(part):
     payload = part.get("payload", "")
     if part.get("payloadType") == "InlineBase64":
         return base64.b64decode(payload).decode("utf-8-sig")
     return payload
 
 
-def _get_definition(client, workspace_id: str, item: WorkspaceItem):
+def get_item_definition(client, workspace_id: str, item: WorkspaceItem):
     if item.kind == "Report":
         path = f"workspaces/{workspace_id}/reports/{item.id}/getDefinition"
     elif item.kind == "SemanticModel":
@@ -137,20 +137,20 @@ def _get_definition(client, workspace_id: str, item: WorkspaceItem):
     return client.get_json_lro_result(response)
 
 
-def _literal_value(node):
+def get_literal_value(node):
     try:
         return node["expr"]["Literal"]["Value"].strip("'")
     except (KeyError, TypeError, AttributeError):
         return ""
 
 
-def _rdl_visual_parameter_names(visual):
+def get_rdl_visual_parameter_names(visual):
     result = set()
     try:
         mappings_value = visual["objects"]["parameterMapping"][0]["properties"][
             "mappings"
         ]
-        raw = _literal_value(mappings_value)
+        raw = get_literal_value(mappings_value)
         if raw:
             for mapping in json.loads(raw):
                 name = mapping.get("paramName")
@@ -161,20 +161,20 @@ def _rdl_visual_parameter_names(visual):
     return result
 
 
-def _legacy_rdl_visual_reference(visual):
+def get_legacy_rdl_visual_reference(visual):
     old_item_id = ""
     old_workspace_id = ""
 
     try:
         properties = visual["objects"]["reportInfo"][0]["properties"]
 
-        old_item_id = _literal_value(properties.get("reportId", {}))
-        old_workspace_id = _literal_value(properties.get("workspaceId", {}))
+        old_item_id = get_literal_value(properties.get("reportId", {}))
+        old_workspace_id = get_literal_value(properties.get("workspaceId", {}))
 
         if not old_item_id or not old_workspace_id:
             ref = properties.get("reference", {}).get("byReference", {})
-            old_item_id = old_item_id or _literal_value(ref.get("itemId", {}))
-            old_workspace_id = old_workspace_id or _literal_value(
+            old_item_id = old_item_id or get_literal_value(ref.get("itemId", {}))
+            old_workspace_id = old_workspace_id or get_literal_value(
                 ref.get("workspaceId", {})
             )
     except (KeyError, IndexError, TypeError):
@@ -183,7 +183,7 @@ def _legacy_rdl_visual_reference(visual):
     return old_item_id, old_workspace_id
 
 
-def _discover_legacy_report_visuals(report, path, text):
+def discover_legacy_report_visuals(report, path, text):
     visuals = []
 
     try:
@@ -210,7 +210,7 @@ def _discover_legacy_report_visuals(report, path, text):
             if visual.get("visualType") != "rdlVisual":
                 continue
 
-            old_item_id, old_workspace_id = _legacy_rdl_visual_reference(visual)
+            old_item_id, old_workspace_id = get_legacy_rdl_visual_reference(visual)
 
             visuals.append(
                 WorkspaceRdlVisual(
@@ -221,7 +221,7 @@ def _discover_legacy_report_visuals(report, path, text):
                     definition_part_path=path,
                     old_item_id=old_item_id,
                     old_workspace_id=old_workspace_id,
-                    parameter_names=_rdl_visual_parameter_names(visual),
+                    parameter_names=get_rdl_visual_parameter_names(visual),
                     definition_format="LegacyReportJson",
                     legacy_section_name=section_name,
                     legacy_visual_name=config.get("name") or "",
@@ -246,7 +246,7 @@ def discover_report_definitions(
         print(f"  Folder Id : {report.folder_id or '(root)'}")
         print("  Loading definition...")
 
-        definition_response = _get_definition(client, workspace_id, report)
+        definition_response = get_item_definition(client, workspace_id, report)
         if client.diagnostics is not None:
             client.diagnostics.log_item_definition(
                 report.kind, report.name, report.id, definition_response
@@ -262,7 +262,7 @@ def discover_report_definitions(
             if not path.lower().endswith(".json"):
                 continue
             try:
-                decoded[path] = _decode_part(part)
+                decoded[path] = decode_definition_part(part)
             except (UnicodeDecodeError, ValueError):
                 print(f"  [WARN] Could not decode JSON part: {path}")
 
@@ -303,8 +303,8 @@ def discover_report_definitions(
                 ref = visual["objects"]["reportInfo"][0]["properties"]["reference"][
                     "byReference"
                 ]
-                old_item_id = _literal_value(ref.get("itemId", {}))
-                old_workspace_id = _literal_value(ref.get("workspaceId", {}))
+                old_item_id = get_literal_value(ref.get("itemId", {}))
+                old_workspace_id = get_literal_value(ref.get("workspaceId", {}))
             except (KeyError, IndexError, TypeError):
                 pass
 
@@ -317,7 +317,7 @@ def discover_report_definitions(
                 definition_part_path=path,
                 old_item_id=old_item_id,
                 old_workspace_id=old_workspace_id,
-                parameter_names=_rdl_visual_parameter_names(visual),
+                parameter_names=get_rdl_visual_parameter_names(visual),
             )
             report_visuals.append(workspace_visual)
             visuals.append(workspace_visual)
@@ -325,7 +325,7 @@ def discover_report_definitions(
         for path, text in decoded.items():
             if PurePosixPath(path).name != "report.json":
                 continue
-            legacy_visuals = _discover_legacy_report_visuals(report, path, text)
+            legacy_visuals = discover_legacy_report_visuals(report, path, text)
             report_visuals.extend(legacy_visuals)
             visuals.extend(legacy_visuals)
 
@@ -361,7 +361,7 @@ def discover_semantic_model_definitions(client, workspace_id: str, workspace_ite
         print(f"  Folder Id         : {model.folder_id or '(root)'}")
         print("  Loading TMDL definition...")
 
-        definition_response = _get_definition(client, workspace_id, model)
+        definition_response = get_item_definition(client, workspace_id, model)
         parts = definition_response.get("definition", {}).get("parts", [])
         print(f"  Definition parts  : {len(parts)}")
 
@@ -376,11 +376,11 @@ def discover_semantic_model_definitions(client, workspace_id: str, workspace_ite
 
 
 
-def _xml_local_name(tag: str) -> str:
+def xml_local_name(tag: str) -> str:
     return tag.rsplit("}", 1)[-1]
 
 
-def _rdl_parameter_names(xml_text: str):
+def get_rdl_parameter_names(xml_text: str):
     result = set()
     try:
         root = ET.fromstring(xml_text)
@@ -388,14 +388,14 @@ def _rdl_parameter_names(xml_text: str):
         return result
 
     for element in root.iter():
-        if _xml_local_name(element.tag) == "ReportParameter":
+        if xml_local_name(element.tag) == "ReportParameter":
             name = element.attrib.get("Name")
             if name:
                 result.add(name)
     return result
 
 
-def _rdl_datasource_names(xml_text: str):
+def get_rdl_datasource_names(xml_text: str):
     result = []
     seen = set()
     try:
@@ -404,7 +404,7 @@ def _rdl_datasource_names(xml_text: str):
         return result
 
     for element in root.iter():
-        if _xml_local_name(element.tag) != "DataSource":
+        if xml_local_name(element.tag) != "DataSource":
             continue
         name = str(element.attrib.get("Name") or "").strip()
         key = name.casefold()
@@ -434,11 +434,11 @@ def update_paginated_info_definition(
             f"found {len(rdl_parts)}."
         )
 
-    rdl_text = _decode_part(rdl_parts[0])
+    rdl_text = decode_definition_part(rdl_parts[0])
     info.definition_response = definition_response
     info.rdl_text = rdl_text
-    info.parameter_names = _rdl_parameter_names(rdl_text)
-    info.datasource_names = _rdl_datasource_names(rdl_text)
+    info.parameter_names = get_rdl_parameter_names(rdl_text)
+    info.datasource_names = get_rdl_datasource_names(rdl_text)
     info.definition_current = current
     return info
 
@@ -456,7 +456,7 @@ def discover_paginated_report_definitions(client, workspace_id: str, workspace_i
         print(f"  Folder Id : {report.folder_id or '(root)'}")
         print("  Loading RDL definition...")
 
-        definition_response = _get_definition(client, workspace_id, report)
+        definition_response = get_item_definition(client, workspace_id, report)
         parts = definition_response.get("definition", {}).get("parts", [])
         print(f"  Definition parts: {len(parts)}")
 

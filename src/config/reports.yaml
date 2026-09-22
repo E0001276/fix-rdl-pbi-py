@@ -1,0 +1,108 @@
+version: 1
+reports:
+- report: Transferencias FOVISSSTE
+  pages:
+  - page: Reporte paginado Aceptado
+    paginatedReport: Transferencias FOVISSSTE Aceptada
+  - page: Reporte paginado Rechazado
+    paginatedReport: Transferencias FOVISSSTE Rechazado
+  - page: Reporte paginado Recibidos
+    paginatedReport: Transferencias FOVISSSTE Recibidos
+- report: Devolución de Pagos SJL
+  pages:
+  - page: Reporte paginado Rechazados
+    paginatedReport: Devolución de Pagos SJL Rechazada
+  - page: Reporte paginado Recibidos
+    paginatedReport: Devolución de Pagos SJL Recibidas
+  - page: Reporte paginado Aceptado
+    paginatedReport: Devolución de Pagos SJL Aceptada
+- report: Solicitud Marca-Desmarca
+  pages:
+  - page: Reporte paginado
+    paginatedReport: PORTABILIDAD
+- report: Dev de Saldos Excedentes FOVISSSTE
+  pages:
+  - page: Reporte paginado Rechazados
+    paginatedReport: Dev de Saldos Excedentes FOVISSSTE Rechazada
+  - page: Reporte paginado Aceptados
+    paginatedReport: Dev de Saldos Excedentes FOVISSSTE Aceptada
+  - page: Reporte paginado Recibidos
+    paginatedReport: Dev de Saldos Excedentes FOVISSSTE Recibidos
+- report: Desmarca FOVISSSTE
+  pages:
+  - page: Reporte paginado Recibidos
+    paginatedReport: Desmarca FOVISSSTE Recibidas
+  - page: Reporte paginado Aceptados
+    paginatedReport: Desmarca FOVISSSTE Aceptada
+  - page: Reporte paginado Rechazados
+    paginatedReport: Desmarca FOVISSSTE Rechazada
+- report: FOVISSSTE
+  pages:
+  - page: Cifras de Desmarca FOVISSSTE Paginado
+    paginatedReport: Desmarca FOVISSSTE Global
+  - page: Detalle Desmarca FOVISSSTE Exportable
+    paginatedReport: Desmarca FOVISSSTE Detalle
+  - page: TR_Reporte paginado Aceptado
+    paginatedReport: Transferencias FOVISSSTE Aceptada
+  - page: TR_Reporte paginado Rechazado
+    paginatedReport: Transferencias FOVISSSTE Rechazado
+  - page: TR_Reporte paginado Recibidos
+    paginatedReport: Transferencias FOVISSSTE Recibidos
+  - page: Detalle Desmarca FOVISSSTE Paginado
+    paginatedReport: Desmarca FOVISSSTE Detalle
+  - page: Detalle Dev_Saldos Excedentes paginado
+    paginatedReport: Detalle Dev de Saldos Excedentes FOVISSSTE
+- report: Desmarca Créditos de Vivienda
+  pages:
+  - page: Reporte paginado Rechazado
+    paginatedReport: Reporte de Desmarca Rechazado
+  - page: Reporte paginado Recibido
+    paginatedReport: Reporte de Desmarca Recibidos
+  - page: Reporte paginado Aceptado
+    paginatedReport: Reporte de Desmarca Aceptado
+- report: Dev de Saldos Excedentes
+  pages:
+  - page: Reporte Paginado Rechazadas_TAAG
+    paginatedReport: Dev de Saldos Excedentes Rechazado TAAG
+  - page: Reporte Paginado Aceptadas_43Bis
+    paginatedReport: Dev de Saldos Excedentes Aceptado 43BIS
+  - page: Reporte Paginado Recibidas_TAAG
+    paginatedReport: Dev de Saldos Excedentes Recibido TAAG
+  - page: Reporte Paginado Aceptadas_TAAG
+    paginatedReport: Dev de Saldos Excedentes Aceptado TAAG
+  - page: Reporte Paginado Recibidos_43Bis
+    paginatedReport: Dev de Saldos Excedentes Recibidos 43BIS
+  - page: Reporte Paginado Rechazado_43Bis
+    paginatedReport: Dev de Saldos Excedentes Rechazado 43BIS
+- report: Solicitud de Marca por 43BIS
+  pages:
+  - page: Reporte paginado Rechazado
+    paginatedReport: Solicitud de Marca por 43BIS_Rechazado
+  - page: Reporte paginado Recibido
+    paginatedReport: Solicitud de Marca por 43BIS_Recibidos
+  - page: Reporte paginado Aceptado
+    paginatedReport: Solicitud de Marca por 43BIS_Aceptado
+- report: Transferencia de Acreditados
+  pages:
+  - page: Reporte Paginado Rechazadoss
+    paginatedReport: Transferencia de Acreditados Rechazado
+  - page: Reporte Paginado Recibidos
+    paginatedReport: Transferencia de Acreditados Recibidos
+  - page: Reporte Paginado Aceptadas
+    paginatedReport: Transferencia Acreditados Aceptada
+- report: Trans Anualidad Garantizada
+  pages:
+  - page: Reporte Paginado Recibidos
+    paginatedReport: Anualidad Garantizada Recibidos
+  - page: Reporte Paginado Aceptado
+    paginatedReport: Anualidad Garantizada Aceptada
+  - page: Reporte Paginado Rechazado
+    paginatedReport: Anualidad Garantizada Rechazado
+- report: Trans Uso de Garantía por 43BIS
+  pages:
+  - page: Reporte Paginado Rechazados
+    paginatedReport: Trans Uso de Garantía por 43BIS_Rechazado
+  - page: Reporte Paginado Recibidos
+    paginatedReport: Trans Uso de Garantía por 43BIS_Recibidos
+  - page: Reporte Paginado Aceptados
+    paginatedReport: Trans Uso de Garantía por 43BIS_Aceptado

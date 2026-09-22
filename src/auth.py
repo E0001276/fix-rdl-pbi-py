@@ -5,7 +5,7 @@ import subprocess
 from pathlib import Path
 
 
-def _find_azure_cli() -> str:
+def find_azure_cli() -> str:
     """Return an Azure CLI command that works on Windows and Linux."""
     names = ["az.cmd", "az.exe", "az"] if os.name == "nt" else ["az"]
     for name in names:
@@ -28,7 +28,7 @@ def _find_azure_cli() -> str:
 
 
 def get_access_token(resource: str) -> str:
-    az_command = _find_azure_cli()
+    az_command = find_azure_cli()
     result = subprocess.run(
         [
             az_command,

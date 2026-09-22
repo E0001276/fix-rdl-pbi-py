@@ -12,11 +12,11 @@ class GatewayBindingResult:
     message: str = ""
 
 
-def _norm(value) -> str:
+def normalize_text(value) -> str:
     return str(value or "").strip().casefold()
 
 
-def _details(value) -> dict:
+def parse_connection_details(value) -> dict:
     if isinstance(value, dict):
         return value
     if isinstance(value, str):
@@ -28,26 +28,26 @@ def _details(value) -> dict:
     return {}
 
 
-def _matches_expected_oracle(datasource: dict, expected_database: str) -> bool:
-    if _norm(datasource.get("datasourceType")) != "oracle":
+def matches_expected_oracle(datasource: dict, expected_database: str) -> bool:
+    if normalize_text(datasource.get("datasourceType")) != "oracle":
         return False
-    expected = _norm(expected_database)
+    expected = normalize_text(expected_database)
     if not expected:
         return True
-    details = _details(datasource.get("connectionDetails"))
+    details = parse_connection_details(datasource.get("connectionDetails"))
     return expected in {
-        _norm(details.get("server")),
-        _norm(details.get("database")),
+        normalize_text(details.get("server")),
+        normalize_text(details.get("database")),
     }
 
 
-def _get_dataset_datasources(powerbi, workspace_id: str, dataset_id: str) -> list[dict]:
+def get_dataset_datasources(powerbi, workspace_id: str, dataset_id: str) -> list[dict]:
     response = powerbi.get(f"groups/{workspace_id}/datasets/{dataset_id}/datasources")
     value = response.json().get("value", [])
     return [item for item in value if isinstance(item, dict)]
 
 
-def _discover_gateways(powerbi, workspace_id: str, dataset_id: str) -> list[dict]:
+def discover_gateways(powerbi, workspace_id: str, dataset_id: str) -> list[dict]:
     response = powerbi.get(
         f"groups/{workspace_id}/datasets/{dataset_id}/Default.DiscoverGateways"
     )
@@ -55,11 +55,11 @@ def _discover_gateways(powerbi, workspace_id: str, dataset_id: str) -> list[dict
     unique = {}
     for item in value:
         if isinstance(item, dict) and item.get("id"):
-            unique.setdefault(_norm(item["id"]), item)
+            unique.setdefault(normalize_text(item["id"]), item)
     return list(unique.values())
 
 
-def _take_over_dataset(powerbi, workspace_id: str, dataset_id: str):
+def take_over_dataset(powerbi, workspace_id: str, dataset_id: str):
     return powerbi.post(f"groups/{workspace_id}/datasets/{dataset_id}/Default.TakeOver")
 
 
@@ -93,7 +93,7 @@ def bind_semantic_models_to_gateway(powerbi, workspace_items, config):
         print(f"  Folder Id         : {model.folder_id or '(root)'}")
 
         try:
-            datasources = _get_dataset_datasources(
+            datasources = get_dataset_datasources(
                 powerbi, config.workspace_id, model.id
             )
         except Exception as exc:
@@ -108,11 +108,11 @@ def bind_semantic_models_to_gateway(powerbi, workspace_items, config):
         oracle_sources = [
             ds
             for ds in datasources
-            if _matches_expected_oracle(ds, config.expected_oracle_database)
+            if matches_expected_oracle(ds, config.expected_oracle_database)
         ]
         print(f"  Matching Oracle sources: {len(oracle_sources)}")
         for ds in oracle_sources:
-            d = _details(ds.get("connectionDetails"))
+            d = parse_connection_details(ds.get("connectionDetails"))
             print(f"    - server      : {d.get('server') or '(none)'}")
             print(f"      database    : {d.get('database') or '(none)'}")
             print(f"      gatewayId   : {ds.get('gatewayId') or '(not bound)'}")
@@ -148,7 +148,7 @@ def bind_semantic_models_to_gateway(powerbi, workspace_items, config):
             continue
 
         try:
-            gateways = _discover_gateways(powerbi, config.workspace_id, model.id)
+            gateways = discover_gateways(powerbi, config.workspace_id, model.id)
         except Exception as exc:
             message = f"Default.DiscoverGateways failed: {exc}"
             print(f"  Status            : ERROR\n  Reason            : {message}")
@@ -187,7 +187,7 @@ def bind_semantic_models_to_gateway(powerbi, workspace_items, config):
 
         print("  Calling Default.TakeOver...")
         try:
-            takeover_response = _take_over_dataset(
+            takeover_response = take_over_dataset(
                 powerbi,
                 config.workspace_id,
                 model.id,

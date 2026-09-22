@@ -1,0 +1,11 @@
+workspaceId: b066ad04-3a06-4d90-a5c8-e08f9efe48ab
+workspaceName: ws-gamma-cicd
+expectedOracleDatabase: NCI_QA_DB
+failOnUnresolvedRdlVisual: true
+applyRdlVisualFix: true
+applyPaginatedReportFix: true
+failOnUnresolvedPaginatedReport: true
+bindSemanticModelsToConnection: true
+failOnUnresolvedConnectionBinding: true
+bindPaginatedReportsToSemanticModels: true
+failOnUnresolvedPaginatedDatasourceBinding: true

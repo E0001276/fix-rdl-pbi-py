@@ -1,0 +1,16 @@
+workspaceId: REPLACE_WITH_WS_ALPHA_CICD_ID
+workspaceName: ws-alpha-cicd
+expectedOracleDatabase: NCI_QA_DB
+failOnUnresolvedRdlVisual: true
+applyRdlVisualFix: true
+applyPaginatedReportFix: true
+failOnUnresolvedPaginatedReport: true
+bindSemanticModelsToConnection: true
+failOnUnresolvedConnectionBinding: true
+bindPaginatedReportsToSemanticModels: true
+failOnUnresolvedPaginatedDatasourceBinding: true
+refreshSemanticModels: true
+waitForRefresh: false
+failOnRefreshError: true
+refreshPollSeconds: 5
+refreshTimeoutSeconds: 1800
