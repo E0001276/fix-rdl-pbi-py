@@ -6,6 +6,7 @@ import unicodedata
 from workspace import get_report_definition, update_report_definition
 
 _GENERIC_PAGE_WORDS = {"reporte", "report", "paginado", "paginada", "paginated"}
+_STOP_WORDS = {"de", "del", "la", "el", "los", "las", "por", "para", "y"}
 
 _CANONICAL_WORDS = {
     "aceptado": "aceptado",
@@ -31,11 +32,97 @@ def _plain(value: str) -> str:
     return " ".join(value.split())
 
 
+def _edit_distance_at_most_one(left: str, right: str) -> bool:
+    """Return True when two tokens differ by at most one edit.
+
+    This is intentionally narrow.  It is used only to normalize known status
+    words (for example, ``rechazadoss`` -> ``rechazados``), never for arbitrary
+    report names.
+    """
+    if left == right:
+        return True
+    if abs(len(left) - len(right)) > 1:
+        return False
+
+    if len(left) == len(right):
+        differences = sum(a != b for a, b in zip(left, right))
+        return differences <= 1
+
+    shorter, longer = (left, right) if len(left) < len(right) else (right, left)
+    i = j = edits = 0
+    while i < len(shorter) and j < len(longer):
+        if shorter[i] == longer[j]:
+            i += 1
+            j += 1
+            continue
+        edits += 1
+        if edits > 1:
+            return False
+        j += 1
+    return True
+
+
+def _canonical_token(token: str) -> str:
+    direct = _CANONICAL_WORDS.get(token)
+    if direct:
+        return direct
+
+    # Tolerate a one-character typo only for the finite status vocabulary.
+    # This fixes labels such as ``Rechazadoss`` without introducing fuzzy
+    # matching across arbitrary report names.
+    for known, canonical in _CANONICAL_WORDS.items():
+        if len(token) >= 6 and _edit_distance_at_most_one(token, known):
+            return canonical
+    return token
+
+
 def _tokens(value: str, drop_generic: bool = False):
     tokens = _plain(value).split()
     if drop_generic:
         tokens = [token for token in tokens if token not in _GENERIC_PAGE_WORDS]
-    return [_CANONICAL_WORDS.get(token, token) for token in tokens]
+    return [_canonical_token(token) for token in tokens]
+
+
+def _content_tokens(value: str, drop_generic: bool = False):
+    return [
+        token
+        for token in _tokens(value, drop_generic=drop_generic)
+        if token not in _STOP_WORDS
+    ]
+
+
+def _token_matches(page_token: str, candidate_token: str) -> bool:
+    """Match exact tokens plus conservative abbreviations from page labels.
+
+    Short page tokens such as ``TR`` may be author-defined abbreviations for a
+    longer artifact token such as ``Transferencias``.  An abbreviation is only
+    accepted when it is a prefix with at least two characters; final resolution
+    still requires a unique candidate.
+    """
+    if page_token == candidate_token:
+        return True
+    if 2 <= len(page_token) <= 5 and candidate_token.startswith(page_token):
+        return True
+    return False
+
+
+def _all_page_tokens_match(page_tokens, candidate_tokens) -> bool:
+    if not page_tokens:
+        return False
+    unmatched = list(candidate_tokens)
+    for page_token in page_tokens:
+        index = next(
+            (
+                i
+                for i, candidate_token in enumerate(unmatched)
+                if _token_matches(page_token, candidate_token)
+            ),
+            None,
+        )
+        if index is None:
+            return False
+        unmatched.pop(index)
+    return True
 
 
 
@@ -405,34 +492,33 @@ def _multiset_remove_prefix(candidate_tokens, prefix_tokens):
 
 
 def _target_workspace_discovery(paginated_infos, visual):
-    """Resolve an RDL Visual using only artifacts present in the target workspace.
+    """Resolve an RDL Visual using only artifacts in the target workspace.
 
-    This is the fallback for stale/deleted itemIds.  It deliberately does not
-    depend on preconfigured GUID mappings or on another workspace being
-    accessible.  Discovery uses the target folder, the main report's logical
-    family, the RDL Visual parameter contract, and finally a deterministic
-    variant token match between the Power BI page and the paginated report
-    names that actually exist in the target workspace.
-
-    The resolver only returns a result when the candidate is unique.  Ambiguous
-    cases remain unresolved so failOnUnresolvedRdlVisual can stop the deploy.
+    Evidence is applied from strongest to weakest: target folder, exact
+    parameter contract, report family, and page variant.  Report-family
+    comparison ignores grammatical stop words, while the page variant supports
+    two deliberately narrow normalizations needed by real Power BI artifacts:
+    status-word typos and short prefix abbreviations (for example ``TR`` ->
+    ``Transferencias``).  A result is returned only when exactly one candidate
+    satisfies the available evidence.
     """
     candidates = _folder_candidates(paginated_infos, visual)
     steps = []
 
     if visual.report_folder_id:
         same_folder_count = sum(
-            1 for info in paginated_infos
+            1
+            for info in paginated_infos
             if info.item.folder_id == visual.report_folder_id
         )
         if same_folder_count:
             steps.append(f"same-folder candidates={len(candidates)}")
 
-    # 1) Parameter contract is strong target-only metadata.  Narrow only when
-    #    at least one exact match exists; otherwise keep the current candidate set.
+    # 1) Exact parameter contract is strong target-only metadata.
     if visual.parameter_names:
         exact_params = [
-            info for info in candidates
+            info
+            for info in candidates
             if info.parameter_names == visual.parameter_names
         ]
         if len(exact_params) == 1:
@@ -444,18 +530,17 @@ def _target_workspace_discovery(paginated_infos, visual):
             candidates = exact_params
             steps.append(f"exact-parameter candidates={len(candidates)}")
 
-    # 2) Discover the report family from names that exist in this workspace.
-    #    Example:
-    #      main report: Trans Uso de Garantía por 43BIS
-    #      candidates : Trans Uso de Garantía por 43BIS_Aceptado / ...
-    main_tokens = _tokens(visual.report_name)
+    # 2) Report family.  Ignore only grammatical stop words so harmless naming
+    # differences such as "Transferencia Acreditados" vs
+    # "Transferencia de Acreditados" remain in the same logical family.
+    main_tokens = _content_tokens(visual.report_name)
+    main_set = set(main_tokens)
     family = []
-    for info in candidates:
-        candidate_tokens = _tokens(info.item.name)
-        if candidate_tokens[: len(main_tokens)] == main_tokens:
-            family.append(info)
-        elif main_tokens and set(main_tokens).issubset(set(candidate_tokens)):
-            family.append(info)
+    if main_tokens:
+        for info in candidates:
+            candidate_tokens = _content_tokens(info.item.name)
+            if main_set.issubset(set(candidate_tokens)):
+                family.append(info)
 
     if len(family) == 1:
         return (
@@ -466,59 +551,56 @@ def _target_workspace_discovery(paginated_infos, visual):
         candidates = family
         steps.append(f"main-report-family candidates={len(candidates)}")
 
-    # 3) Derive the visual variant from workspace metadata.  Generic page words
-    #    such as Report/Reporte/Paginado are ignored, and grammatical variants
-    #    (Aceptados/Aceptada, etc.) are canonicalized by _tokens().
-    page_tokens = _tokens(visual.page_name, drop_generic=True)
-    main_set = set(main_tokens)
-    stop_words = {"de", "del", "la", "el", "los", "las", "por", "para", "y"}
-    page_variant = [
-        token for token in page_tokens
-        if token not in main_set and token not in stop_words
-    ]
+    # 3) Page variant.  Remove generic page words, stop words and tokens already
+    # supplied by the main report.  Status terms are canonicalized and a short
+    # token can act as a prefix abbreviation only if that yields one unique
+    # candidate.
+    page_tokens = _content_tokens(visual.page_name, drop_generic=True)
+    page_variant = [token for token in page_tokens if token not in main_set]
 
     if page_variant:
-        exact_variant = []
-        subset_variant = []
-        page_variant_set = set(page_variant)
+        full_matches = []
+        exact_matches = []
 
         for info in candidates:
-            candidate_tokens = _tokens(info.item.name)
-            suffix_tokens = _multiset_remove_prefix(candidate_tokens, main_tokens)
-            suffix_tokens = [t for t in suffix_tokens if t not in stop_words]
+            candidate_tokens = _content_tokens(info.item.name)
+            candidate_variant = [
+                token for token in candidate_tokens if token not in main_set
+            ]
 
-            if suffix_tokens == page_variant:
-                exact_variant.append(info)
-            elif page_variant_set.issubset(set(suffix_tokens)):
-                subset_variant.append(info)
+            if candidate_variant == page_variant:
+                exact_matches.append(info)
+            if _all_page_tokens_match(page_variant, candidate_variant):
+                full_matches.append(info)
 
-        if len(exact_variant) == 1:
+        if len(exact_matches) == 1:
             return (
-                exact_variant[0],
+                exact_matches[0],
                 "target workspace discovery: unique logical variant match inside report family",
             )
-        if len(subset_variant) == 1:
+        if len(full_matches) == 1:
             return (
-                subset_variant[0],
-                "target workspace discovery: unique page-variant token match inside report family",
+                full_matches[0],
+                "target workspace discovery: unique normalized page-variant match inside report family",
             )
-        if exact_variant:
-            steps.append(f"exact-variant candidates={len(exact_variant)}")
-        elif subset_variant:
-            steps.append(f"variant candidates={len(subset_variant)}")
+        if exact_matches:
+            steps.append(f"exact-variant candidates={len(exact_matches)}")
+        elif full_matches:
+            steps.append(f"normalized-variant candidates={len(full_matches)}")
 
-    # 4) Last target-only discriminator: token evidence from both the main
-    #    report and page against candidates in the same target folder.  Resolve
-    #    only when a single candidate has a strictly better score and the page
-    #    contributes at least one non-generic token to that score.
-    evidence = set(main_tokens) | set(page_variant)
-    page_evidence = set(page_variant)
+    # 4) Conservative score fallback.  Exact token evidence is preferred; short
+    # page abbreviations contribute only when they match a candidate prefix.
     scored = []
     for info in candidates:
-        ct = set(_tokens(info.item.name))
-        total = len(evidence & ct)
-        page_score = len(page_evidence & ct)
-        family_score = len(set(main_tokens) & ct)
+        candidate_tokens = _content_tokens(info.item.name)
+        candidate_set = set(candidate_tokens)
+        family_score = len(main_set & candidate_set)
+        page_score = sum(
+            1
+            for page_token in page_variant
+            if any(_token_matches(page_token, token) for token in candidate_tokens)
+        )
+        total = family_score + page_score
         scored.append((total, page_score, family_score, info))
 
     if scored:
@@ -530,7 +612,7 @@ def _target_workspace_discovery(paginated_infos, visual):
         if best[1] > 0 and best_key > runner_key:
             return (
                 best[3],
-                "target workspace discovery: unique highest logical token score "
+                "target workspace discovery: unique highest normalized token score "
                 f"(score={best_key}, runner={runner_key})",
             )
 

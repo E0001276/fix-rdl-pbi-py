@@ -27,7 +27,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--config",
-        default=str(Path(__file__).parent / "config" / "postdeploy-dev-cicd.json"),
+        default=str(Path(__file__).parent / "config" / "postdeploy-delta.json"),
         help="Path to the environment configuration JSON.",
     )
     return parser
@@ -171,7 +171,9 @@ def _main(args, diagnostics) -> None:
     )
     print(f"[CACHE] Current snapshots : {current_snapshots}")
     print(f"[CACHE] Stale snapshots   : {stale_snapshots}")
-    print("[CACHE] Full workspace rediscovery is not required because updateDefinition preserves item identity.")
+    print(
+        "[CACHE] Full workspace rediscovery is not required because updateDefinition preserves item identity."
+    )
 
     _section("PAGINATED REPORT RUNTIME DATASOURCE BINDING")
     bind_paginated_reports_to_semantic_models(
