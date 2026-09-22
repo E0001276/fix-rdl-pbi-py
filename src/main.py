@@ -17,6 +17,7 @@ from remediation import apply_remediation, summarize_discovery
 from workspace import (
     discover_paginated_report_definitions,
     discover_report_definitions,
+    discover_semantic_model_definitions,
     list_fabric_workspace_items,
 )
 
@@ -126,6 +127,16 @@ def _main(args, diagnostics) -> None:
     print(
         f"[CACHE] Report definitions retained for this run: "
         f"{len(report_definition_cache)}"
+    )
+
+    _section("SEMANTIC MODEL DEFINITIONS")
+    print("[DISCOVERY] Reading semantic model definitions with Fabric REST...")
+    discover_semantic_model_definitions(
+        fabric, config.workspace_id, workspace_items
+    )
+    print(
+        f"[DISCOVERY] Semantic model definitions logged: "
+        f"{len(workspace_items.semantic_models)}"
     )
 
     _section("PAGINATED REPORT DEFINITIONS")

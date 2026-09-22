@@ -44,6 +44,10 @@ class DiagnosticLogger:
         self.http_dir.mkdir(parents=True, exist_ok=True)
         self.rdl_dir = self.run_dir / "rdl"
         self.rdl_dir.mkdir(parents=True, exist_ok=True)
+        self.rpt_dir = self.run_dir / "rpt"
+        self.rpt_dir.mkdir(parents=True, exist_ok=True)
+        self.sm_dir = self.run_dir / "sm"
+        self.sm_dir.mkdir(parents=True, exist_ok=True)
         self.execution_path = self.run_dir / "execution.log"
         self._execution_file = self.execution_path.open("w", encoding="utf-8", buffering=1)
         self._counter = 0
@@ -157,6 +161,92 @@ class DiagnosticLogger:
         target = self.rdl_dir / filename
         target.write_text(xml_text, encoding="utf-8")
         print(f"[RDL] {stage}: {target}")
+
+    @staticmethod
+    def _safe_part_path(path: str, fallback: str) -> Path:
+        """Return a safe relative path for one Fabric definition part."""
+        raw = str(path or fallback).replace("\\", "/")
+        pieces = []
+        for piece in raw.split("/"):
+            if not piece or piece in {".", ".."}:
+                continue
+            pieces.append(DiagnosticLogger._safe_name(piece))
+        return Path(*pieces) if pieces else Path(fallback)
+
+    def log_item_definition(
+        self,
+        item_kind: str,
+        item_name: str,
+        item_id: str,
+        definition_response: dict,
+    ):
+        """Persist all InlineBase64 definition parts in decoded form.
+
+        Reports are written under ``rpt`` and semantic models under ``sm``.
+        The original Fabric part hierarchy is preserved inside a directory per
+        item so PBIR/TMDL definitions remain easy to inspect and compare.
+        """
+        destinations = {
+            "Report": (self.rpt_dir, "RPT"),
+            "SemanticModel": (self.sm_dir, "SM"),
+        }
+        destination_info = destinations.get(item_kind)
+        if destination_info is None:
+            return
+
+        root_dir, label = destination_info
+        item_dir = root_dir / (
+            f"{self._safe_name(item_name)}_{self._safe_name(item_id)}"
+        )
+        item_dir.mkdir(parents=True, exist_ok=True)
+
+        parts = definition_response.get("definition", {}).get("parts", [])
+        index = []
+        for number, part in enumerate(parts, start=1):
+            if not isinstance(part, dict):
+                continue
+
+            original_path = str(part.get("path") or f"part_{number}.bin")
+            payload = part.get("payload")
+            payload_type = part.get("payloadType")
+
+            try:
+                if payload_type == "InlineBase64":
+                    raw = base64.b64decode(payload or "")
+                elif isinstance(payload, str):
+                    raw = payload.encode("utf-8")
+                else:
+                    raise ValueError(
+                        f"Unsupported payload type: {payload_type or '(empty)'}"
+                    )
+
+                relative_path = self._safe_part_path(
+                    original_path, f"part_{number}.bin"
+                )
+                target = item_dir / relative_path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(raw)
+                index.append(
+                    {
+                        "path": original_path,
+                        "decoded": True,
+                        "file": relative_path.as_posix(),
+                        "bytes": len(raw),
+                    }
+                )
+            except Exception as exc:
+                index.append(
+                    {
+                        "path": original_path,
+                        "decoded": False,
+                        "error": str(exc),
+                    }
+                )
+
+        (item_dir / "index.json").write_text(
+            json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        print(f"[{label}] Definition: {item_dir}")
 
     def log_http(self, method: str, url: str, request_headers: dict, request_json, response, token_label: str = "ACCESS_TOKEN"):
         self._counter += 1

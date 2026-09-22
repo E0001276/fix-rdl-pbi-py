@@ -121,6 +121,9 @@ def _decode_part(part):
 def _get_definition(client, workspace_id: str, item: WorkspaceItem):
     if item.kind == "Report":
         path = f"workspaces/{workspace_id}/reports/{item.id}/getDefinition"
+    elif item.kind == "SemanticModel":
+        # TMDL is the documented default when format is omitted.
+        path = f"workspaces/{workspace_id}/semanticModels/{item.id}/getDefinition"
     elif item.kind == "PaginatedReport":
         # Microsoft documents `format` as optional. When omitted,
         # PaginatedReportDefinition is the default. Some tenants currently
@@ -244,6 +247,10 @@ def discover_report_definitions(
         print("  Loading definition...")
 
         definition_response = _get_definition(client, workspace_id, report)
+        if client.diagnostics is not None:
+            client.diagnostics.log_item_definition(
+                report.kind, report.name, report.id, definition_response
+            )
         if definition_cache is not None:
             definition_cache[report.id] = definition_response
         parts = definition_response.get("definition", {}).get("parts", [])
@@ -339,6 +346,34 @@ def discover_report_definitions(
         print()
 
     return visuals
+
+
+def discover_semantic_model_definitions(client, workspace_id: str, workspace_items):
+    """Load and persist decoded semantic-model definitions for diagnostics."""
+    models = workspace_items.semantic_models
+
+    print(f"[SEMANTIC MODEL DEFINITIONS] Models to inspect: {len(models)}")
+    print()
+
+    for index, model in enumerate(models, start=1):
+        print(f"[{index}/{len(models)}] Semantic model: {model.name}")
+        print(f"  Semantic Model Id : {model.id}")
+        print(f"  Folder Id         : {model.folder_id or '(root)'}")
+        print("  Loading TMDL definition...")
+
+        definition_response = _get_definition(client, workspace_id, model)
+        parts = definition_response.get("definition", {}).get("parts", [])
+        print(f"  Definition parts  : {len(parts)}")
+
+        if client.diagnostics is not None:
+            client.diagnostics.log_item_definition(
+                model.kind, model.name, model.id, definition_response
+            )
+
+        print("  Status            : LOADED + LOGGED")
+        print()
+
+
 
 
 def _xml_local_name(tag: str) -> str:
