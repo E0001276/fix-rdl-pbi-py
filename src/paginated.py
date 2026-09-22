@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from workspace import (
     get_paginated_report_definition,
+    update_paginated_info_definition,
     update_paginated_report_definition,
 )
 
@@ -416,9 +417,17 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
         print(f"  Report Id         : {item.id}")
         print(f"  Folder Id         : {item.folder_id or '(root)'}")
 
-        before = get_paginated_report_definition(fabric, config.workspace_id, item.id)
-        part = _find_rdl_part(before)
-        xml_before = _decode_part(part)
+        if info.definition_current and info.definition_response is not None and info.rdl_text:
+            before = info.definition_response
+            xml_before = info.rdl_text
+            print("  Definition source : EXECUTION CACHE")
+        else:
+            before = get_paginated_report_definition(
+                fabric, config.workspace_id, item.id
+            )
+            update_paginated_info_definition(info, before, current=True)
+            xml_before = info.rdl_text
+            print("  Definition source : FABRIC REST (CACHE REFRESH)")
         if getattr(fabric, "diagnostics", None) is not None:
             fabric.diagnostics.log_rdl(item.name, item.id, "before", xml_before)
         binding_before = _extract_rdl_binding(xml_before)
@@ -501,23 +510,39 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
             continue
 
         try:
-            persisted = get_paginated_report_definition(fabric, config.workspace_id, item.id)
-            persisted_part = _find_rdl_part(persisted)
-            persisted_xml = _decode_part(persisted_part)
-            persisted_ok = _datasource_bindings_match_target(persisted_xml, config.workspace_name, model_map)
+            persisted = get_paginated_report_definition(
+                fabric, config.workspace_id, item.id
+            )
+            update_paginated_info_definition(info, persisted, current=True)
+            persisted_xml = info.rdl_text
+            persisted_ok = _datasource_bindings_match_target(
+                persisted_xml, config.workspace_name, model_map
+            )
             if persisted_ok:
                 print("  RDL verification   : VERIFIED PER DATASOURCE")
                 print("  Status             : UPDATED AND VERIFIED")
                 results.append(PaginatedBindingResult(item.id, item.name, model_ids, model_names, "UPDATED"))
             else:
+                # A persisted definition was returned, but it does not yet show
+                # the requested binding.  Preserve that observation for logs but
+                # force one targeted refresh in the runtime phase to retain the
+                # eventual-consistency safety previously provided by the full
+                # post-RDL rediscovery.
+                info.definition_current = False
                 print("  RDL verification   : NOT REFLECTED (NON-BLOCKING)")
+                print("  Snapshot status    : STALE (targeted refresh required later)")
                 print("  Item identity      : PRESERVED")
                 print("  Recreation         : DISABLED")
                 print("  Status             : UPDATED (HTTP ACCEPTED; RUNTIME BINDING NEXT)")
                 results.append(PaginatedBindingResult(item.id, item.name, model_ids, model_names, "UPDATED_RUNTIME_BINDING_PENDING"))
         except Exception as exc:
+            # The write was accepted but the persisted definition could not be
+            # re-read.  Mark only this snapshot stale; the runtime phase will
+            # refresh this one report instead of re-reading all paginated RDLs.
+            info.definition_current = False
             print("  RDL verification   : SKIPPED (NON-BLOCKING)")
             print(f"  Verification reason: {exc}")
+            print("  Snapshot status    : STALE (targeted refresh required later)")
             print("  Item identity      : PRESERVED")
             print("  Recreation         : DISABLED")
             results.append(PaginatedBindingResult(item.id, item.name, model_ids, model_names, "UPDATED_RUNTIME_BINDING_PENDING"))

@@ -314,19 +314,14 @@ def _resolve_by_existing_reference(
                 "current workspaceId + itemId directly identify target paginated report",
             ), ""
 
-        globally_resolved, global_note = _resolve_historical_item_globally(
-            fabric,
-            paginated_infos,
-            visual,
-            target_workspace_id,
-            source_cache,
-        )
-        if globally_resolved:
-            return (globally_resolved, global_note), ""
-
+        # Hybrid references are common after Git/environment transformations:
+        # workspaceId already points to target while itemId is stale.  Do not
+        # scan every accessible workspace yet.  The caller first attempts the
+        # target-only resolver using current folder/parameter/family metadata;
+        # global historical lookup remains available as a final fallback.
         return (
             None,
-            "itemId was not found in the current target workspace; " + global_note,
+            "itemId was not found in the current target workspace",
         )
 
     source_entry = _source_workspace_catalog(
@@ -548,8 +543,10 @@ def _target_workspace_discovery(paginated_infos, visual):
 def _resolve_paginated(
     fabric, paginated_infos, visual, target_workspace_id: str, source_cache: dict
 ):
-    # First use the real reference persisted in the RDL Visual.  This is the
-    # authoritative path and avoids inferring the target from a page label.
+    # 1) Use persisted identity first.  For a real source workspace reference,
+    # this still resolves source itemId -> exact source displayName -> target.
+    # For a hybrid target-workspace + stale-itemId reference, the resolver now
+    # defers the expensive global scan until after target-only discovery.
     by_reference, reference_note = _resolve_by_existing_reference(
         fabric,
         paginated_infos,
@@ -560,21 +557,36 @@ def _resolve_paginated(
     if by_reference:
         return by_reference
 
-    # If the persisted itemId no longer exists (for example, because the
-    # paginated report was deleted and recreated), discover the relationship
-    # from the current target workspace itself.  No GUID mapping/configuration
-    # is required.  The target-only resolver uses folder/family/parameters and
-    # a unique logical page variant only as evidence from artifacts currently
-    # present in the workspace.
+    # 2) Resolve deleted/recreated itemIds using only current target artifacts.
     discovered, discovery_note = _target_workspace_discovery(
         paginated_infos, visual
     )
     if discovered:
         return discovered, discovery_note
 
+    # 3) Preserve the historical global-search safety net for the specific
+    # hybrid case.  It is now a fallback, not the first action, which avoids
+    # walking every accessible workspace when target-only evidence is unique.
+    global_note = ""
+    if (
+        visual.old_workspace_id == target_workspace_id
+        and visual.old_item_id
+    ):
+        historical, global_note = _resolve_historical_item_globally(
+            fabric,
+            paginated_infos,
+            visual,
+            target_workspace_id,
+            source_cache,
+        )
+        if historical:
+            return historical, global_note
+
     reason = discovery_note
     if reference_note:
         reason += f"; persisted reference resolution: {reference_note}"
+    if global_note:
+        reason += f"; historical fallback: {global_note}"
     return None, reason
 
 
@@ -774,7 +786,14 @@ def _read_reference_from_definition(definition_response: dict, visual_locator):
     return "", ""
 
 
-def apply_remediation(fabric, rdl_visuals, paginated_infos, workspace_items, config):
+def apply_remediation(
+    fabric,
+    rdl_visuals,
+    paginated_infos,
+    workspace_items,
+    config,
+    report_definition_cache: dict | None = None,
+):
     unresolved = []
     plan = []
     source_workspace_cache = {}
@@ -850,9 +869,16 @@ def apply_remediation(fabric, rdl_visuals, paginated_infos, workspace_items, con
         for report_id, changes in by_report.items():
             report_name = changes[0][0].report_name
             print(f"[REPORT] {report_name} [{report_id}]")
-            definition_response = get_report_definition(
-                fabric, config.workspace_id, report_id
-            )
+            if report_definition_cache is not None and report_id in report_definition_cache:
+                definition_response = report_definition_cache[report_id]
+                print("  Definition source  : EXECUTION CACHE")
+            else:
+                definition_response = get_report_definition(
+                    fabric, config.workspace_id, report_id
+                )
+                if report_definition_cache is not None:
+                    report_definition_cache[report_id] = definition_response
+                print("  Definition source  : FABRIC REST")
             definition = definition_response.get("definition", {})
             parts = definition.get("parts", [])
             parts_by_path = {part.get("path"): part for part in parts}
@@ -885,6 +911,8 @@ def apply_remediation(fabric, rdl_visuals, paginated_infos, workspace_items, con
             verify_definition = get_report_definition(
                 fabric, config.workspace_id, report_id
             )
+            if report_definition_cache is not None:
+                report_definition_cache[report_id] = verify_definition
             for visual, target in changes:
                 actual_item_id, actual_workspace_id = _read_reference_from_definition(
                     verify_definition, visual

@@ -32,6 +32,10 @@ class WorkspaceRdlVisual:
 class PaginatedReportInfo:
     item: WorkspaceItem
     parameter_names: set[str] = field(default_factory=set)
+    datasource_names: list[str] = field(default_factory=list)
+    definition_response: dict | None = None
+    rdl_text: str = ""
+    definition_current: bool = False
 
 
 class WorkspaceItems(list):
@@ -224,7 +228,9 @@ def _discover_legacy_report_visuals(report, path, text):
     return visuals
 
 
-def discover_report_definitions(client, workspace_id: str, workspace_items):
+def discover_report_definitions(
+    client, workspace_id: str, workspace_items, definition_cache: dict | None = None
+):
     visuals = []
     reports = workspace_items.reports
 
@@ -238,6 +244,8 @@ def discover_report_definitions(client, workspace_id: str, workspace_items):
         print("  Loading definition...")
 
         definition_response = _get_definition(client, workspace_id, report)
+        if definition_cache is not None:
+            definition_cache[report.id] = definition_response
         parts = definition_response.get("definition", {}).get("parts", [])
         print(f"  Definition parts: {len(parts)}")
 
@@ -352,6 +360,54 @@ def _rdl_parameter_names(xml_text: str):
     return result
 
 
+def _rdl_datasource_names(xml_text: str):
+    result = []
+    seen = set()
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError:
+        return result
+
+    for element in root.iter():
+        if _xml_local_name(element.tag) != "DataSource":
+            continue
+        name = str(element.attrib.get("Name") or "").strip()
+        key = name.casefold()
+        if name and key not in seen:
+            result.append(name)
+            seen.add(key)
+    return result
+
+
+def update_paginated_info_definition(
+    info: PaginatedReportInfo, definition_response: dict, *, current: bool = True
+):
+    """Refresh the in-memory snapshot for one paginated report definition.
+
+    The cache is intentionally scoped to a single post-deploy process.  Writers
+    call this function after verifying updateDefinition so later phases can reuse
+    the persisted RDL instead of downloading it again.
+    """
+    parts = definition_response.get("definition", {}).get("parts", [])
+    rdl_parts = [
+        part for part in parts
+        if str(part.get("path", "")).lower().endswith(".rdl")
+    ]
+    if len(rdl_parts) != 1:
+        raise RuntimeError(
+            f"Expected exactly one RDL definition part for '{info.item.name}', "
+            f"found {len(rdl_parts)}."
+        )
+
+    rdl_text = _decode_part(rdl_parts[0])
+    info.definition_response = definition_response
+    info.rdl_text = rdl_text
+    info.parameter_names = _rdl_parameter_names(rdl_text)
+    info.datasource_names = _rdl_datasource_names(rdl_text)
+    info.definition_current = current
+    return info
+
+
 def discover_paginated_report_definitions(client, workspace_id: str, workspace_items):
     result = []
     reports = workspace_items.paginated_reports
@@ -369,22 +425,27 @@ def discover_paginated_report_definitions(client, workspace_id: str, workspace_i
         parts = definition_response.get("definition", {}).get("parts", [])
         print(f"  Definition parts: {len(parts)}")
 
-        parameter_names = set()
-        rdl_count = 0
-        for part in parts:
-            if str(part.get("path", "")).lower().endswith(".rdl"):
-                rdl_count += 1
-                parameter_names |= _rdl_parameter_names(_decode_part(part))
+        info = PaginatedReportInfo(report)
+        update_paginated_info_definition(info, definition_response, current=True)
 
+        rdl_count = sum(
+            1
+            for part in parts
+            if str(part.get("path", "")).lower().endswith(".rdl")
+        )
         print(f"  RDL parts       : {rdl_count}")
         print(
             "  RDL parameters  : "
-            + (", ".join(sorted(parameter_names)) or "(none)")
+            + (", ".join(sorted(info.parameter_names)) or "(none)")
         )
-        print("  Status          : LOADED")
+        print(
+            "  RDL datasources : "
+            + (", ".join(info.datasource_names) or "(none)")
+        )
+        print("  Status          : LOADED + CACHED")
         print()
 
-        result.append(PaginatedReportInfo(report, parameter_names))
+        result.append(info)
 
     return result
 
