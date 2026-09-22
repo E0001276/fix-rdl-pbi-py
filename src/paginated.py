@@ -99,22 +99,6 @@ def _replace_tag_text(xml_text: str, tag_name: str, transform) -> tuple[str, boo
     return pattern.sub(repl, xml_text), changed
 
 
-def _replace_datasource_names(xml_text: str, workspace_name: str):
-    pattern = re.compile(r'(<DataSource\b[^>]*\bName=")([^"]+)(")')
-    mapping = {}
-    changed = False
-
-    def repl(match):
-        nonlocal changed
-        old = match.group(2)
-        new = _target_datasource_name(old, workspace_name)
-        mapping[old] = new
-        if new != old:
-            changed = True
-        return match.group(1) + new + match.group(3)
-
-    return pattern.sub(repl, xml_text), mapping, changed
-
 
 def _find_rdl_part(definition_response: dict) -> dict:
     parts = definition_response.get("definition", {}).get("parts", [])
@@ -152,16 +136,6 @@ def _extract_rdl_binding(xml_text: str) -> dict:
             result["connect_strings"].append(element.text.strip())
     return result
 
-
-def _resolve_semantic_model(workspace_items, paginated_item):
-    same_folder = [
-        model
-        for model in workspace_items.semantic_models
-        if model.folder_id == paginated_item.folder_id
-    ]
-    if len(same_folder) == 1:
-        return same_folder[0], "single semantic model in the same workspace folder"
-    return None, f"{len(same_folder)} semantic models in the same workspace folder"
 
 
 def _compact_name(value: str) -> str:
@@ -386,43 +360,6 @@ def _datasource_bindings_match_target(
     return True
 
 
-def _is_binding_logically_correct(
-    binding: dict,
-    workspace_name: str,
-    semantic_model_name: str,
-) -> bool:
-    """Match the .NET logical rule without consulting a source workspace.
-
-    The expected datasource name is derived from the current target RDL: preserve
-    everything after the first underscore and replace only the workspace prefix.
-    The virtual database GUID is intentionally excluded; runtime binding handles it.
-    """
-    if not binding["datasource_names"]:
-        return False
-
-    expected_names = [
-        _target_datasource_name(name, workspace_name)
-        for name in binding["datasource_names"]
-    ]
-    datasource_names_ok = all(
-        current.casefold() == expected.casefold()
-        for current, expected in zip(binding["datasource_names"], expected_names)
-    )
-
-    expected_set = {name.casefold() for name in expected_names if name}
-    dataset_refs_ok = bool(binding["dataset_datasource_names"]) and all(
-        name.casefold() in expected_set for name in binding["dataset_datasource_names"]
-    )
-    workspace_ok = bool(binding["workspace_names"]) and all(
-        name.casefold() == workspace_name.casefold()
-        for name in binding["workspace_names"]
-    )
-    dataset_ok = bool(binding["dataset_names"]) and all(
-        name.casefold() == semantic_model_name.casefold()
-        for name in binding["dataset_names"]
-    )
-    return datasource_names_ok and dataset_refs_ok and workspace_ok and dataset_ok
-
 
 def _build_fabric_definition(
     original_response: dict, item_name: str, xml_after: str
@@ -455,38 +392,6 @@ def _build_fabric_definition(
     }
 
 
-def _expected_datasource_name(workspace_name: str, semantic_model_name: str) -> str:
-    workspace_prefix = re.sub(r"[\s-]+", "", workspace_name or "")
-    model_suffix = re.sub(r"[\s-]+", "", semantic_model_name or "")
-    return f"{workspace_prefix}_{model_suffix}"
-
-
-def _binding_matches_target(
-    binding: dict, workspace_name: str, model_name: str
-) -> bool:
-    expected_ds = _expected_datasource_name(workspace_name, model_name).lower()
-    ds_names = [str(x).strip().lower() for x in binding.get("datasource_names", [])]
-    ws_names = [str(x).strip().lower() for x in binding.get("workspace_names", [])]
-    model_names = [str(x).strip().lower() for x in binding.get("dataset_names", [])]
-    return (
-        bool(ds_names)
-        and all(x == expected_ds for x in ds_names)
-        and bool(ws_names)
-        and all(x == (workspace_name or "").strip().lower() for x in ws_names)
-        and bool(model_names)
-        and all(x == (model_name or "").strip().lower() for x in model_names)
-    )
-
-
-# def _extract_created_item_id(client, response):
-#     if response.status_code == 201:
-#         body = response.json()
-#         return body.get("id") or body.get("itemId")
-#     if response.status_code == 202:
-#         result = client.get_json_lro_result(response)
-#         if isinstance(result, dict):
-#             return result.get("id") or result.get("itemId")
-#     return None
 
 
 def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config):

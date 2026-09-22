@@ -22,10 +22,6 @@ _CANONICAL_WORDS = {
     "recibidas": "recibido",
 }
 
-_PAGE_FAMILY_ALIASES = {
-    "tr": {"transferencias", "fovissste"},
-}
-
 
 def _plain(value: str) -> str:
     value = unicodedata.normalize("NFKD", value or "")
@@ -41,13 +37,6 @@ def _tokens(value: str, drop_generic: bool = False):
         tokens = [token for token in tokens if token not in _GENERIC_PAGE_WORDS]
     return [_CANONICAL_WORDS.get(token, token) for token in tokens]
 
-
-def _strip_report_prefix(candidate_name: str, report_name: str) -> str:
-    candidate_tokens = _tokens(candidate_name)
-    report_tokens = _tokens(report_name)
-    if candidate_tokens[: len(report_tokens)] == report_tokens:
-        candidate_tokens = candidate_tokens[len(report_tokens) :]
-    return " ".join(candidate_tokens)
 
 
 def _folder_candidates(paginated_infos, visual):
@@ -410,100 +399,7 @@ def _resolve_by_existing_reference(
         f"source itemId resolves to '{source_name}', but target workspace has {exact_count} exact displayName matches",
     )
 
-def _resolve_by_page_family(candidates, visual):
-    page_tokens = _tokens(visual.page_name, drop_generic=True)
-    if len(page_tokens) < 2:
-        return None
 
-    family_tokens = _PAGE_FAMILY_ALIASES.get(page_tokens[0])
-    if not family_tokens:
-        return None
-
-    family_candidates = [
-        info
-        for info in candidates
-        if family_tokens.issubset(set(_tokens(info.item.name)))
-    ]
-    if not family_candidates:
-        return None
-
-    target_tokens = page_tokens[1:]
-    target_set = set(target_tokens)
-    matched = [
-        info
-        for info in family_candidates
-        if target_set.issubset(set(_tokens(info.item.name)))
-    ]
-
-    if len(matched) == 1:
-        return matched[0], "page family alias and status uniquely match paginated report"
-
-    return None
-
-
-def _resolve_by_page_label(candidates, visual):
-    page_tokens = _tokens(visual.page_name, drop_generic=True)
-    page_key = " ".join(page_tokens)
-    if not page_key:
-        return None
-
-    exact = []
-    for info in candidates:
-        suffix = _strip_report_prefix(info.item.name, visual.report_name)
-        if suffix == page_key:
-            exact.append(info)
-    if len(exact) == 1:
-        return exact[0], "page label matches paginated report suffix"
-
-    scored = []
-    page_set = set(page_tokens)
-    for info in candidates:
-        suffix_tokens = _tokens(
-            _strip_report_prefix(info.item.name, visual.report_name)
-        )
-        score = len(page_set & set(suffix_tokens))
-        if score:
-            scored.append((score, info))
-
-    if scored:
-        max_score = max(score for score, _ in scored)
-        best = [info for score, info in scored if score == max_score]
-        if len(best) == 1:
-            return best[0], "page label uniquely matches paginated report"
-    return None
-
-
-def _resolve_by_parameters(candidates, visual):
-    if not visual.parameter_names:
-        return None
-
-    exact = [
-        info
-        for info in candidates
-        if info.parameter_names and info.parameter_names == visual.parameter_names
-    ]
-    if len(exact) == 1:
-        return exact[0], "RDL Visual parameter mapping matches RDL parameters"
-
-    scored = []
-    for info in candidates:
-        if not info.parameter_names:
-            continue
-        overlap = len(visual.parameter_names & info.parameter_names)
-        missing = len(visual.parameter_names - info.parameter_names)
-        if overlap:
-            scored.append((overlap, -missing, info))
-
-    if scored:
-        best_key = max((overlap, missing_score) for overlap, missing_score, _ in scored)
-        best = [
-            info
-            for overlap, missing_score, info in scored
-            if (overlap, missing_score) == best_key
-        ]
-        if len(best) == 1 and best_key[0] == len(visual.parameter_names):
-            return best[0], "RDL Visual parameters are contained in one RDL definition"
-    return None
 
 
 def _multiset_remove_prefix(candidate_tokens, prefix_tokens):
@@ -717,9 +613,6 @@ def _encode_json_part(data: dict) -> str:
     text = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
     return base64.b64encode(text.encode("utf-8")).decode("ascii")
 
-
-# def _set_literal_value(node: dict, value: str) -> None:
-#     node.setdefault("expr", {}).setdefault("Literal", {})["Value"] = f"'{value}'"
 
 
 def _patch_rdl_visual_part(part: dict, target_item_id: str, target_workspace_id: str):
