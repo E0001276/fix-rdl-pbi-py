@@ -1,10 +1,8 @@
-from paginated import (
-    _extract_rdl_binding,
-    _find_rdl_part,
-    _decode_part,
-    _resolve_semantic_models_for_rdl,
+from paginated import _resolve_semantic_models_for_rdl
+from workspace import (
+    get_paginated_report_definition,
+    update_paginated_info_definition,
 )
-from workspace import get_paginated_report_definition
 
 
 DEFAULT_POWER_BI_SERVER = "pbiazure://api.powerbi.com/"
@@ -37,18 +35,25 @@ def get_paginated_report_datasources(powerbi, workspace_id: str, report_id: str)
     return _datasources(response.json())
 
 
-def _get_persisted_rdl_datasource_names(fabric, workspace_id: str, report_id: str) -> list[str]:
-    definition = get_paginated_report_definition(fabric, workspace_id, report_id)
-    part = _find_rdl_part(definition)
-    binding = _extract_rdl_binding(_decode_part(part))
-    names = []
-    seen = set()
-    for name in binding.get("datasource_names", []):
-        key = str(name).casefold()
-        if name and key not in seen:
-            names.append(name)
-            seen.add(key)
-    return names
+def _get_persisted_rdl_datasource_names(
+    fabric, workspace_id: str, info
+) -> list[str]:
+    """Return persisted RDL datasource names with targeted cache refresh.
+
+    Definitions loaded during initial discovery are reused for the entire run.
+    A fresh Fabric call is made only when a previous write could not be verified
+    and therefore marked this one snapshot stale.
+    """
+    if not info.definition_current or not info.datasource_names:
+        definition = get_paginated_report_definition(
+            fabric, workspace_id, info.item.id
+        )
+        update_paginated_info_definition(info, definition, current=True)
+        print("  RDL definition     : FABRIC REST (TARGETED CACHE REFRESH)")
+    else:
+        print("  RDL definition     : EXECUTION CACHE")
+
+    return list(info.datasource_names)
 
 
 def _find_runtime_for_rdl(runtime_datasources: list[dict], rdl_name: str):
@@ -134,7 +139,7 @@ def bind_paginated_reports_to_semantic_models(
                 powerbi, config.workspace_id, item.id
             )
             rdl_names = _get_persisted_rdl_datasource_names(
-                fabric, config.workspace_id, item.id
+                fabric, config.workspace_id, info
             )
         except Exception as exc:
             message = f"Datasource discovery failed: {exc}"

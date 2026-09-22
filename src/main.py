@@ -50,6 +50,14 @@ def main() -> None:
     try:
         _main(args, diagnostics)
     finally:
+        counts = diagnostics.request_counts
+        print()
+        print("=" * 80)
+        print("HTTP REQUEST SUMMARY")
+        print("=" * 80)
+        print(f"Total requests : {diagnostics.request_count}")
+        print(f"GET            : {counts.get('GET', 0)}")
+        print(f"POST           : {counts.get('POST', 0)}")
         print(f"[LOG] Detailed run directory: {diagnostics.run_dir}")
         diagnostics.close()
 
@@ -107,10 +115,18 @@ def _main(args, diagnostics) -> None:
 
     _section("REPORT DEFINITIONS")
     print("[DISCOVERY] Reading report definitions and RDL Visuals with Fabric REST...")
+    report_definition_cache = {}
     rdl_visuals = discover_report_definitions(
-        fabric, config.workspace_id, workspace_items
+        fabric,
+        config.workspace_id,
+        workspace_items,
+        definition_cache=report_definition_cache,
     )
     print(f"[DISCOVERY] RDL Visuals found: {len(rdl_visuals)}")
+    print(
+        f"[CACHE] Report definitions retained for this run: "
+        f"{len(report_definition_cache)}"
+    )
 
     _section("PAGINATED REPORT DEFINITIONS")
     print("[DISCOVERY] Reading paginated report definitions with Fabric REST...")
@@ -146,12 +162,16 @@ def _main(args, diagnostics) -> None:
     _section("PAGINATED REPORT RDL REMEDIATION")
     remediate_paginated_reports(fabric, workspace_items, paginated_infos, config)
 
-    _section("POST-RDL WORKSPACE REDISCOVERY")
-    workspace_items = list_fabric_workspace_items(fabric, config.workspace_id)
-    paginated_infos = discover_paginated_report_definitions(
-        fabric, config.workspace_id, workspace_items
+    _section("POST-RDL SNAPSHOT STATUS")
+    current_snapshots = sum(1 for info in paginated_infos if info.definition_current)
+    stale_snapshots = len(paginated_infos) - current_snapshots
+    print(
+        "[CACHE] Paginated definitions are reused from initial discovery and "
+        "refreshed only after a write or when verification could not complete."
     )
-    print(f"[DISCOVERY] Current paginated report definitions: {len(paginated_infos)}")
+    print(f"[CACHE] Current snapshots : {current_snapshots}")
+    print(f"[CACHE] Stale snapshots   : {stale_snapshots}")
+    print("[CACHE] Full workspace rediscovery is not required because updateDefinition preserves item identity.")
 
     _section("PAGINATED REPORT RUNTIME DATASOURCE BINDING")
     bind_paginated_reports_to_semantic_models(
@@ -159,10 +179,18 @@ def _main(args, diagnostics) -> None:
     )
 
     _section("RDL VISUAL RESOLUTION AND APPLY")
-    rdl_visuals = discover_report_definitions(
-        fabric, config.workspace_id, workspace_items
+    print(
+        "[CACHE] Reusing main-report definitions and RDL Visual discovery from "
+        "the beginning of this execution. Earlier phases do not modify main reports."
     )
-    apply_remediation(fabric, rdl_visuals, paginated_infos, workspace_items, config)
+    apply_remediation(
+        fabric,
+        rdl_visuals,
+        paginated_infos,
+        workspace_items,
+        config,
+        report_definition_cache=report_definition_cache,
+    )
 
 
 if __name__ == "__main__":

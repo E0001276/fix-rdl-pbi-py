@@ -47,6 +47,7 @@ class DiagnosticLogger:
         self.execution_path = self.run_dir / "execution.log"
         self._execution_file = self.execution_path.open("w", encoding="utf-8", buffering=1)
         self._counter = 0
+        self._method_counts = {"GET": 0, "POST": 0}
         self._original_stdout = sys.stdout
         self._original_stderr = sys.stderr
         sys.stdout = _Tee(sys.stdout, self._execution_file)
@@ -66,6 +67,14 @@ class DiagnosticLogger:
         (self.run_dir / "manifest.json").write_text(
             json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
         )
+
+    @property
+    def request_count(self) -> int:
+        return self._counter
+
+    @property
+    def request_counts(self) -> dict:
+        return dict(self._method_counts)
 
     def close(self):
         if sys.stdout is not self._original_stdout:
@@ -151,6 +160,8 @@ class DiagnosticLogger:
 
     def log_http(self, method: str, url: str, request_headers: dict, request_json, response, token_label: str = "ACCESS_TOKEN"):
         self._counter += 1
+        method_key = method.upper()
+        self._method_counts[method_key] = self._method_counts.get(method_key, 0) + 1
         parsed_name = self._safe_name(url.split("?", 1)[0].rstrip("/").split("/")[-1])
         request_dir = self.http_dir / f"{self._counter:04d}_{method.upper()}_{parsed_name}"
         request_dir.mkdir(parents=True, exist_ok=True)
