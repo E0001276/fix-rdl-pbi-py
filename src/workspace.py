@@ -23,6 +23,9 @@ class WorkspaceRdlVisual:
     old_item_id: str
     old_workspace_id: str
     parameter_names: set[str] = field(default_factory=set)
+    definition_format: str = "PBIR"
+    legacy_section_name: str = ""
+    legacy_visual_name: str = ""
 
 
 @dataclass
@@ -151,6 +154,76 @@ def _rdl_visual_parameter_names(visual):
     return result
 
 
+def _legacy_rdl_visual_reference(visual):
+    old_item_id = ""
+    old_workspace_id = ""
+
+    try:
+        properties = visual["objects"]["reportInfo"][0]["properties"]
+
+        old_item_id = _literal_value(properties.get("reportId", {}))
+        old_workspace_id = _literal_value(properties.get("workspaceId", {}))
+
+        if not old_item_id or not old_workspace_id:
+            ref = properties.get("reference", {}).get("byReference", {})
+            old_item_id = old_item_id or _literal_value(ref.get("itemId", {}))
+            old_workspace_id = old_workspace_id or _literal_value(
+                ref.get("workspaceId", {})
+            )
+    except (KeyError, IndexError, TypeError):
+        pass
+
+    return old_item_id, old_workspace_id
+
+
+def _discover_legacy_report_visuals(report, path, text):
+    visuals = []
+
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        print(f"  [WARN] Invalid legacy report JSON: {path}")
+        return visuals
+
+    for section in data.get("sections", []):
+        page_name = section.get("displayName") or section.get("name") or ""
+        section_name = section.get("name") or ""
+
+        for container in section.get("visualContainers", []):
+            raw_config = container.get("config", "")
+            if not raw_config:
+                continue
+
+            try:
+                config = json.loads(raw_config)
+            except (TypeError, json.JSONDecodeError):
+                continue
+
+            visual = config.get("singleVisual", {})
+            if visual.get("visualType") != "rdlVisual":
+                continue
+
+            old_item_id, old_workspace_id = _legacy_rdl_visual_reference(visual)
+
+            visuals.append(
+                WorkspaceRdlVisual(
+                    report_id=report.id,
+                    report_name=report.name,
+                    report_folder_id=report.folder_id,
+                    page_name=page_name,
+                    definition_part_path=path,
+                    old_item_id=old_item_id,
+                    old_workspace_id=old_workspace_id,
+                    parameter_names=_rdl_visual_parameter_names(visual),
+                    definition_format="LegacyReportJson",
+                    legacy_section_name=section_name,
+                    legacy_visual_name=config.get("name") or "",
+                )
+            )
+
+    return visuals
+
+
 def discover_report_definitions(client, workspace_id: str, workspace_items):
     visuals = []
     reports = workspace_items.reports
@@ -233,6 +306,13 @@ def discover_report_definitions(client, workspace_id: str, workspace_items):
             )
             report_visuals.append(workspace_visual)
             visuals.append(workspace_visual)
+
+        for path, text in decoded.items():
+            if PurePosixPath(path).name != "report.json":
+                continue
+            legacy_visuals = _discover_legacy_report_visuals(report, path, text)
+            report_visuals.extend(legacy_visuals)
+            visuals.extend(legacy_visuals)
 
         print(f"  RDL Visuals found: {len(report_visuals)}")
         for visual in report_visuals:

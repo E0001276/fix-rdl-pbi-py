@@ -2,7 +2,7 @@ from paginated import (
     _extract_rdl_binding,
     _find_rdl_part,
     _decode_part,
-    _resolve_semantic_model,
+    _resolve_semantic_models_for_rdl,
 )
 from workspace import get_paginated_report_definition
 
@@ -25,8 +25,6 @@ def _connection_details(datasource: dict) -> dict:
 
 
 def _runtime_name(datasource: dict) -> str:
-    # GET /reports/{id}/datasources returns `name`. Older/custom responses can
-    # expose datasourceName, so retain it only as a fallback.
     return str(datasource.get("name") or datasource.get("datasourceName") or "").strip()
 
 
@@ -43,7 +41,6 @@ def _get_persisted_rdl_datasource_names(fabric, workspace_id: str, report_id: st
     definition = get_paginated_report_definition(fabric, workspace_id, report_id)
     part = _find_rdl_part(definition)
     binding = _extract_rdl_binding(_decode_part(part))
-    # Preserve RDL order and remove duplicates case-insensitively.
     names = []
     seen = set()
     for name in binding.get("datasource_names", []):
@@ -56,19 +53,22 @@ def _get_persisted_rdl_datasource_names(fabric, workspace_id: str, report_id: st
 
 def _find_runtime_for_rdl(runtime_datasources: list[dict], rdl_name: str):
     exact = [ds for ds in runtime_datasources if _norm(_runtime_name(ds)) == _norm(rdl_name)]
-    if exact:
+    if len(exact) == 1:
         return exact[0]
-    # This fallback is intentionally identical to the .NET implementation: when
-    # Power BI exposes only one runtime datasource, use it even if its runtime
-    # name lags the physical RDL datasource name.
-    return runtime_datasources[0] if runtime_datasources else None
+    # Safe legacy fallback only when Power BI exposes a single datasource.
+    if len(runtime_datasources) == 1:
+        return runtime_datasources[0]
+    return None
 
 
-def _build_update_details(runtime_datasources: list[dict], rdl_names: list[str], semantic_model_id: str):
-    target_database = _target_database(semantic_model_id)
+def _build_update_details(runtime_datasources: list[dict], datasource_models: dict):
     details = []
-    for rdl_name in rdl_names:
+    unresolved_runtime = []
+    for rdl_name, model in datasource_models.items():
         runtime = _find_runtime_for_rdl(runtime_datasources, rdl_name)
+        if runtime is None and len(runtime_datasources) > 1:
+            unresolved_runtime.append(rdl_name)
+            continue
         current_server = _connection_details(runtime or {}).get("server") or ""
         target_server = current_server or DEFAULT_POWER_BI_SERVER
         details.append(
@@ -76,11 +76,24 @@ def _build_update_details(runtime_datasources: list[dict], rdl_names: list[str],
                 "datasourceName": rdl_name,
                 "connectionDetails": {
                     "server": target_server,
-                    "database": target_database,
+                    "database": _target_database(model.id),
                 },
             }
         )
-    return details
+    return details, unresolved_runtime
+
+
+def _runtime_matches_target(runtime_datasources: list[dict], datasource_models: dict) -> bool:
+    if not runtime_datasources or not datasource_models:
+        return False
+    for rdl_name, model in datasource_models.items():
+        runtime = _find_runtime_for_rdl(runtime_datasources, rdl_name)
+        if runtime is None:
+            return False
+        database = _connection_details(runtime).get("database")
+        if _norm(database) != _norm(_target_database(model.id)):
+            return False
+    return True
 
 
 def bind_paginated_reports_to_semantic_models(
@@ -90,13 +103,12 @@ def bind_paginated_reports_to_semantic_models(
     paginated_infos,
     config,
 ):
-    """Mirror the proven .NET paginated runtime remediation, target-only.
+    """Bind each paginated-report datasource to its own semantic model.
 
-    The target semantic model is resolved from the target workspace folder.
-    The persisted target RDL supplies datasourceName. Power BI GET /datasources
-    supplies the current server. Only the virtual database semantic-model ID is
-    replaced. TakeOver is executed before Default.UpdateDatasources, exactly as
-    in the working .NET application.
+    A paginated report can contain multiple Power BI datasources.  Each datasource
+    is resolved independently from its persisted RDL name, so reports such as
+    Desmarca FOVISSSTE Global/Detalle can bind `..._DesmarcaFOVISSSTE` to the
+    Desmarca FOVISSSTE model and `..._FOVISSSTE` to the FOVISSSTE model.
     """
     if not config.bind_paginated_reports_to_semantic_models:
         print("Paginated report runtime datasource binding is disabled by configuration.")
@@ -108,7 +120,7 @@ def bind_paginated_reports_to_semantic_models(
     print(f"Workspace: {config.workspace_name} [{config.workspace_id}]")
     print(f"Paginated reports to bind: {len(paginated_infos)}")
     print("API: Power BI REST API v1.0")
-    print("Strategy: .NET parity, target-only resolution")
+    print("Strategy: per-datasource semantic model resolution")
 
     for index, info in enumerate(paginated_infos, start=1):
         item = info.item
@@ -116,19 +128,6 @@ def bind_paginated_reports_to_semantic_models(
         print(f"[{index}/{len(paginated_infos)}] Paginated Report Runtime Datasource")
         print(f"  Name              : {item.name}")
         print(f"  Report Id         : {item.id}")
-
-        model, reason = _resolve_semantic_model(workspace_items, item)
-        if model is None:
-            message = f"Unable to resolve semantic model safely: {reason}."
-            print("  Semantic model    : NOT RESOLVED")
-            print(f"  Reason            : {message}")
-            failures.append(message)
-            results.append((item.name, "UNRESOLVED"))
-            continue
-
-        print(f"  Semantic model    : {model.name} [{model.id}]")
-        print(f"  Resolution reason : {reason}")
-        target_database = _target_database(model.id)
 
         try:
             runtime_datasources = get_paginated_report_datasources(
@@ -144,6 +143,21 @@ def bind_paginated_reports_to_semantic_models(
             results.append((item.name, "GET_FAILED"))
             continue
 
+        datasource_resolution, resolution_failures = _resolve_semantic_models_for_rdl(
+            workspace_items, item, rdl_names
+        )
+        if resolution_failures:
+            message = "Unable to resolve semantic model(s) safely: " + " | ".join(resolution_failures)
+            print("  Status             : UNRESOLVED")
+            print(f"  Reason             : {message}")
+            failures.append(message)
+            results.append((item.name, "UNRESOLVED"))
+            continue
+
+        datasource_models = {
+            name: model for name, (model, _reason) in datasource_resolution.items()
+        }
+
         print(f"  Runtime datasources: {len(runtime_datasources)}")
         for ds in runtime_datasources:
             details = _connection_details(ds)
@@ -154,7 +168,10 @@ def bind_paginated_reports_to_semantic_models(
 
         print(f"  Persisted RDL datasource names: {len(rdl_names)}")
         for name in rdl_names:
+            model, reason = datasource_resolution[name]
             print(f"    - {name}")
+            print(f"      Semantic model : {model.name} [{model.id}]")
+            print(f"      Resolution      : {reason}")
 
         if not runtime_datasources:
             message = "Power BI returned no runtime datasource for this paginated report."
@@ -169,20 +186,24 @@ def bind_paginated_reports_to_semantic_models(
             results.append((item.name, "ERROR"))
             continue
 
-        runtime_already_correct = all(
-            _norm(_connection_details(ds).get("database")) == _norm(target_database)
-            for ds in runtime_datasources
-        )
-        if runtime_already_correct:
-            print(f"  Target database    : {target_database}")
+        if _runtime_matches_target(runtime_datasources, datasource_models):
             print("  Status             : ALREADY CORRECT")
             results.append((item.name, "UNCHANGED"))
             continue
 
-        update_details = _build_update_details(
-            runtime_datasources, rdl_names, model.id
+        update_details, unresolved_runtime = _build_update_details(
+            runtime_datasources, datasource_models
         )
-        print(f"  Target database    : {target_database}")
+        if unresolved_runtime:
+            message = (
+                "Power BI returned multiple runtime datasources but none matched these RDL datasource names exactly: "
+                + ", ".join(unresolved_runtime)
+            )
+            print(f"  Status             : UNRESOLVED\n  Reason             : {message}")
+            failures.append(message)
+            results.append((item.name, "UNRESOLVED"))
+            continue
+
         for detail in update_details:
             print(f"  Update datasource  : {detail['datasourceName']}")
             print(f"    Server           : {detail['connectionDetails']['server']}")
@@ -208,7 +229,6 @@ def bind_paginated_reports_to_semantic_models(
             results.append((item.name, "UPDATE_FAILED"))
             continue
 
-        # The .NET application verifies once, immediately, through GET /datasources.
         try:
             persisted = get_paginated_report_datasources(
                 powerbi, config.workspace_id, item.id
@@ -220,11 +240,8 @@ def bind_paginated_reports_to_semantic_models(
             results.append((item.name, "VERIFY_FAILED"))
             continue
 
-        persisted_ok = bool(persisted) and all(
-            _norm(_connection_details(ds).get("database")) == _norm(target_database)
-            for ds in persisted
-        )
-        print("  Runtime verification: " + ("VERIFIED" if persisted_ok else "FAILED"))
+        persisted_ok = _runtime_matches_target(persisted, datasource_models)
+        print("  Runtime verification: " + ("VERIFIED PER DATASOURCE" if persisted_ok else "FAILED"))
         if not persisted_ok:
             observed = " | ".join(
                 f"name={_runtime_name(ds) or '(none)'}; "
@@ -232,9 +249,13 @@ def bind_paginated_reports_to_semantic_models(
                 f"database={_connection_details(ds).get('database')}"
                 for ds in persisted
             )
+            expected = " | ".join(
+                f"{name}={_target_database(model.id)}"
+                for name, model in datasource_models.items()
+            )
             message = (
-                "Power BI accepted UpdateDatasources but the target database was not persisted. "
-                f"Expected {target_database}. Found: {observed or '(none)'}"
+                "Power BI accepted UpdateDatasources but one or more datasource-specific target databases were not persisted. "
+                f"Expected: {expected}. Found: {observed or '(none)'}"
             )
             print(f"  Status             : VERIFY_FAILED\n  Reason             : {message}")
             failures.append(message)
