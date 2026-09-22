@@ -20,15 +20,15 @@ class PaginatedBindingResult:
     message: str = ""
 
 
-def _local_name(tag: str) -> str:
+def xml_local_name(tag: str) -> str:
     return tag.rsplit("}", 1)[-1]
 
 
-def _normalize_workspace_datasource_prefix(workspace_name: str) -> str:
+def normalize_workspace_datasource_prefix(workspace_name: str) -> str:
     return re.sub(r"[\s-]+", "", workspace_name or "")
 
 
-def _target_datasource_name(current_name: str, workspace_name: str) -> str:
+def build_target_datasource_name(current_name: str, workspace_name: str) -> str:
     """Target-only equivalent of the .NET workspace-prefix replacement.
 
     We do not need the source workspace name: the current RDL itself supplies the
@@ -37,25 +37,25 @@ def _target_datasource_name(current_name: str, workspace_name: str) -> str:
     """
     if not current_name:
         return current_name
-    target_prefix = _normalize_workspace_datasource_prefix(workspace_name)
+    target_prefix = normalize_workspace_datasource_prefix(workspace_name)
     if "_" in current_name:
         _, suffix = current_name.split("_", 1)
         return f"{target_prefix}_{suffix}"
     return current_name
 
 
-def _decode_part(part: dict) -> str:
+def decode_definition_part(part: dict) -> str:
     payload = part.get("payload", "")
     if part.get("payloadType") == "InlineBase64":
         return base64.b64decode(payload).decode("utf-8-sig")
     return payload
 
 
-def _encode_rdl(xml_text: str) -> str:
+def encode_rdl(xml_text: str) -> str:
     return base64.b64encode(xml_text.encode("utf-8")).decode("ascii")
 
 
-def _validate_rdl_namespace(xml_text: str) -> None:
+def validate_rdl_namespace(xml_text: str) -> None:
     """Fail fast if the RDL root no longer declares the report namespace as default.
 
     The RDL service expects the Report element to identify the 2016/01 report
@@ -82,7 +82,7 @@ def _validate_rdl_namespace(xml_text: str) -> None:
         )
 
 
-def _replace_tag_text(xml_text: str, tag_name: str, transform) -> tuple[str, bool]:
+def replace_tag_text(xml_text: str, tag_name: str, transform) -> tuple[str, bool]:
     pattern = re.compile(
         rf"(<{re.escape(tag_name)}\b[^>]*>)(.*?)(</{re.escape(tag_name)}>)",
         flags=re.DOTALL,
@@ -101,17 +101,8 @@ def _replace_tag_text(xml_text: str, tag_name: str, transform) -> tuple[str, boo
 
 
 
-def _find_rdl_part(definition_response: dict) -> dict:
-    parts = definition_response.get("definition", {}).get("parts", [])
-    rdl_parts = [p for p in parts if str(p.get("path", "")).lower().endswith(".rdl")]
-    if len(rdl_parts) != 1:
-        raise RuntimeError(
-            f"Expected exactly one RDL definition part, found {len(rdl_parts)}."
-        )
-    return rdl_parts[0]
 
-
-def _extract_rdl_binding(xml_text: str) -> dict:
+def extract_rdl_binding(xml_text: str) -> dict:
     result = {
         "datasource_names": [],
         "dataset_datasource_names": [],
@@ -122,7 +113,7 @@ def _extract_rdl_binding(xml_text: str) -> dict:
 
     root = ET.fromstring(xml_text)
     for element in root.iter():
-        local = _local_name(element.tag)
+        local = xml_local_name(element.tag)
         if local == "DataSource":
             name = element.attrib.get("Name")
             if name:
@@ -139,18 +130,18 @@ def _extract_rdl_binding(xml_text: str) -> dict:
 
 
 
-def _compact_name(value: str) -> str:
+def compact_name(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", (value or "").casefold())
 
 
-def _datasource_suffix(datasource_name: str) -> str:
+def get_datasource_suffix(datasource_name: str) -> str:
     value = str(datasource_name or "").strip()
     if "_" in value:
         return value.split("_", 1)[1]
     return value
 
 
-def _resolve_semantic_model_for_datasource(
+def resolve_semantic_model_for_datasource(
     workspace_items, paginated_item, datasource_name: str
 ):
     """Resolve one embedded RDL datasource to one target semantic model.
@@ -161,8 +152,8 @@ def _resolve_semantic_model_for_datasource(
     Folder-based resolution remains only as a safe fallback for the traditional
     single-datasource reports.
     """
-    suffix = _datasource_suffix(datasource_name)
-    suffix_key = _compact_name(suffix)
+    suffix = get_datasource_suffix(datasource_name)
+    suffix_key = compact_name(suffix)
     if not suffix_key:
         return None, "datasource name does not contain a resolvable model suffix"
 
@@ -172,7 +163,7 @@ def _resolve_semantic_model_for_datasource(
         if model.folder_id == paginated_item.folder_id
     ]
     same_folder_matches = [
-        model for model in same_folder if _compact_name(model.name) == suffix_key
+        model for model in same_folder if compact_name(model.name) == suffix_key
     ]
     if len(same_folder_matches) == 1:
         return same_folder_matches[0], "datasource suffix exactly matches semantic model name in paginated-report folder"
@@ -182,7 +173,7 @@ def _resolve_semantic_model_for_datasource(
     global_matches = [
         model
         for model in workspace_items.semantic_models
-        if _compact_name(model.name) == suffix_key
+        if compact_name(model.name) == suffix_key
     ]
     if len(global_matches) == 1:
         return global_matches[0], "datasource suffix exactly matches semantic model name in target workspace"
@@ -198,13 +189,13 @@ def _resolve_semantic_model_for_datasource(
     )
 
 
-def _resolve_semantic_models_for_rdl(
+def resolve_semantic_models_for_rdl(
     workspace_items, paginated_item, datasource_names: list[str]
 ):
     resolved = {}
     failures = []
     for datasource_name in datasource_names:
-        model, reason = _resolve_semantic_model_for_datasource(
+        model, reason = resolve_semantic_model_for_datasource(
             workspace_items, paginated_item, datasource_name
         )
         if model is None:
@@ -214,7 +205,7 @@ def _resolve_semantic_models_for_rdl(
     return resolved, failures
 
 
-def _update_connect_string(value: str, target_model_id: str) -> str:
+def update_connect_string(value: str, target_model_id: str) -> str:
     result = value or ""
     target_database = f"sobe_wowvirtualserver-{target_model_id}"
     result = re.sub(
@@ -230,7 +221,7 @@ def _update_connect_string(value: str, target_model_id: str) -> str:
     return result
 
 
-def _patch_rdl(
+def patch_rdl(
     xml_text: str,
     workspace_name: str,
     datasource_models: dict,
@@ -242,7 +233,7 @@ def _patch_rdl(
     Desmarca FOVISSSTE Global/Detalle, which contain two datasources backed by two
     different semantic models.
     """
-    _validate_rdl_namespace(xml_text)
+    validate_rdl_namespace(xml_text)
 
     datasource_pattern = re.compile(
         r'(<DataSource\b[^>]*\bName=")([^"]+)("[^>]*>)(.*?)(</DataSource>)',
@@ -258,23 +249,23 @@ def _patch_rdl(
         if model is None:
             return match.group(0)
 
-        new_name = _target_datasource_name(old_name, workspace_name)
+        new_name = build_target_datasource_name(old_name, workspace_name)
         datasource_name_map[old_name] = new_name
         new_body = body
 
-        new_body, c = _replace_tag_text(
+        new_body, c = replace_tag_text(
             new_body,
             "ConnectString",
-            lambda value: _update_connect_string(value, model.id),
+            lambda value: update_connect_string(value, model.id),
         )
         changed = changed or c
 
-        new_body, c = _replace_tag_text(
+        new_body, c = replace_tag_text(
             new_body, "rd:PowerBIWorkspaceName", lambda _value: workspace_name
         )
         changed = changed or c
 
-        new_body, c = _replace_tag_text(
+        new_body, c = replace_tag_text(
             new_body, "rd:PowerBIDatasetName", lambda _value: model.name
         )
         changed = changed or c
@@ -288,17 +279,17 @@ def _patch_rdl(
 
     def map_datasource(value: str) -> str:
         stripped = value.strip()
-        replacement = datasource_name_map.get(stripped) or _target_datasource_name(
+        replacement = datasource_name_map.get(stripped) or build_target_datasource_name(
             stripped, workspace_name
         )
         left = value[: len(value) - len(value.lstrip())]
         right = value[len(value.rstrip()) :]
         return left + replacement + right
 
-    result, c = _replace_tag_text(result, "DataSourceName", map_datasource)
+    result, c = replace_tag_text(result, "DataSourceName", map_datasource)
     changed = changed or c
 
-    _validate_rdl_namespace(result)
+    validate_rdl_namespace(result)
     if (
         'xmlns="http://schemas.microsoft.com/AnalysisServices/QueryDefinition"'
         in re.search(r"<Report\b[^>]*>", result, flags=re.DOTALL).group(0)
@@ -310,12 +301,12 @@ def _patch_rdl(
     return changed, result
 
 
-def _extract_datasource_bindings(xml_text: str) -> list[dict]:
+def extract_datasource_bindings(xml_text: str) -> list[dict]:
     """Return datasource-level binding details, preserving datasource identity."""
     root = ET.fromstring(xml_text)
     result = []
     for element in root.iter():
-        if _local_name(element.tag) != "DataSource":
+        if xml_local_name(element.tag) != "DataSource":
             continue
         entry = {
             "name": element.attrib.get("Name") or "",
@@ -324,7 +315,7 @@ def _extract_datasource_bindings(xml_text: str) -> list[dict]:
             "connect_string": "",
         }
         for child in element.iter():
-            local = _local_name(child.tag)
+            local = xml_local_name(child.tag)
             text = (child.text or "").strip()
             if local == "PowerBIWorkspaceName" and text:
                 entry["workspace_name"] = text
@@ -336,16 +327,16 @@ def _extract_datasource_bindings(xml_text: str) -> list[dict]:
     return result
 
 
-def _datasource_bindings_match_target(
+def datasource_bindings_match_target(
     xml_text: str, workspace_name: str, datasource_models: dict
 ) -> bool:
-    bindings = _extract_datasource_bindings(xml_text)
+    bindings = extract_datasource_bindings(xml_text)
     if len(bindings) != len(datasource_models):
         return False
 
     expected_by_name = {}
     for old_name, model in datasource_models.items():
-        expected_by_name[_target_datasource_name(old_name, workspace_name).casefold()] = model
+        expected_by_name[build_target_datasource_name(old_name, workspace_name).casefold()] = model
 
     for binding in bindings:
         model = expected_by_name.get(str(binding["name"]).casefold())
@@ -362,7 +353,7 @@ def _datasource_bindings_match_target(
 
 
 
-def _build_fabric_definition(
+def build_fabric_definition(
     original_response: dict, item_name: str, xml_after: str
 ) -> dict:
     """Build the smallest supported PaginatedReportDefinition payload.
@@ -386,7 +377,7 @@ def _build_fabric_definition(
         "parts": [
             {
                 "path": f"{item_name}.rdl",
-                "payload": _encode_rdl(xml_after),
+                "payload": encode_rdl(xml_after),
                 "payloadType": "InlineBase64",
             }
         ]
@@ -430,10 +421,10 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
             print("  Definition source : FABRIC REST (CACHE REFRESH)")
         if getattr(fabric, "diagnostics", None) is not None:
             fabric.diagnostics.log_rdl(item.name, item.id, "before", xml_before)
-        binding_before = _extract_rdl_binding(xml_before)
+        binding_before = extract_rdl_binding(xml_before)
         datasource_names = list(dict.fromkeys(binding_before["datasource_names"]))
 
-        datasource_models, resolution_failures = _resolve_semantic_models_for_rdl(
+        datasource_models, resolution_failures = resolve_semantic_models_for_rdl(
             workspace_items, item, datasource_names
         )
         if resolution_failures:
@@ -460,7 +451,7 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
         print("    Semantic Model    : " + (", ".join(binding_before["dataset_names"]) or "(none)"))
         print("    Connect String    : " + (" | ".join(binding_before["connect_strings"]) or "(none)"))
 
-        if _datasource_bindings_match_target(xml_before, config.workspace_name, model_map):
+        if datasource_bindings_match_target(xml_before, config.workspace_name, model_map):
             if getattr(fabric, "diagnostics", None) is not None:
                 fabric.diagnostics.log_rdl(item.name, item.id, "after", xml_before)
             print("  Logical RDL binding: ALREADY CORRECT")
@@ -468,7 +459,7 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
             results.append(PaginatedBindingResult(item.id, item.name, model_ids, model_names, "UNCHANGED"))
             continue
 
-        changed, xml_after = _patch_rdl(xml_before, config.workspace_name, model_map)
+        changed, xml_after = patch_rdl(xml_before, config.workspace_name, model_map)
         if getattr(fabric, "diagnostics", None) is not None:
             fabric.diagnostics.log_rdl(item.name, item.id, "after", xml_after)
         if not changed:
@@ -479,7 +470,7 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
             results.append(PaginatedBindingResult(item.id, item.name, model_ids, model_names, "PATCH_FAILED", message))
             continue
 
-        if not _datasource_bindings_match_target(xml_after, config.workspace_name, model_map):
+        if not datasource_bindings_match_target(xml_after, config.workspace_name, model_map):
             message = "Datasource-level local RDL validation failed before calling Fabric updateDefinition."
             print("  Status             : LOCAL_VERIFY_FAILED")
             print(f"  Reason             : {message}")
@@ -487,7 +478,7 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
             results.append(PaginatedBindingResult(item.id, item.name, model_ids, model_names, "LOCAL_VERIFY_FAILED", message))
             continue
 
-        patched_binding = _extract_rdl_binding(xml_after)
+        patched_binding = extract_rdl_binding(xml_after)
         print("  XML patch strategy  : TEXT-PRESERVING (no XML re-serialization)")
         print("  Namespace integrity : VALID")
         print("  Patched RDL binding (local validation):")
@@ -496,7 +487,7 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
         print("    Semantic Model    : " + (", ".join(patched_binding["dataset_names"]) or "(none)"))
         print("    Connect String    : " + (" | ".join(patched_binding["connect_strings"]) or "(none)"))
 
-        definition = _build_fabric_definition(before, item.name, xml_after)
+        definition = build_fabric_definition(before, item.name, xml_after)
         print("  Updating RDL definition with Fabric REST...")
         try:
             status = update_paginated_report_definition(fabric, config.workspace_id, item.id, definition)
@@ -515,7 +506,7 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
             )
             update_paginated_info_definition(info, persisted, current=True)
             persisted_xml = info.rdl_text
-            persisted_ok = _datasource_bindings_match_target(
+            persisted_ok = datasource_bindings_match_target(
                 persisted_xml, config.workspace_name, model_map
             )
             if persisted_ok:

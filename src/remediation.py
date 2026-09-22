@@ -1,678 +1,12 @@
 import base64
 import json
-import re
-import unicodedata
+from collections import Counter
 
+from paginated_mapping import PaginatedReportMapping
 from workspace import get_report_definition, update_report_definition
 
-_GENERIC_PAGE_WORDS = {"reporte", "report", "paginado", "paginada", "paginated"}
-_STOP_WORDS = {"de", "del", "la", "el", "los", "las", "por", "para", "y"}
 
-_CANONICAL_WORDS = {
-    "aceptado": "aceptado",
-    "aceptada": "aceptado",
-    "aceptados": "aceptado",
-    "aceptadas": "aceptado",
-    "rechazado": "rechazado",
-    "rechazada": "rechazado",
-    "rechazados": "rechazado",
-    "rechazadas": "rechazado",
-    "recibido": "recibido",
-    "recibida": "recibido",
-    "recibidos": "recibido",
-    "recibidas": "recibido",
-}
-
-
-def _plain(value: str) -> str:
-    value = unicodedata.normalize("NFKD", value or "")
-    value = "".join(ch for ch in value if not unicodedata.combining(ch))
-    value = value.lower()
-    value = re.sub(r"[^a-z0-9]+", " ", value)
-    return " ".join(value.split())
-
-
-def _edit_distance_at_most_one(left: str, right: str) -> bool:
-    """Return True when two tokens differ by at most one edit.
-
-    This is intentionally narrow.  It is used only to normalize known status
-    words (for example, ``rechazadoss`` -> ``rechazados``), never for arbitrary
-    report names.
-    """
-    if left == right:
-        return True
-    if abs(len(left) - len(right)) > 1:
-        return False
-
-    if len(left) == len(right):
-        differences = sum(a != b for a, b in zip(left, right))
-        return differences <= 1
-
-    shorter, longer = (left, right) if len(left) < len(right) else (right, left)
-    i = j = edits = 0
-    while i < len(shorter) and j < len(longer):
-        if shorter[i] == longer[j]:
-            i += 1
-            j += 1
-            continue
-        edits += 1
-        if edits > 1:
-            return False
-        j += 1
-    return True
-
-
-def _canonical_token(token: str) -> str:
-    direct = _CANONICAL_WORDS.get(token)
-    if direct:
-        return direct
-
-    # Tolerate a one-character typo only for the finite status vocabulary.
-    # This fixes labels such as ``Rechazadoss`` without introducing fuzzy
-    # matching across arbitrary report names.
-    for known, canonical in _CANONICAL_WORDS.items():
-        if len(token) >= 6 and _edit_distance_at_most_one(token, known):
-            return canonical
-    return token
-
-
-def _tokens(value: str, drop_generic: bool = False):
-    tokens = _plain(value).split()
-    if drop_generic:
-        tokens = [token for token in tokens if token not in _GENERIC_PAGE_WORDS]
-    return [_canonical_token(token) for token in tokens]
-
-
-def _content_tokens(value: str, drop_generic: bool = False):
-    return [
-        token
-        for token in _tokens(value, drop_generic=drop_generic)
-        if token not in _STOP_WORDS
-    ]
-
-
-def _token_matches(page_token: str, candidate_token: str) -> bool:
-    """Match exact tokens plus conservative abbreviations from page labels.
-
-    Short page tokens such as ``TR`` may be author-defined abbreviations for a
-    longer artifact token such as ``Transferencias``.  An abbreviation is only
-    accepted when it is a prefix with at least two characters; final resolution
-    still requires a unique candidate.
-    """
-    if page_token == candidate_token:
-        return True
-    if 2 <= len(page_token) <= 5 and candidate_token.startswith(page_token):
-        return True
-    return False
-
-
-def _all_page_tokens_match(page_tokens, candidate_tokens) -> bool:
-    if not page_tokens:
-        return False
-    unmatched = list(candidate_tokens)
-    for page_token in page_tokens:
-        index = next(
-            (
-                i
-                for i, candidate_token in enumerate(unmatched)
-                if _token_matches(page_token, candidate_token)
-            ),
-            None,
-        )
-        if index is None:
-            return False
-        unmatched.pop(index)
-    return True
-
-
-
-def _folder_candidates(paginated_infos, visual):
-    if not visual.report_folder_id:
-        return list(paginated_infos)
-    same_folder = [
-        info
-        for info in paginated_infos
-        if info.item.folder_id == visual.report_folder_id
-    ]
-    return same_folder or list(paginated_infos)
-
-
-def _list_paginated_reports_in_workspace(fabric, workspace_id: str):
-    """Return paginated report metadata from any accessible workspace.
-
-    The RDL Visual already stores the original workspaceId + itemId.  We use
-    that real reference first instead of guessing the destination from the
-    page name.
-    """
-    reports = []
-    path = f"workspaces/{workspace_id}/paginatedReports"
-    next_url = path
-
-    while next_url:
-        response = fabric.get(next_url)
-        data = response.json()
-        reports.extend(data.get("value", []))
-
-        next_url = data.get("continuationUri")
-        if not next_url:
-            token = data.get("continuationToken")
-            next_url = f"{path}?continuationToken={token}" if token else None
-
-    return reports
-
-
-def _source_workspace_catalog(fabric, workspace_id: str, cache: dict):
-    """Load and cache paginated reports from an accessible workspace.
-
-    Cache entries contain either the workspace catalog or the access/error text
-    so multiple visuals never repeat the same API call.
-    """
-    key = f"workspace:{workspace_id}"
-    if key in cache:
-        return cache[key]
-
-    try:
-        reports = _list_paginated_reports_in_workspace(fabric, workspace_id)
-        entry = {"reports": reports, "error": ""}
-    except Exception as exc:
-        entry = {"reports": [], "error": str(exc)}
-
-    cache[key] = entry
-    return entry
-
-
-def _list_accessible_workspaces(fabric, cache: dict):
-    """Return every Fabric workspace visible to the execution identity.
-
-    This is used only when a report reference is hybrid: workspaceId already
-    points to the target workspace but itemId still belongs to an older
-    workspace.  Results are cached for the complete remediation run.
-    """
-    key = "accessible_workspaces"
-    if key in cache:
-        return cache[key]
-
-    workspaces = []
-    path = "workspaces"
-    next_url = path
-
-    try:
-        while next_url:
-            response = fabric.get(next_url)
-            data = response.json()
-            workspaces.extend(data.get("value", []))
-
-            next_url = data.get("continuationUri")
-            if not next_url:
-                token = data.get("continuationToken")
-                next_url = f"{path}?continuationToken={token}" if token else None
-
-        entry = {"workspaces": workspaces, "error": ""}
-    except Exception as exc:
-        entry = {"workspaces": [], "error": str(exc)}
-
-    cache[key] = entry
-    return entry
-
-
-def _workspace_display_name(workspace: dict) -> str:
-    return str(
-        workspace.get("displayName")
-        or workspace.get("name")
-        or workspace.get("id")
-        or ""
-    ).strip()
-
-
-def _global_historical_item_lookup(
-    fabric,
-    historical_item_id: str,
-    target_workspace_id: str,
-    cache: dict,
-):
-    """Find a historical paginated-report itemId across accessible workspaces.
-
-    Power BI/Fabric Git transformations can produce a hybrid reference where
-    workspaceId has already been changed to the target workspace while itemId
-    still belongs to the previous workspace.  In that state the original
-    workspaceId has been lost, but the historical itemId remains authoritative.
-
-    The function searches the paginated-report catalogs of all workspaces that
-    the execution identity can read.  It never uses a page label or report-name
-    heuristic to identify the source artifact.
-    """
-    lookup_key = f"historical_item:{historical_item_id}"
-    if lookup_key in cache:
-        return cache[lookup_key]
-
-    workspace_entry = _list_accessible_workspaces(fabric, cache)
-    if workspace_entry["error"]:
-        result = {
-            "matches": [],
-            "errors": [],
-            "error": "unable to list accessible workspaces: "
-            + workspace_entry["error"],
-        }
-        cache[lookup_key] = result
-        return result
-
-    matches = []
-    errors = []
-
-    for workspace in workspace_entry["workspaces"]:
-        workspace_id = str(workspace.get("id") or "").strip()
-        if not workspace_id or workspace_id == target_workspace_id:
-            continue
-
-        catalog = _source_workspace_catalog(fabric, workspace_id, cache)
-        if catalog["error"]:
-            errors.append(
-                {
-                    "workspaceId": workspace_id,
-                    "workspaceName": _workspace_display_name(workspace),
-                    "error": catalog["error"],
-                }
-            )
-            continue
-
-        for report in catalog["reports"]:
-            if str(report.get("id") or "").strip() != historical_item_id:
-                continue
-
-            matches.append(
-                {
-                    "workspaceId": workspace_id,
-                    "workspaceName": _workspace_display_name(workspace),
-                    "report": report,
-                }
-            )
-
-    result = {"matches": matches, "errors": errors, "error": ""}
-    cache[lookup_key] = result
-    return result
-
-
-def _match_source_report_name_in_target(paginated_infos, source_name: str):
-    target_matches = [
-        info
-        for info in paginated_infos
-        if info.item.name.strip().casefold() == source_name.strip().casefold()
-    ]
-    if len(target_matches) == 1:
-        return target_matches[0]
-    return None
-
-
-def _resolve_historical_item_globally(
-    fabric,
-    paginated_infos,
-    visual,
-    target_workspace_id: str,
-    source_cache: dict,
-):
-    """Resolve a stale itemId when its original workspaceId is no longer present."""
-    if not visual.old_item_id:
-        return None, "visual does not contain an itemId to search globally"
-
-    result = _global_historical_item_lookup(
-        fabric,
-        visual.old_item_id,
-        target_workspace_id,
-        source_cache,
-    )
-    if result["error"]:
-        return None, result["error"]
-
-    matches = result["matches"]
-    if len(matches) == 0:
-        detail = "historical itemId was not found in any accessible non-target workspace"
-        if result["errors"]:
-            detail += f"; {len(result['errors'])} workspace catalog(s) could not be read"
-        return None, detail
-
-    if len(matches) != 1:
-        locations = ", ".join(
-            f"{match['workspaceName']} [{match['workspaceId']}]"
-            for match in matches
-        )
-        return (
-            None,
-            f"historical itemId matched {len(matches)} paginated reports across accessible workspaces: {locations}",
-        )
-
-    source = matches[0]
-    source_report = source["report"]
-    source_name = str(
-        source_report.get("displayName")
-        or source_report.get("name")
-        or ""
-    ).strip()
-    if not source_name:
-        return None, "historical itemId was found but source displayName is empty"
-
-    target = _match_source_report_name_in_target(paginated_infos, source_name)
-    if target is None:
-        exact_count = sum(
-            1
-            for info in paginated_infos
-            if info.item.name.strip().casefold() == source_name.casefold()
-        )
-        return (
-            None,
-            f"historical itemId resolves to '{source_name}' in "
-            f"{source['workspaceName']} [{source['workspaceId']}], but target has "
-            f"{exact_count} exact displayName matches",
-        )
-
-    reason = (
-        "historical itemId found by global workspace search: "
-        f"{source['workspaceName']} [{source['workspaceId']}] / "
-        f"'{source_name}' -> exact target displayName"
-    )
-    return target, reason
-
-
-def _resolve_by_existing_reference(
-    fabric, paginated_infos, visual, target_workspace_id: str, source_cache: dict
-):
-    """Resolve a target paginated report from persisted artifact identity.
-
-    Resolution order:
-      1. Target workspaceId + target itemId already identify the item.
-      2. Different workspaceId: source workspace itemId -> source displayName ->
-         exact target displayName.
-      3. Hybrid reference (target workspaceId + stale itemId): search the stale
-         itemId across all accessible workspaces, then map the discovered source
-         displayName exactly to the target workspace.
-
-    Page names are never used by this function.
-    """
-    if not visual.old_item_id or not visual.old_workspace_id:
-        return None, "visual does not contain a complete workspaceId + itemId reference"
-
-    target_by_id = [
-        info for info in paginated_infos if info.item.id == visual.old_item_id
-    ]
-
-    if visual.old_workspace_id == target_workspace_id:
-        if len(target_by_id) == 1:
-            return (
-                target_by_id[0],
-                "current workspaceId + itemId directly identify target paginated report",
-            ), ""
-
-        # Hybrid references are common after Git/environment transformations:
-        # workspaceId already points to target while itemId is stale.  Do not
-        # scan every accessible workspace yet.  The caller first attempts the
-        # target-only resolver using current folder/parameter/family metadata;
-        # global historical lookup remains available as a final fallback.
-        return (
-            None,
-            "itemId was not found in the current target workspace",
-        )
-
-    source_entry = _source_workspace_catalog(
-        fabric, visual.old_workspace_id, source_cache
-    )
-    if source_entry["error"]:
-        # The original workspace may have been deleted or may no longer be
-        # readable.  Try the historical itemId globally before giving up.
-        globally_resolved, global_note = _resolve_historical_item_globally(
-            fabric,
-            paginated_infos,
-            visual,
-            target_workspace_id,
-            source_cache,
-        )
-        if globally_resolved:
-            return (globally_resolved, global_note), ""
-        return (
-            None,
-            "source workspace could not be queried: "
-            + source_entry["error"]
-            + "; global historical search: "
-            + global_note,
-        )
-
-    source_matches = [
-        report
-        for report in source_entry["reports"]
-        if str(report.get("id") or "") == visual.old_item_id
-    ]
-    if len(source_matches) != 1:
-        globally_resolved, global_note = _resolve_historical_item_globally(
-            fabric,
-            paginated_infos,
-            visual,
-            target_workspace_id,
-            source_cache,
-        )
-        if globally_resolved:
-            return (globally_resolved, global_note), ""
-        return (
-            None,
-            f"source itemId matched {len(source_matches)} paginated reports in referenced workspace; "
-            f"global historical search: {global_note}",
-        )
-
-    source_report = source_matches[0]
-    source_name = str(
-        source_report.get("displayName")
-        or source_report.get("name")
-        or ""
-    ).strip()
-    if not source_name:
-        return None, "source itemId was found but its displayName is empty"
-
-    target = _match_source_report_name_in_target(paginated_infos, source_name)
-    if target is not None:
-        return (
-            target,
-            f"source workspace itemId resolves to '{source_name}' and target displayName matches exactly",
-        ), ""
-
-    exact_count = sum(
-        1
-        for info in paginated_infos
-        if info.item.name.strip().casefold() == source_name.casefold()
-    )
-    return (
-        None,
-        f"source itemId resolves to '{source_name}', but target workspace has {exact_count} exact displayName matches",
-    )
-
-
-
-
-def _multiset_remove_prefix(candidate_tokens, prefix_tokens):
-    """Remove an exact logical report-name prefix from candidate tokens."""
-    if candidate_tokens[: len(prefix_tokens)] == prefix_tokens:
-        return candidate_tokens[len(prefix_tokens) :]
-    return candidate_tokens
-
-
-def _target_workspace_discovery(paginated_infos, visual):
-    """Resolve an RDL Visual using only artifacts in the target workspace.
-
-    Evidence is applied from strongest to weakest: target folder, exact
-    parameter contract, report family, and page variant.  Report-family
-    comparison ignores grammatical stop words, while the page variant supports
-    two deliberately narrow normalizations needed by real Power BI artifacts:
-    status-word typos and short prefix abbreviations (for example ``TR`` ->
-    ``Transferencias``).  A result is returned only when exactly one candidate
-    satisfies the available evidence.
-    """
-    candidates = _folder_candidates(paginated_infos, visual)
-    steps = []
-
-    if visual.report_folder_id:
-        same_folder_count = sum(
-            1
-            for info in paginated_infos
-            if info.item.folder_id == visual.report_folder_id
-        )
-        if same_folder_count:
-            steps.append(f"same-folder candidates={len(candidates)}")
-
-    # 1) Exact parameter contract is strong target-only metadata.
-    if visual.parameter_names:
-        exact_params = [
-            info
-            for info in candidates
-            if info.parameter_names == visual.parameter_names
-        ]
-        if len(exact_params) == 1:
-            return (
-                exact_params[0],
-                "target workspace discovery: exact RDL Visual/RDL parameter contract",
-            )
-        if len(exact_params) > 1:
-            candidates = exact_params
-            steps.append(f"exact-parameter candidates={len(candidates)}")
-
-    # 2) Report family.  Ignore only grammatical stop words so harmless naming
-    # differences such as "Transferencia Acreditados" vs
-    # "Transferencia de Acreditados" remain in the same logical family.
-    main_tokens = _content_tokens(visual.report_name)
-    main_set = set(main_tokens)
-    family = []
-    if main_tokens:
-        for info in candidates:
-            candidate_tokens = _content_tokens(info.item.name)
-            if main_set.issubset(set(candidate_tokens)):
-                family.append(info)
-
-    if len(family) == 1:
-        return (
-            family[0],
-            "target workspace discovery: main-report family uniquely identifies paginated report",
-        )
-    if len(family) > 1:
-        candidates = family
-        steps.append(f"main-report-family candidates={len(candidates)}")
-
-    # 3) Page variant.  Remove generic page words, stop words and tokens already
-    # supplied by the main report.  Status terms are canonicalized and a short
-    # token can act as a prefix abbreviation only if that yields one unique
-    # candidate.
-    page_tokens = _content_tokens(visual.page_name, drop_generic=True)
-    page_variant = [token for token in page_tokens if token not in main_set]
-
-    if page_variant:
-        full_matches = []
-        exact_matches = []
-
-        for info in candidates:
-            candidate_tokens = _content_tokens(info.item.name)
-            candidate_variant = [
-                token for token in candidate_tokens if token not in main_set
-            ]
-
-            if candidate_variant == page_variant:
-                exact_matches.append(info)
-            if _all_page_tokens_match(page_variant, candidate_variant):
-                full_matches.append(info)
-
-        if len(exact_matches) == 1:
-            return (
-                exact_matches[0],
-                "target workspace discovery: unique logical variant match inside report family",
-            )
-        if len(full_matches) == 1:
-            return (
-                full_matches[0],
-                "target workspace discovery: unique normalized page-variant match inside report family",
-            )
-        if exact_matches:
-            steps.append(f"exact-variant candidates={len(exact_matches)}")
-        elif full_matches:
-            steps.append(f"normalized-variant candidates={len(full_matches)}")
-
-    # 4) Conservative score fallback.  Exact token evidence is preferred; short
-    # page abbreviations contribute only when they match a candidate prefix.
-    scored = []
-    for info in candidates:
-        candidate_tokens = _content_tokens(info.item.name)
-        candidate_set = set(candidate_tokens)
-        family_score = len(main_set & candidate_set)
-        page_score = sum(
-            1
-            for page_token in page_variant
-            if any(_token_matches(page_token, token) for token in candidate_tokens)
-        )
-        total = family_score + page_score
-        scored.append((total, page_score, family_score, info))
-
-    if scored:
-        scored.sort(key=lambda x: (x[0], x[1], x[2]), reverse=True)
-        best = scored[0]
-        runner = scored[1] if len(scored) > 1 else None
-        best_key = best[:3]
-        runner_key = runner[:3] if runner else (-1, -1, -1)
-        if best[1] > 0 and best_key > runner_key:
-            return (
-                best[3],
-                "target workspace discovery: unique highest normalized token score "
-                f"(score={best_key}, runner={runner_key})",
-            )
-
-    detail = ", ".join(steps) if steps else "no narrowing metadata"
-    return None, (
-        f"target workspace discovery remained ambiguous among {len(candidates)} candidate(s); {detail}"
-    )
-
-
-def _resolve_paginated(
-    fabric, paginated_infos, visual, target_workspace_id: str, source_cache: dict
-):
-    # 1) Use persisted identity first.  For a real source workspace reference,
-    # this still resolves source itemId -> exact source displayName -> target.
-    # For a hybrid target-workspace + stale-itemId reference, the resolver now
-    # defers the expensive global scan until after target-only discovery.
-    by_reference, reference_note = _resolve_by_existing_reference(
-        fabric,
-        paginated_infos,
-        visual,
-        target_workspace_id,
-        source_cache,
-    )
-    if by_reference:
-        return by_reference
-
-    # 2) Resolve deleted/recreated itemIds using only current target artifacts.
-    discovered, discovery_note = _target_workspace_discovery(
-        paginated_infos, visual
-    )
-    if discovered:
-        return discovered, discovery_note
-
-    # 3) Preserve the historical global-search safety net for the specific
-    # hybrid case.  It is now a fallback, not the first action, which avoids
-    # walking every accessible workspace when target-only evidence is unique.
-    global_note = ""
-    if (
-        visual.old_workspace_id == target_workspace_id
-        and visual.old_item_id
-    ):
-        historical, global_note = _resolve_historical_item_globally(
-            fabric,
-            paginated_infos,
-            visual,
-            target_workspace_id,
-            source_cache,
-        )
-        if historical:
-            return historical, global_note
-
-    reason = discovery_note
-    if reference_note:
-        reason += f"; persisted reference resolution: {reference_note}"
-    if global_note:
-        reason += f"; historical fallback: {global_note}"
-    return None, reason
-
-
-def summarize_discovery(workspace_items, rdl_visuals, config):
+def summarize_discovery(workspace_items, rdl_visuals, config, mapping):
     counts = {"Report": 0, "SemanticModel": 0, "PaginatedReport": 0}
     for item in workspace_items:
         if item.kind in counts:
@@ -684,32 +18,84 @@ def summarize_discovery(workspace_items, rdl_visuals, config):
     print(f"Semantic Models      : {counts['SemanticModel']}")
     print(f"Paginated Reports    : {counts['PaginatedReport']}")
     print(f"RDL Visuals          : {len(rdl_visuals)}")
+    print(f"Mapping reports      : {mapping.report_count}")
+    print(f"Mapping pages        : {mapping.page_count}")
     print(f"Total workspace items: {len(workspace_items)}")
 
 
-def _print_resolution_header(index, total, visual):
+def print_resolution_header(index, total, visual):
     print("-" * 80)
     print(f"[{index}/{total}] Resolving RDL Visual")
     print(f"  Main report        : {visual.report_name}")
     print(f"  Main report Id     : {visual.report_id}")
-    print(f"  Report folder Id   : {visual.report_folder_id or '(root)'}")
     print(f"  Page               : {visual.page_name or '(unnamed page)'}")
     print(f"  Definition part    : {visual.definition_part_path}")
     print(f"  Current itemId     : {visual.old_item_id or '(empty)'}")
     print(f"  Current workspaceId: {visual.old_workspace_id or '(empty)'}")
-    print(
-        "  Visual parameters  : "
-        + (", ".join(sorted(visual.parameter_names)) or "(none)")
+
+
+def validate_mapping_cardinality(rdl_visuals) -> None:
+    """Fail when mapping v1 cannot distinguish multiple RDL visuals on one page."""
+    counts = Counter((visual.report_name, visual.page_name) for visual in rdl_visuals)
+    ambiguous = [key for key, count in counts.items() if count > 1]
+    if not ambiguous:
+        return
+
+    details = "; ".join(
+        f"{report} / {page or '(unnamed page)'} ({counts[(report, page)]} visuals)"
+        for report, page in ambiguous
+    )
+    raise RuntimeError(
+        "reports.yaml version 1 supports one RDL visual per "
+        f"report page. Multiple RDL visuals were found: {details}."
     )
 
 
-def _encode_json_part(data: dict) -> str:
+def index_paginated_reports(paginated_infos):
+    by_name = {}
+    for info in paginated_infos:
+        by_name.setdefault(info.item.name, []).append(info)
+    return by_name
+
+
+def resolve_from_mapping(
+    mapping: PaginatedReportMapping,
+    paginated_by_name: dict,
+    visual,
+):
+    relation = mapping.find(visual.report_name, visual.page_name)
+    if relation is None:
+        return None, (
+            "mapping entry not found for "
+            f"report='{visual.report_name}', page='{visual.page_name}'"
+        )
+
+    matches = paginated_by_name.get(relation.paginated_report, [])
+    if not matches:
+        return None, (
+            "mapped paginated report was not found in target workspace: "
+            f"'{relation.paginated_report}'"
+        )
+
+    if len(matches) > 1:
+        ids = ", ".join(info.item.id for info in matches)
+        return None, (
+            "mapped paginated report name is ambiguous in target workspace: "
+            f"'{relation.paginated_report}' matched {len(matches)} items [{ids}]"
+        )
+
+    return matches[0], (
+        "explicit mapping: "
+        f"{visual.report_name} / {visual.page_name} -> {relation.paginated_report}"
+    )
+
+
+def encode_json_part(data: dict) -> str:
     text = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
     return base64.b64encode(text.encode("utf-8")).decode("ascii")
 
 
-
-def _patch_rdl_visual_part(part: dict, target_item_id: str, target_workspace_id: str):
+def patch_rdl_visual_part(part: dict, target_item_id: str, target_workspace_id: str):
     if part.get("payloadType") != "InlineBase64":
         raise RuntimeError(
             f"Unsupported payload type for {part.get('path')}: {part.get('payloadType')}"
@@ -721,34 +107,29 @@ def _patch_rdl_visual_part(part: dict, target_item_id: str, target_workspace_id:
     if visual.get("visualType") != "rdlVisual":
         raise RuntimeError(f"Definition part is not an RDL visual: {part.get('path')}")
 
-    try:
-        objects = visual.setdefault("objects", {})
-        report_info = objects.setdefault("reportInfo", [])
-        if not report_info:
-            report_info.append({})
-        properties = report_info[0].setdefault("properties", {})
+    objects = visual.setdefault("objects", {})
+    report_info = objects.setdefault("reportInfo", [])
+    if not report_info:
+        report_info.append({})
+    properties = report_info[0].setdefault("properties", {})
 
-        # Replace the complete reference, not only the two literal values.
-        # This mirrors the canonical ItemLocation structure produced by Power BI
-        # when the user manually selects a paginated report in the visual UI.
-        properties["reference"] = {
-            "kind": "ItemLocation",
-            "byReference": {
-                "itemId": {"expr": {"Literal": {"Value": f"'{target_item_id}'"}}},
-                "workspaceId": {
-                    "expr": {"Literal": {"Value": f"'{target_workspace_id}'"}}
-                },
+    # PBIR stores the linked paginated report as an ItemLocation reference.
+    # Replace only this relationship; parameterMapping and the rest of the
+    # visual definition are intentionally preserved.
+    properties["reference"] = {
+        "kind": "ItemLocation",
+        "byReference": {
+            "itemId": {"expr": {"Literal": {"Value": f"'{target_item_id}'"}}},
+            "workspaceId": {
+                "expr": {"Literal": {"Value": f"'{target_workspace_id}'"}}
             },
-        }
-    except (KeyError, IndexError, TypeError) as exc:
-        raise RuntimeError(
-            f"Unable to create RDL visual report reference in {part.get('path')}"
-        ) from exc
+        },
+    }
 
-    part["payload"] = _encode_json_part(data)
+    part["payload"] = encode_json_part(data)
 
 
-def _patch_legacy_rdl_visual_part(
+def patch_legacy_rdl_visual_part(
     part: dict, visual_locator, target_item_id: str, target_workspace_id: str
 ):
     if part.get("payloadType") != "InlineBase64":
@@ -788,6 +169,8 @@ def _patch_legacy_rdl_visual_part(
                 report_info.append({})
             properties = report_info[0].setdefault("properties", {})
 
+            # Legacy report.json uses direct reportId/workspaceId literals.
+            # parameterMapping is intentionally left untouched.
             properties["reportId"] = {
                 "expr": {"Literal": {"Value": f"'{target_item_id}'"}}
             }
@@ -799,7 +182,7 @@ def _patch_legacy_rdl_visual_part(
             container["config"] = json.dumps(
                 config, ensure_ascii=False, separators=(",", ":")
             )
-            part["payload"] = _encode_json_part(data)
+            part["payload"] = encode_json_part(data)
             return
 
     raise RuntimeError(
@@ -808,7 +191,7 @@ def _patch_legacy_rdl_visual_part(
     )
 
 
-def _read_legacy_reference(part: dict, visual_locator):
+def read_legacy_reference(part: dict, visual_locator):
     if part.get("payloadType") != "InlineBase64":
         return "", ""
 
@@ -833,9 +216,7 @@ def _read_legacy_reference(part: dict, visual_locator):
             visual = config.get("singleVisual", {})
             try:
                 properties = visual["objects"]["reportInfo"][0]["properties"]
-                item_id = properties["reportId"]["expr"]["Literal"]["Value"].strip(
-                    "'"
-                )
+                item_id = properties["reportId"]["expr"]["Literal"]["Value"].strip("'")
                 workspace_id = properties["workspaceId"]["expr"]["Literal"][
                     "Value"
                 ].strip("'")
@@ -846,12 +227,12 @@ def _read_legacy_reference(part: dict, visual_locator):
     return "", ""
 
 
-def _read_reference_from_definition(definition_response: dict, visual_locator):
+def read_reference_from_definition(definition_response: dict, visual_locator):
     for part in definition_response.get("definition", {}).get("parts", []):
         if part.get("path") != visual_locator.definition_part_path:
             continue
         if visual_locator.definition_format == "LegacyReportJson":
-            return _read_legacy_reference(part, visual_locator)
+            return read_legacy_reference(part, visual_locator)
         if part.get("payloadType") != "InlineBase64":
             return "", ""
         raw = base64.b64decode(part.get("payload", "")).decode("utf-8-sig")
@@ -872,35 +253,41 @@ def apply_remediation(
     fabric,
     rdl_visuals,
     paginated_infos,
-    workspace_items,
     config,
+    mapping: PaginatedReportMapping,
     report_definition_cache: dict | None = None,
 ):
+    """Resolve and repair RDL Visual links using explicit mapping only.
+
+    Resolution is deterministic:
+      Report displayName + Page displayName -> PaginatedReport displayName.
+
+    No folder, parameter, fuzzy-name, source-workspace, or historical lookup is
+    used.  The target paginated report ID is obtained from the current target
+    workspace by exact displayName.
+    """
+    validate_mapping_cardinality(rdl_visuals)
+    paginated_by_name = index_paginated_reports(paginated_infos)
+
     unresolved = []
     plan = []
-    source_workspace_cache = {}
+    used_mapping_keys = set()
 
     print(f"Workspace: {config.workspace_name} [{config.workspace_id}]")
+    print(f"Mapping  : {config.reports_mapping_path}")
     print(f"RDL Visuals to resolve: {len(rdl_visuals)}")
     print()
 
     for index, visual in enumerate(rdl_visuals, start=1):
-        _print_resolution_header(index, len(rdl_visuals), visual)
+        print_resolution_header(index, len(rdl_visuals), visual)
 
-        candidates = _folder_candidates(paginated_infos, visual)
-        print(f"  Candidate reports  : {len(candidates)}")
-        for candidate in candidates:
-            print(f"    - {candidate.item.name} [{candidate.item.id}]")
+        paginated, reason = resolve_from_mapping(mapping, paginated_by_name, visual)
+        relation = mapping.find(visual.report_name, visual.page_name)
+        if relation is not None:
+            used_mapping_keys.add((relation.report, relation.page))
 
-        paginated, reason = _resolve_paginated(
-            fabric,
-            paginated_infos,
-            visual,
-            config.workspace_id,
-            source_workspace_cache,
-        )
         if paginated is None:
-            unresolved.append(visual)
+            unresolved.append((visual, reason))
             print("  Target report      : NOT RESOLVED")
             print(f"  Resolution reason  : {reason}")
             print("  Resolution status  : UNRESOLVED")
@@ -931,9 +318,21 @@ def apply_remediation(
         )
         print()
 
+    unused_mapping_keys = mapping.keys() - used_mapping_keys
+    if unused_mapping_keys:
+        print("[MAPPING] Entries not used by discovered RDL Visuals:")
+        for report_name, page_name in sorted(unused_mapping_keys):
+            print(f"  - {report_name} / {page_name}")
+        print()
+
     if unresolved and config.fail_on_unresolved_rdl_visual:
+        details = "; ".join(
+            f"{visual.report_name} / {visual.page_name}: {reason}"
+            for visual, reason in unresolved
+        )
         raise RuntimeError(
-            f"Unable to resolve {len(unresolved)} RDL Visual relationship(s) safely. No report definitions were updated."
+            f"Unable to resolve {len(unresolved)} RDL Visual relationship(s) "
+            f"from reports.yaml. No report definitions were updated. {details}"
         )
 
     print("=" * 80)
@@ -944,7 +343,7 @@ def apply_remediation(
         print("Apply is disabled by configuration (applyRdlVisualFix=false).")
     else:
         by_report = {}
-        for visual, target, reason, needs_update in plan:
+        for visual, target, _, needs_update in plan:
             if needs_update:
                 by_report.setdefault(visual.report_id, []).append((visual, target))
 
@@ -961,6 +360,7 @@ def apply_remediation(
                 if report_definition_cache is not None:
                     report_definition_cache[report_id] = definition_response
                 print("  Definition source  : FABRIC REST")
+
             definition = definition_response.get("definition", {})
             parts = definition.get("parts", [])
             parts_by_path = {part.get("path"): part for part in parts}
@@ -971,17 +371,19 @@ def apply_remediation(
                     raise RuntimeError(
                         f"Definition part not found: {visual.definition_part_path}"
                     )
+
                 print(f"  Patching page      : {visual.page_name}")
                 print(f"    Old itemId       : {visual.old_item_id or '(empty)'}")
                 print(f"    New itemId       : {target.id}")
                 print(f"    Old workspaceId  : {visual.old_workspace_id or '(empty)'}")
                 print(f"    New workspaceId  : {config.workspace_id}")
+
                 if visual.definition_format == "LegacyReportJson":
-                    _patch_legacy_rdl_visual_part(
+                    patch_legacy_rdl_visual_part(
                         part, visual, target.id, config.workspace_id
                     )
                 else:
-                    _patch_rdl_visual_part(part, target.id, config.workspace_id)
+                    patch_rdl_visual_part(part, target.id, config.workspace_id)
 
             print("  Calling Update Report Definition...")
             status_code = update_report_definition(
@@ -995,8 +397,9 @@ def apply_remediation(
             )
             if report_definition_cache is not None:
                 report_definition_cache[report_id] = verify_definition
+
             for visual, target in changes:
-                actual_item_id, actual_workspace_id = _read_reference_from_definition(
+                actual_item_id, actual_workspace_id = read_reference_from_definition(
                     verify_definition, visual
                 )
                 ok = (
@@ -1008,13 +411,16 @@ def apply_remediation(
                 print(f"      workspaceId : {actual_workspace_id or '(empty)'}")
                 if not ok:
                     raise RuntimeError(
-                        f"RDL visual update verification failed for {report_name} / {visual.page_name}."
+                        f"RDL visual update verification failed for "
+                        f"{report_name} / {visual.page_name}."
                     )
+
             print("  Apply status       : UPDATED AND VERIFIED")
             print()
 
     resolved = [(visual, target) for visual, target, _, _ in plan]
     updated_count = sum(1 for _, _, _, needs_update in plan if needs_update)
+
     print("=" * 80)
     print("POST-DEPLOY SUMMARY")
     print("=" * 80)

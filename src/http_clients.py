@@ -23,13 +23,13 @@ class ApiClient:
             }
         )
 
-    def _url(self, path_or_url: str) -> str:
+    def build_url(self, path_or_url: str) -> str:
         if path_or_url.startswith("http://") or path_or_url.startswith("https://"):
             return path_or_url
         return urljoin(self.base_url, path_or_url.lstrip("/"))
 
     @staticmethod
-    def _raise_for_status_with_body(response):
+    def raise_for_status_with_body(response):
         if response.ok:
             return
 
@@ -44,7 +44,7 @@ class ApiClient:
             response=response,
         )
 
-    def _log(self, method: str, url: str, request_json, response):
+    def log_http_exchange(self, method: str, url: str, request_json, response):
         if self.diagnostics is not None:
             self.diagnostics.log_http(
                 method=method,
@@ -56,39 +56,39 @@ class ApiClient:
             )
 
     def get(self, path_or_url: str, params=None):
-        url = self._url(path_or_url)
+        url = self.build_url(path_or_url)
         response = self.session.get(url, params=params)
-        self._log("GET", url, None, response)
-        self._raise_for_status_with_body(response)
+        self.log_http_exchange("GET", url, None, response)
+        self.raise_for_status_with_body(response)
         return response
 
     def post(self, path_or_url: str, json=None, params=None):
-        url = self._url(path_or_url)
+        url = self.build_url(path_or_url)
         response = self.session.post(url, json=json, params=params)
-        self._log("POST", url, json, response)
-        self._raise_for_status_with_body(response)
+        self.log_http_exchange("POST", url, json, response)
+        self.raise_for_status_with_body(response)
         return response
 
     # def patch(self, path_or_url: str, json=None, params=None):
-    #     url = self._url(path_or_url)
+    #     url = self.build_url(path_or_url)
     #     response = self.session.patch(url, json=json, params=params)
-    #     self._log("PATCH", url, json, response)
-    #     self._raise_for_status_with_body(response)
+    #     self.log_http_exchange("PATCH", url, json, response)
+    #     self.raise_for_status_with_body(response)
     #     return response
 
     # def delete(self, path_or_url: str, params=None):
-    #     url = self._url(path_or_url)
+    #     url = self.build_url(path_or_url)
     #     response = self.session.delete(url, params=params)
-    #     self._log("DELETE", url, None, response)
-    #     self._raise_for_status_with_body(response)
+    #     self.log_http_exchange("DELETE", url, None, response)
+    #     self.raise_for_status_with_body(response)
     #     return response
 
     @staticmethod
-    def _fabric_operation_path(operation_id: str) -> str:
+    def fabric_operation_path(operation_id: str) -> str:
         return f"operations/{operation_id}"
 
     @staticmethod
-    def _fabric_result_path(operation_id: str) -> str:
+    def fabric_result_path(operation_id: str) -> str:
         return f"operations/{operation_id}/result"
 
     def wait_for_lro_completion(self, response, timeout_seconds: int = 300):
@@ -116,7 +116,7 @@ class ApiClient:
             # include a regional wabi-paas Location; using x-ms-operation-id keeps all
             # polling on https://api.fabric.microsoft.com/v1.
             state_ref = (
-                self._fabric_operation_path(operation_id) if operation_id else location
+                self.fabric_operation_path(operation_id) if operation_id else location
             )
             state_response = self.get(state_ref)
             state = state_response.json()
@@ -155,7 +155,7 @@ class ApiClient:
 
             time.sleep(max(1, retry_after))
             state_ref = (
-                self._fabric_operation_path(operation_id) if operation_id else location
+                self.fabric_operation_path(operation_id) if operation_id else location
             )
             state_response = self.get(state_ref)
             state = state_response.json()
@@ -163,7 +163,7 @@ class ApiClient:
 
             if status == "Succeeded":
                 if operation_id:
-                    return self.get(self._fabric_result_path(operation_id)).json()
+                    return self.get(self.fabric_result_path(operation_id)).json()
                 result_url = state_response.headers.get("Location")
                 if not result_url:
                     raise RuntimeError(
