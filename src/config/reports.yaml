@@ -106,3 +106,21 @@ reports:
         paginatedReport: Trans Uso de Garantía por 43BIS_Recibidos
       - page: Reporte Paginado Aceptados
         paginatedReport: Trans Uso de Garantía por 43BIS_Aceptado
+  - report: Redención de Bono
+    pages:
+      - page: Total Paginado DetalleRechazado
+        paginatedReport: Reporte Detalle Redención de Bono de Pensión ISSSTE - Totales
+      - page: Total Paginado DetalleA
+        paginatedReport: Reporte Detalle Redención de Bono de Pensión ISSSTE - Totales
+      - page: Paginado DetalleA
+        paginatedReport: "Reporte Detalle Redención de Bono de Pensión  ISSSTE"
+      - page: Total Paginado Detalle
+        paginatedReport: Reporte Detalle Redención de Bono de Pensión ISSSTE - Totales
+      - page: Paginado Global
+        paginatedReport: Reporte Global Redención de Bono de Pensión ISSSTE
+      - page: Paginado DetalleR
+        paginatedReport: "Reporte Detalle Redención de Bono de Pensión  ISSSTE"
+      - page: Paginado Detalle
+        paginatedReport: "Reporte Detalle Redención de Bono de Pensión  ISSSTE"
+      - page: Paginado Detalle Estatus
+        paginatedReport: Reporte Detalle Redención de Bono de Pensión ISSSTE_
