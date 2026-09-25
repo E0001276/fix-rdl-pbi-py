@@ -1,6 +1,7 @@
 workspaceId: 567000c2-2893-4e44-9d56-c8f4053e6200
 workspaceName: ws-uat-cicd
 expectedOracleDatabase: NCI_QA_DB
+semanticModelConnectionName: NCI_QA_DB
 failOnUnresolvedRdlVisual: true
 applyRdlVisualFix: true
 applyPaginatedReportFix: true

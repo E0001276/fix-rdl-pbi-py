@@ -1,6 +1,7 @@
 workspaceId: 2c7f84a1-5b19-43cc-86f2-8042f14a96ec
 workspaceName: ws-delta-cicd
 expectedOracleDatabase: NCI_QA_DB
+semanticModelConnectionName: NCI_QA_DB
 failOnUnresolvedRdlVisual: true
 applyRdlVisualFix: true
 applyPaginatedReportFix: true
