@@ -62,8 +62,12 @@ def print_configuration(config_path: str, config, mapping) -> None:
     print(f"[WORKSPACE] Name     : {config.workspace_name}")
     print(f"[WORKSPACE] Id       : {config.workspace_id}")
     print(
-        f"[WORKSPACE] Database : "
+        f"[WORKSPACE] Oracle server      : "
         f"{config.expected_oracle_database or '(not configured)'}"
+    )
+    print(
+        f"[WORKSPACE] Fabric connection  : "
+        f"{config.semantic_model_connection_name or '(not configured)'}"
     )
     print(f"[MAPPING] File       : {config.reports_mapping_path}")
     print(f"[MAPPING] Reports    : {mapping.report_count}")
@@ -163,7 +167,7 @@ def execute_post_deploy_pipeline(
     # 5) Main report RDL Visual -> current target paginated itemIds.
 
     print_section("SEMANTIC MODEL GATEWAY BINDING")
-    bind_semantic_models_to_gateway(powerbi, workspace_items, config)
+    bind_semantic_models_to_gateway(fabric, powerbi, workspace_items, config)
 
     print_section("SEMANTIC MODEL REFRESH")
     refresh_semantic_models(powerbi, workspace_items, config)

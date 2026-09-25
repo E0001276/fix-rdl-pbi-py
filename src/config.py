@@ -12,6 +12,7 @@ class PostDeployConfig:
     workspace_id: str
     workspace_name: str
     expected_oracle_database: str
+    semantic_model_connection_name: str
     fail_on_unresolved_rdl_visual: bool
     apply_rdl_visual_fix: bool
     apply_paginated_report_fix: bool
@@ -36,6 +37,12 @@ def load_config(path: str) -> PostDeployConfig:
         workspace_id=require_text(data, "workspaceId", config_path),
         workspace_name=require_text(data, "workspaceName", config_path),
         expected_oracle_database=str(data.get("expectedOracleDatabase", "")).strip(),
+        semantic_model_connection_name=str(
+            data.get(
+                "semanticModelConnectionName",
+                data.get("expectedOracleDatabase", ""),
+            )
+        ).strip(),
         fail_on_unresolved_rdl_visual=bool(
             data.get("failOnUnresolvedRdlVisual", True)
         ),
