@@ -1,0 +1,12 @@
+workspaceId: ee35e4f4-7817-4299-9c91-1ad55c41616e
+workspaceName: ws-chloar
+expectedOracleDatabase: NCI_QA_DB
+semanticModelConnectionName: NCI_QA_DB
+failOnUnresolvedRdlVisual: true
+applyRdlVisualFix: true
+applyPaginatedReportFix: true
+failOnUnresolvedPaginatedReport: true
+bindSemanticModelsToConnection: true
+failOnUnresolvedConnectionBinding: true
+bindPaginatedReportsToSemanticModels: true
+failOnUnresolvedPaginatedDatasourceBinding: true
