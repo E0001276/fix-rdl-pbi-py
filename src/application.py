@@ -178,9 +178,23 @@ def execute_post_deploy_pipeline(
     print_post_rdl_snapshot_status(paginated_infos)
 
     print_section("PAGINATED REPORT RUNTIME DATASOURCE BINDING")
-    bind_paginated_reports_to_semantic_models(
-        powerbi, fabric, workspace_items, paginated_infos, config
-    )
+    deferred_paginated_binding_error = None
+    try:
+        bind_paginated_reports_to_semantic_models(
+            powerbi, fabric, workspace_items, paginated_infos, config
+        )
+    except RuntimeError as exc:
+        if not config.defer_paginated_datasource_binding_failure_until_after_rdl_visual_fix:
+            raise
+        deferred_paginated_binding_error = exc
+        print()
+        print(
+            "[DEFERRED FAILURE] Paginated runtime datasource binding reported "
+            "one or more unresolved items. The failure is deferred until after "
+            "RDL Visual remediation so report-to-paginated-report references are "
+            "still repaired."
+        )
+        print(f"[DEFERRED FAILURE] Reason: {exc}")
 
     print_section("RDL VISUAL RESOLUTION AND APPLY")
     print(
@@ -195,6 +209,9 @@ def execute_post_deploy_pipeline(
         mapping,
         report_definition_cache=report_definition_cache,
     )
+
+    if deferred_paginated_binding_error is not None:
+        raise deferred_paginated_binding_error
 
 
 def run_post_deploy(config_path: str, diagnostics) -> None:

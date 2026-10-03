@@ -1,3 +1,5 @@
+import time
+
 from paginated import resolve_semantic_models_for_rdl
 from workspace import (
     get_paginated_report_definition,
@@ -33,6 +35,53 @@ def build_target_database_name(semantic_model_id: str) -> str:
 def get_paginated_report_datasources(powerbi, workspace_id: str, report_id: str) -> list[dict]:
     response = powerbi.get(f"groups/{workspace_id}/reports/{report_id}/datasources")
     return extract_datasources(response.json())
+
+
+def get_paginated_report_datasources_with_recovery(
+    powerbi, workspace_id: str, report_id: str, config
+) -> list[dict]:
+    """Read runtime datasources and recover safely when Power BI returns an empty list.
+
+    Some paginated reports temporarily expose no runtime datasource after an RDL
+    update.  The recovery behavior is fully controlled by the environment YAML:
+    optionally take ownership, then retry the GET with configurable count/delay.
+    """
+    datasources = get_paginated_report_datasources(powerbi, workspace_id, report_id)
+    if datasources:
+        return datasources
+
+    if config.take_over_paginated_report_when_runtime_datasource_empty:
+        print("  Runtime datasource recovery: empty result; calling Default.TakeOver...")
+        takeover = powerbi.post(
+            f"groups/{workspace_id}/reports/{report_id}/Default.TakeOver"
+        )
+        print(f"  Recovery TakeOver  : HTTP {takeover.status_code}")
+        datasources = get_paginated_report_datasources(
+            powerbi, workspace_id, report_id
+        )
+        if datasources:
+            print("  Runtime datasource recovery: datasource available after TakeOver.")
+            return datasources
+
+    for attempt in range(1, config.paginated_runtime_datasource_retry_count + 1):
+        delay = config.paginated_runtime_datasource_retry_seconds
+        print(
+            f"  Runtime datasource recovery: retry {attempt}/"
+            f"{config.paginated_runtime_datasource_retry_count} after {delay}s..."
+        )
+        if delay > 0:
+            time.sleep(delay)
+        datasources = get_paginated_report_datasources(
+            powerbi, workspace_id, report_id
+        )
+        if datasources:
+            print(
+                "  Runtime datasource recovery: datasource available on "
+                f"retry {attempt}."
+            )
+            return datasources
+
+    return datasources
 
 
 def get_persisted_rdl_datasource_names(
@@ -135,8 +184,8 @@ def bind_paginated_reports_to_semantic_models(
         print(f"  Report Id         : {item.id}")
 
         try:
-            runtime_datasources = get_paginated_report_datasources(
-                powerbi, config.workspace_id, item.id
+            runtime_datasources = get_paginated_report_datasources_with_recovery(
+                powerbi, config.workspace_id, item.id, config
             )
             rdl_names = get_persisted_rdl_datasource_names(
                 fabric, config.workspace_id, info

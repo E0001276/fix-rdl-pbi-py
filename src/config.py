@@ -21,6 +21,10 @@ class PostDeployConfig:
     fail_on_unresolved_connection_binding: bool
     bind_paginated_reports_to_semantic_models: bool
     fail_on_unresolved_paginated_datasource_binding: bool
+    paginated_runtime_datasource_retry_count: int
+    paginated_runtime_datasource_retry_seconds: int
+    take_over_paginated_report_when_runtime_datasource_empty: bool
+    defer_paginated_datasource_binding_failure_until_after_rdl_visual_fix: bool
     refresh_semantic_models: bool
     wait_for_refresh: bool
     fail_on_refresh_error: bool
@@ -62,6 +66,21 @@ def load_config(path: str) -> PostDeployConfig:
         ),
         fail_on_unresolved_paginated_datasource_binding=bool(
             data.get("failOnUnresolvedPaginatedDatasourceBinding", True)
+        ),
+        paginated_runtime_datasource_retry_count=max(
+            0, int(data.get("paginatedRuntimeDatasourceRetryCount", 0))
+        ),
+        paginated_runtime_datasource_retry_seconds=max(
+            0, int(data.get("paginatedRuntimeDatasourceRetrySeconds", 0))
+        ),
+        take_over_paginated_report_when_runtime_datasource_empty=bool(
+            data.get("takeOverPaginatedReportWhenRuntimeDatasourceEmpty", False)
+        ),
+        defer_paginated_datasource_binding_failure_until_after_rdl_visual_fix=bool(
+            data.get(
+                "deferPaginatedDatasourceBindingFailureUntilAfterRdlVisualFix",
+                False,
+            )
         ),
         refresh_semantic_models=bool(data.get("refreshSemanticModels", True)),
         wait_for_refresh=bool(data.get("waitForRefresh", False)),

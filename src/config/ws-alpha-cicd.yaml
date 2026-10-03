@@ -10,3 +10,7 @@ bindSemanticModelsToConnection: true
 failOnUnresolvedConnectionBinding: true
 bindPaginatedReportsToSemanticModels: true
 failOnUnresolvedPaginatedDatasourceBinding: true
+paginatedRuntimeDatasourceRetryCount: 6
+paginatedRuntimeDatasourceRetrySeconds: 5
+takeOverPaginatedReportWhenRuntimeDatasourceEmpty: true
+deferPaginatedDatasourceBindingFailureUntilAfterRdlVisualFix: true
