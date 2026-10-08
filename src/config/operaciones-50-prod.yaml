@@ -1,0 +1,16 @@
+workspaceId: febbaca7-abc5-42d8-ab70-78ef9dc49c65
+workspaceName: "Operaciones 5.0 PROD"
+expectedOracleDatabase: NCI_PROD_DB
+semanticModelConnectionName: NCI_PROD_DB
+failOnUnresolvedRdlVisual: true
+applyRdlVisualFix: true
+applyPaginatedReportFix: true
+failOnUnresolvedPaginatedReport: true
+bindSemanticModelsToConnection: true
+failOnUnresolvedConnectionBinding: true
+bindPaginatedReportsToSemanticModels: true
+failOnUnresolvedPaginatedDatasourceBinding: true
+paginatedRuntimeDatasourceRetryCount: 6
+paginatedRuntimeDatasourceRetrySeconds: 5
+takeOverPaginatedReportWhenRuntimeDatasourceEmpty: true
+deferPaginatedDatasourceBindingFailureUntilAfterRdlVisualFix: true

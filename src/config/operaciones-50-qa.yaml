@@ -1,0 +1,16 @@
+workspaceId: 9a6d8c09-872e-4c5c-aacc-2ff853c33a8e
+workspaceName: "Operaciones 5.0 QA"
+expectedOracleDatabase: NCI_QA_DB
+semanticModelConnectionName: NCI_QA_DB
+failOnUnresolvedRdlVisual: true
+applyRdlVisualFix: true
+applyPaginatedReportFix: true
+failOnUnresolvedPaginatedReport: true
+bindSemanticModelsToConnection: true
+failOnUnresolvedConnectionBinding: true
+bindPaginatedReportsToSemanticModels: true
+failOnUnresolvedPaginatedDatasourceBinding: true
+paginatedRuntimeDatasourceRetryCount: 6
+paginatedRuntimeDatasourceRetrySeconds: 5
+takeOverPaginatedReportWhenRuntimeDatasourceEmpty: true
+deferPaginatedDatasourceBindingFailureUntilAfterRdlVisualFix: true
