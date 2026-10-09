@@ -26,7 +26,11 @@ def xml_local_name(tag: str) -> str:
 
 
 def normalize_workspace_datasource_prefix(workspace_name: str) -> str:
-    return re.sub(r"[\s-]+", "", workspace_name or "")
+    # RDL datasource prefixes omit workspace separators such as spaces, hyphens,
+    # and periods. Keep this normalization narrowly scoped so existing workspace
+    # naming behavior remains unchanged while names such as "Operaciones 5.0 DEV"
+    # resolve to the existing RDL prefix "Operaciones50DEV".
+    return re.sub(r"[\s.-]+", "", workspace_name or "")
 
 
 def build_target_datasource_name(current_name: str, workspace_name: str) -> str:
