@@ -1,4 +1,5 @@
 import time
+from failure_summary import format_failure_details, print_failure_summary
 
 
 def get_dataset_info(powerbi, workspace_id: str, dataset_id: str) -> dict:
@@ -76,7 +77,12 @@ def refresh_semantic_models(powerbi, workspace_items, config):
             message = str(exc)
             print("  Status            : ERROR")
             print(f"  Reason            : {message}")
-            failures.append((model, message))
+            failures.append({
+                "element_type": "Semantic Model",
+                "element_name": model.name,
+                "operation": "Semantic model refresh",
+                "reason": message,
+            })
             results.append((model, "ERROR"))
 
     print()
@@ -87,7 +93,9 @@ def refresh_semantic_models(powerbi, workspace_items, config):
         print(f"- {model.name}: {status}")
 
     if failures and config.fail_on_refresh_error:
+        print_failure_summary("SEMANTIC MODEL REFRESH FAILURE SUMMARY", failures)
         raise RuntimeError(
-            f"Unable to refresh {len(failures)} semantic model(s)."
+            f"Unable to refresh {len(failures)} semantic model(s).\n"
+            + format_failure_details(failures)
         )
     return results

@@ -1,4 +1,5 @@
 import time
+from failure_summary import format_failure_details, print_failure_summary
 
 from paginated import resolve_semantic_models_for_rdl
 from workspace import (
@@ -193,7 +194,12 @@ def bind_paginated_reports_to_semantic_models(
         except Exception as exc:
             message = f"Datasource discovery failed: {exc}"
             print(f"  Status             : GET_FAILED\n  Reason             : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Paginated Report",
+                "element_name": item.name,
+                "operation": "Datasource discovery",
+                "reason": message,
+            })
             results.append((item.name, "GET_FAILED"))
             continue
 
@@ -204,7 +210,12 @@ def bind_paginated_reports_to_semantic_models(
             message = "Unable to resolve semantic model(s) safely: " + " | ".join(resolution_failures)
             print("  Status             : UNRESOLVED")
             print(f"  Reason             : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Paginated Report",
+                "element_name": item.name,
+                "operation": "Semantic model resolution",
+                "reason": message,
+            })
             results.append((item.name, "UNRESOLVED"))
             continue
 
@@ -230,13 +241,23 @@ def bind_paginated_reports_to_semantic_models(
         if not runtime_datasources:
             message = "Power BI returned no runtime datasource for this paginated report."
             print(f"  Status             : ERROR\n  Reason             : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Paginated Report",
+                "element_name": item.name,
+                "operation": "Runtime datasource discovery",
+                "reason": message,
+            })
             results.append((item.name, "ERROR"))
             continue
         if not rdl_names:
             message = "The persisted RDL contains no embedded datasource name."
             print(f"  Status             : ERROR\n  Reason             : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Paginated Report",
+                "element_name": item.name,
+                "operation": "Persisted RDL datasource validation",
+                "reason": message,
+            })
             results.append((item.name, "ERROR"))
             continue
 
@@ -254,7 +275,12 @@ def bind_paginated_reports_to_semantic_models(
                 + ", ".join(unresolved_runtime)
             )
             print(f"  Status             : UNRESOLVED\n  Reason             : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Paginated Report",
+                "element_name": item.name,
+                "operation": "Runtime datasource mapping",
+                "reason": message,
+            })
             results.append((item.name, "UNRESOLVED"))
             continue
 
@@ -279,7 +305,12 @@ def bind_paginated_reports_to_semantic_models(
         except Exception as exc:
             message = f"Paginated runtime update failed: {exc}"
             print(f"  Status             : UPDATE_FAILED\n  Reason             : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Paginated Report",
+                "element_name": item.name,
+                "operation": "Power BI UpdateDatasources",
+                "reason": message,
+            })
             results.append((item.name, "UPDATE_FAILED"))
             continue
 
@@ -290,7 +321,12 @@ def bind_paginated_reports_to_semantic_models(
         except Exception as exc:
             message = f"Runtime verification GET failed: {exc}"
             print(f"  Status             : VERIFY_FAILED\n  Reason             : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Paginated Report",
+                "element_name": item.name,
+                "operation": "Runtime datasource verification GET",
+                "reason": message,
+            })
             results.append((item.name, "VERIFY_FAILED"))
             continue
 
@@ -312,7 +348,12 @@ def bind_paginated_reports_to_semantic_models(
                 f"Expected: {expected}. Found: {observed or '(none)'}"
             )
             print(f"  Status             : VERIFY_FAILED\n  Reason             : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Paginated Report",
+                "element_name": item.name,
+                "operation": "Runtime datasource verification",
+                "reason": message,
+            })
             results.append((item.name, "VERIFY_FAILED"))
             continue
 
@@ -327,7 +368,9 @@ def bind_paginated_reports_to_semantic_models(
         print(f"- {name}: {status}")
 
     if failures and config.fail_on_unresolved_paginated_datasource_binding:
+        print_failure_summary("PAGINATED RUNTIME DATASOURCE FAILURE SUMMARY", failures)
         raise RuntimeError(
-            f"Unable to safely bind {len(failures)} paginated report runtime datasource(s)."
+            f"Unable to safely bind {len(failures)} paginated report runtime datasource(s).\n"
+            + format_failure_details(failures)
         )
     return results

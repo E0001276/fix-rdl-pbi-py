@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass
+from failure_summary import format_failure_details, print_failure_summary
 
 
 @dataclass(frozen=True)
@@ -273,7 +274,12 @@ def bind_semantic_models_to_gateway(fabric, powerbi, workspace_items, config):
         except Exception as exc:
             message = f"GET dataset datasources failed: {exc}"
             print(f"  Status            : ERROR\n  Reason            : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Semantic Model",
+                "element_name": model.name,
+                "operation": "Dataset datasource discovery",
+                "reason": message,
+            })
             results.append(
                 GatewayBindingResult(model.id, model.name, "ERROR", message=message)
             )
@@ -299,7 +305,12 @@ def bind_semantic_models_to_gateway(fabric, powerbi, workspace_items, config):
                 f"'{config.expected_oracle_database}' was found in the semantic model."
             )
             print(f"  Status            : ERROR\n  Reason            : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Semantic Model",
+                "element_name": model.name,
+                "operation": "Oracle datasource resolution",
+                "reason": message,
+            })
             results.append(
                 GatewayBindingResult(model.id, model.name, "ERROR", message=message)
             )
@@ -354,7 +365,12 @@ def bind_semantic_models_to_gateway(fabric, powerbi, workspace_items, config):
         except Exception as exc:
             message = f"Default.TakeOver failed: {exc}"
             print(f"  Status            : ERROR\n  Reason            : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Semantic Model",
+                "element_name": model.name,
+                "operation": "Dataset takeover",
+                "reason": message,
+            })
             results.append(
                 GatewayBindingResult(
                     model.id,
@@ -381,7 +397,12 @@ def bind_semantic_models_to_gateway(fabric, powerbi, workspace_items, config):
         except Exception as exc:
             message = f"Default.BindToGateway failed: {exc}"
             print(f"  Status            : ERROR\n  Reason            : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Semantic Model",
+                "element_name": model.name,
+                "operation": "Gateway binding",
+                "reason": message,
+            })
             results.append(
                 GatewayBindingResult(
                     model.id,
@@ -406,7 +427,12 @@ def bind_semantic_models_to_gateway(fabric, powerbi, workspace_items, config):
         except Exception as exc:
             message = f"Post-bind verification failed: {exc}"
             print(f"  Status            : ERROR\n  Reason            : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Semantic Model",
+                "element_name": model.name,
+                "operation": "Gateway binding verification",
+                "reason": message,
+            })
             results.append(
                 GatewayBindingResult(
                     model.id,
@@ -434,7 +460,12 @@ def bind_semantic_models_to_gateway(fabric, powerbi, workspace_items, config):
                 f"Current bindings={current_pairs}."
             )
             print(f"  Status            : ERROR\n  Reason            : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Semantic Model",
+                "element_name": model.name,
+                "operation": "Gateway binding verification",
+                "reason": message,
+            })
             results.append(
                 GatewayBindingResult(
                     model.id,
@@ -472,8 +503,10 @@ def bind_semantic_models_to_gateway(fabric, powerbi, workspace_items, config):
         print(f"- {result.semantic_model_name}: {result.status}")
 
     if failures and config.fail_on_unresolved_connection_binding:
+        print_failure_summary("SEMANTIC MODEL GATEWAY FAILURE SUMMARY", failures)
         raise RuntimeError(
-            f"Unable to safely bind {len(failures)} semantic model gateway relationship(s)."
+            f"Unable to safely bind {len(failures)} semantic model gateway relationship(s).\n"
+            + format_failure_details(failures)
         )
 
     return results
