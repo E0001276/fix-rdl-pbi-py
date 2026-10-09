@@ -8,16 +8,23 @@ reports:
         paginatedReport: Transferencias FOVISSSTE Rechazado
       - page: Reporte paginado Recibidos
         paginatedReport: Transferencias FOVISSSTE Recibidos
+  # - report: Devolución de Pagos SJL
+  #   pages:
+  #     - page: Reporte paginado Rechazados
+  #       paginatedReport: Devolución de Pagos SJL Rechazada
+  #     - page: Reporte paginado Recibidos
+  #       paginatedReport: Devolución de Pagos SJL Recibidas
+  #     - page: Reporte paginado Aceptado
+  #       paginatedReport: Devolución de Pagos SJL Aceptada
   - report: Devolución de Pagos SJL
     pages:
       - page: Reporte paginado Rechazados
-        paginatedReport: Devolución de Pagos SJL Rechazada
-      - page: Reporte paginado Recibidos
-        paginatedReport: Devolución de Pagos SJL Recibidas
-      - page: Reporte paginado Aceptado
         paginatedReport: Devolución de Pagos SJL Aceptada
+      - page: Reporte paginado Recibidos
+        paginatedReport: Devolución de Pagos SJL Rechazada
+      - page: Reporte paginado Aceptado
+        paginatedReport: Devolución de Pagos SJL Recibidas
   - report: Solicitud Marca-Desmarca
     pages:
       - page: Reporte paginado
         paginatedReport: PORTABILIDAD
-  
