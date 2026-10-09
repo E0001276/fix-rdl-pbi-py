@@ -130,7 +130,7 @@ def get_item_definition(client, workspace_id: str, item: WorkspaceItem):
     else:
         raise ValueError(f"Definitions are not loaded for item type {item.kind}.")
 
-    response = client.post(path)
+    response = client.post_with_transient_retry(path)
     return client.get_json_lro_result(response)
 
 
@@ -440,7 +440,7 @@ def discover_paginated_report_definitions(client, workspace_id: str, workspace_i
 
 
 def get_report_definition(client, workspace_id: str, report_id: str):
-    response = client.post(
+    response = client.post_with_transient_retry(
         f"workspaces/{workspace_id}/reports/{report_id}/getDefinition"
     )
     return client.get_json_lro_result(response)
@@ -449,7 +449,7 @@ def get_report_definition(client, workspace_id: str, report_id: str):
 def get_paginated_report_definition(client, workspace_id: str, report_id: str):
     # `format` is optional per Microsoft Learn. If omitted,
     # PaginatedReportDefinition is used by default.
-    response = client.post(
+    response = client.post_with_transient_retry(
         f"workspaces/{workspace_id}/paginatedReports/{report_id}/getDefinition"
     )
     return client.get_json_lro_result(response)

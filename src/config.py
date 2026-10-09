@@ -25,6 +25,9 @@ class PostDeployConfig:
     paginated_runtime_datasource_retry_seconds: int
     take_over_paginated_report_when_runtime_datasource_empty: bool
     defer_paginated_datasource_binding_failure_until_after_rdl_visual_fix: bool
+    fabric_get_definition_retry_count: int
+    fabric_get_definition_retry_initial_seconds: int
+    fabric_get_definition_retry_max_seconds: int
     refresh_semantic_models: bool
     wait_for_refresh: bool
     fail_on_refresh_error: bool
@@ -81,6 +84,15 @@ def load_config(path: str) -> PostDeployConfig:
                 "deferPaginatedDatasourceBindingFailureUntilAfterRdlVisualFix",
                 False,
             )
+        ),
+        fabric_get_definition_retry_count=max(
+            0, int(data.get("fabricGetDefinitionRetryCount", 5))
+        ),
+        fabric_get_definition_retry_initial_seconds=max(
+            0, int(data.get("fabricGetDefinitionRetryInitialSeconds", 5))
+        ),
+        fabric_get_definition_retry_max_seconds=max(
+            0, int(data.get("fabricGetDefinitionRetryMaxSeconds", 30))
         ),
         refresh_semantic_models=bool(data.get("refreshSemanticModels", True)),
         wait_for_refresh=bool(data.get("waitForRefresh", False)),

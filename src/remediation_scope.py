@@ -43,14 +43,42 @@ def _configured_paginated_report_names(mapping) -> set[str]:
     }
 
 
+def select_configured_definition_items(workspace_items, mapping):
+    """Select workspace items whose definitions are required by configuration.
+
+    Workspace item discovery remains complete, but expensive definition reads are
+    limited to Reports and Paginated Reports explicitly present in the mapping.
+    Only uniquely matched workspace items are selected; missing or ambiguous
+    entries are still reported later by ``build_remediation_scope``.
+    """
+    configured_reports = _configured_report_names(mapping)
+    configured_paginated = _configured_paginated_report_names(mapping)
+
+    workspace_reports = _group_by_normalized_name(workspace_items.reports)
+    workspace_paginated = _group_by_normalized_name(workspace_items.paginated_reports)
+
+    selected_reports = WorkspaceItems(
+        matches[0]
+        for name, matches in workspace_reports.items()
+        if name in configured_reports and len(matches) == 1
+    )
+    selected_paginated = WorkspaceItems(
+        matches[0]
+        for name, matches in workspace_paginated.items()
+        if name in configured_paginated and len(matches) == 1
+    )
+
+    return selected_reports, selected_paginated
+
+
 def build_remediation_scope(workspace_items, rdl_visuals, paginated_infos, mapping):
     """Build the post-discovery remediation scope from reports mapping.
 
-    Workspace discovery remains complete.  This scope is applied only after all
-    Reports, Semantic Models, Paginated Reports and their definitions have been
-    discovered.  Main reports and paginated reports are selected explicitly by
-    the configured mapping.  Semantic Models are selected only when they are a
-    dependency of a selected item.
+    Workspace item discovery remains complete. Report and paginated-report
+    definitions are already limited to uniquely matched configuration entries
+    before this scope is built. Main reports and paginated reports are selected
+    explicitly by the configured mapping. Semantic Models are selected only when
+    they are a dependency of a selected item.
     """
     configured_reports = _configured_report_names(mapping)
     configured_paginated = _configured_paginated_report_names(mapping)

@@ -14,3 +14,6 @@ paginatedRuntimeDatasourceRetryCount: 6
 paginatedRuntimeDatasourceRetrySeconds: 5
 takeOverPaginatedReportWhenRuntimeDatasourceEmpty: true
 deferPaginatedDatasourceBindingFailureUntilAfterRdlVisualFix: true
+fabricGetDefinitionRetryCount: 5
+fabricGetDefinitionRetryInitialSeconds: 5
+fabricGetDefinitionRetryMaxSeconds: 30
