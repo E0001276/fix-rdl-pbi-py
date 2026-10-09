@@ -1,5 +1,6 @@
 workspaceId: febbaca7-abc5-42d8-ab70-78ef9dc49c65
 workspaceName: "Operaciones 5.0 PROD"
+reportsMappingPath: reports-prod.yaml
 expectedOracleDatabase: NCI_PROD_DB
 semanticModelConnectionName: NCI_PROD_DB
 failOnUnresolvedRdlVisual: true

@@ -87,8 +87,25 @@ def load_config(path: str) -> PostDeployConfig:
         fail_on_refresh_error=bool(data.get("failOnRefreshError", True)),
         refresh_poll_seconds=int(data.get("refreshPollSeconds", 5)),
         refresh_timeout_seconds=int(data.get("refreshTimeoutSeconds", 1800)),
-        reports_mapping_path=REPORTS_MAPPING_PATH,
+        reports_mapping_path=resolve_reports_mapping_path(data, config_path),
     )
+
+
+def resolve_reports_mapping_path(data: dict, config_path: Path) -> Path:
+    """Resolve the reports mapping configured for one environment.
+
+    Existing configurations keep using the historical reports.yaml default.
+    Environment-specific configurations can override it with a path relative
+    to their own YAML file.
+    """
+    value = data.get("reportsMappingPath")
+    if value is None or not str(value).strip():
+        return REPORTS_MAPPING_PATH
+
+    mapping_path = Path(str(value).strip())
+    if mapping_path.is_absolute():
+        return mapping_path
+    return (config_path.parent / mapping_path).resolve()
 
 
 def require_text(data: dict, key: str, config_path: Path) -> str:

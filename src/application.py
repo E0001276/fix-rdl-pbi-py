@@ -9,6 +9,7 @@ from paginated_mapping import load_paginated_report_mapping
 from powerbi_gateway import bind_semantic_models_to_gateway
 from powerbi_paginated import bind_paginated_reports_to_semantic_models
 from remediation import apply_remediation, summarize_discovery
+from remediation_scope import build_remediation_scope, print_scope_summary
 from semantic_refresh import refresh_semantic_models
 from workspace import (
     discover_paginated_report_definitions,
@@ -151,6 +152,7 @@ def execute_post_deploy_pipeline(
     report_definition_cache,
     config,
     mapping,
+    scope,
 ) -> None:
     """Execute the target-only post-deploy steps in their required order."""
     print_section("DISCOVERY SUMMARY")
@@ -167,21 +169,25 @@ def execute_post_deploy_pipeline(
     # 5) Main report RDL Visual -> current target paginated itemIds.
 
     print_section("SEMANTIC MODEL GATEWAY BINDING")
-    bind_semantic_models_to_gateway(fabric, powerbi, workspace_items, config)
+    bind_semantic_models_to_gateway(
+        fabric, powerbi, scope.semantic_model_items, config
+    )
 
     print_section("SEMANTIC MODEL REFRESH")
-    refresh_semantic_models(powerbi, workspace_items, config)
+    refresh_semantic_models(powerbi, scope.semantic_model_items, config)
 
     print_section("PAGINATED REPORT RDL REMEDIATION")
-    remediate_paginated_reports(fabric, workspace_items, paginated_infos, config)
+    remediate_paginated_reports(
+        fabric, workspace_items, scope.paginated_infos, config
+    )
 
-    print_post_rdl_snapshot_status(paginated_infos)
+    print_post_rdl_snapshot_status(scope.paginated_infos)
 
     print_section("PAGINATED REPORT RUNTIME DATASOURCE BINDING")
     deferred_paginated_binding_error = None
     try:
         bind_paginated_reports_to_semantic_models(
-            powerbi, fabric, workspace_items, paginated_infos, config
+            powerbi, fabric, workspace_items, scope.paginated_infos, config
         )
     except RuntimeError as exc:
         if not config.defer_paginated_datasource_binding_failure_until_after_rdl_visual_fix:
@@ -203,8 +209,8 @@ def execute_post_deploy_pipeline(
     )
     apply_remediation(
         fabric,
-        rdl_visuals,
-        paginated_infos,
+        scope.rdl_visuals,
+        scope.paginated_infos,
         config,
         mapping,
         report_definition_cache=report_definition_cache,
@@ -228,13 +234,25 @@ def run_post_deploy(config_path: str, diagnostics) -> None:
         report_definition_cache,
     ) = discover_workspace_state(fabric, config)
 
-    execute_post_deploy_pipeline(
-        fabric,
-        powerbi,
-        workspace_items,
-        rdl_visuals,
-        paginated_infos,
-        report_definition_cache,
-        config,
-        mapping,
+    scope = build_remediation_scope(
+        workspace_items, rdl_visuals, paginated_infos, mapping
     )
+
+    print_section("CONFIGURATION / WORKSPACE MATCH")
+    print_scope_summary(scope, "CONFIGURATION / WORKSPACE MATCH SUMMARY")
+
+    try:
+        execute_post_deploy_pipeline(
+            fabric,
+            powerbi,
+            workspace_items,
+            rdl_visuals,
+            paginated_infos,
+            report_definition_cache,
+            config,
+            mapping,
+            scope,
+        )
+    finally:
+        print_section("FINAL CONFIGURATION SCOPE SUMMARY")
+        print_scope_summary(scope, "FINAL CONFIGURATION SCOPE SUMMARY")

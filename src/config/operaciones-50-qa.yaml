@@ -1,5 +1,6 @@
 workspaceId: 9a6d8c09-872e-4c5c-aacc-2ff853c33a8e
 workspaceName: "Operaciones 5.0 QA"
+reportsMappingPath: reports-qa.yaml
 expectedOracleDatabase: NCI_QA_DB
 semanticModelConnectionName: NCI_QA_DB
 failOnUnresolvedRdlVisual: true
