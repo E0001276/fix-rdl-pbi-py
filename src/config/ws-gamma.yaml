@@ -1,5 +1,6 @@
 workspaceId: 2fbd70f4-9eed-4493-b38d-106cc4c01d7c
 workspaceName: ws-gamma
+reportsMappingPath: reports-gamma.yaml
 expectedOracleDatabase: NCI_DEV_DB
 semanticModelConnectionName: NCI_TEST_DB
 failOnUnresolvedRdlVisual: true
