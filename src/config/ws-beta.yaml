@@ -1,5 +1,6 @@
 workspaceId: bdd6cc8f-9305-4bc7-9aeb-6eff68717818
 workspaceName: ws-beta
+reportsMappingPath: reports-custom.yaml
 expectedOracleDatabase: NCI_QA_DB
 semanticModelConnectionName: NCI_QA_DB
 failOnUnresolvedRdlVisual: true

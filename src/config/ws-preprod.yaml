@@ -1,5 +1,6 @@
 workspaceId: 70fb2c13-3d00-4b2a-a3ff-c5062b5a90fa
 workspaceName: ws-preprod
+reportsMappingPath: reports-custom.yaml
 expectedOracleDatabase: NCI_QA_DB
 semanticModelConnectionName: NCI_QA_DB
 failOnUnresolvedRdlVisual: true

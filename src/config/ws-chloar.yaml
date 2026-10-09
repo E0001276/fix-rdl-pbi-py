@@ -1,5 +1,6 @@
 workspaceId: 7976050c-17af-4a28-81be-6eb64c76db79
 workspaceName: ws-chloar
+reportsMappingPath: reports-custom.yaml
 expectedOracleDatabase: NCI_QA_DB
 semanticModelConnectionName: NCI_QA_DB
 failOnUnresolvedRdlVisual: true
