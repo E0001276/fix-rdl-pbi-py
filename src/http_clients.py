@@ -130,12 +130,12 @@ class ApiClient:
 
         raise RuntimeError("Transient retry loop ended unexpectedly.")
 
-    # def patch(self, path_or_url: str, json=None, params=None):
-    #     url = self.build_url(path_or_url)
-    #     response = self.session.patch(url, json=json, params=params)
-    #     self.log_http_exchange("PATCH", url, json, response)
-    #     self.raise_for_status_with_body(response)
-    #     return response
+    def patch(self, path_or_url: str, json=None, params=None):
+        url = self.build_url(path_or_url)
+        response = self.session.patch(url, json=json, params=params)
+        self.log_http_exchange("PATCH", url, json, response)
+        self.raise_for_status_with_body(response)
+        return response
 
     # def delete(self, path_or_url: str, params=None):
     #     url = self.build_url(path_or_url)
