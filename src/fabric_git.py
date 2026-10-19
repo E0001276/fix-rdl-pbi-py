@@ -60,23 +60,44 @@ def validate_git_connection(
     client,
     workspace_id: str,
     expected_branch: str = "",
+    expected_owner: str = "",
+    expected_repository: str = "",
 ) -> dict:
-    """Validate that the workspace is connected and, optionally, to the expected branch."""
+    """Validate the Fabric Git connection against the expected GitHub target."""
     connection = get_git_connection(client, workspace_id)
     details = connection.get("gitProviderDetails") or {}
     branch = str(details.get("branchName", "")).strip()
     provider = str(details.get("gitProviderType", "")).strip()
+    owner = str(details.get("ownerName", "")).strip()
     repository = str(details.get("repositoryName", "")).strip()
 
     print(f"[GIT] Provider   : {provider or '(unknown)'}")
-    print(f"[GIT] Repository : {repository or '(unknown)'}")
+    print(f"[GIT] Repository : {(owner + '/' + repository).strip('/') or '(unknown)'}")
     print(f"[GIT] Branch     : {branch or '(unknown)'}")
 
-    expected = str(expected_branch or "").strip()
-    if expected and branch != expected:
+    expected_branch = str(expected_branch or "").strip()
+    expected_owner = str(expected_owner or "").strip()
+    expected_repository = str(expected_repository or "").strip()
+
+    if (expected_owner or expected_repository) and provider.lower() != "github":
+        raise RuntimeError(
+            "Fabric workspace is connected to a different Git provider. "
+            f"Expected GitHub, actual '{provider or '(unknown)'}'."
+        )
+    if expected_branch and branch != expected_branch:
         raise RuntimeError(
             "Fabric workspace is connected to a different Git branch. "
-            f"Expected '{expected}', actual '{branch or '(unknown)'}'."
+            f"Expected '{expected_branch}', actual '{branch or '(unknown)'}'."
+        )
+    if expected_owner and owner.lower() != expected_owner.lower():
+        raise RuntimeError(
+            "Fabric workspace is connected to a different GitHub owner. "
+            f"Expected '{expected_owner}', actual '{owner or '(unknown)'}'."
+        )
+    if expected_repository and repository.lower() != expected_repository.lower():
+        raise RuntimeError(
+            "Fabric workspace is connected to a different GitHub repository. "
+            f"Expected '{expected_repository}', actual '{repository or '(unknown)'}'."
         )
     return connection
 
@@ -203,12 +224,13 @@ def synchronize_workspace_from_git(
         )
 
     body = {
-        "workspaceHead": status.workspace_head or None,
         "remoteCommitHash": status.remote_commit_hash,
         "options": {
             "allowOverrideItems": bool(allow_override_items),
         },
     }
+    if status.workspace_head:
+        body["workspaceHead"] = status.workspace_head
     print(
         "[GIT] Updating workspace from remote commit "
         f"{_short_sha(status.remote_commit_hash)}..."

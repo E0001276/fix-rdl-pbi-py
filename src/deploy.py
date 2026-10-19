@@ -19,7 +19,7 @@ from http_clients import ApiClient
 
 truststore.inject_into_ssl()
 
-DEFAULT_CONFIG_PATH = Path(__file__).parent / "config" / "dev-cicd.yaml"
+DEFAULT_CONFIG_PATH = Path(__file__).parent / "config" / "ws-dev-cicd.yaml"
 
 
 def build_argument_parser() -> argparse.ArgumentParser:
@@ -39,8 +39,18 @@ def build_argument_parser() -> argparse.ArgumentParser:
         default="",
         help=(
             "Optional branch name expected in the Fabric Git connection. "
-            "GitHub Actions should pass the merged PR base branch."
+            "GitHub Actions should pass the target branch that triggered the push workflow."
         ),
+    )
+    parser.add_argument(
+        "--expected-owner",
+        default="",
+        help="Optional GitHub owner expected in the Fabric Git connection.",
+    )
+    parser.add_argument(
+        "--expected-repository",
+        default="",
+        help="Optional GitHub repository expected in the Fabric Git connection.",
     )
     parser.add_argument(
         "--git-connection-id",
@@ -88,6 +98,8 @@ def main() -> None:
                 fabric_git_client,
                 config.workspace_id,
                 expected_branch=args.expected_branch,
+                expected_owner=args.expected_owner,
+                expected_repository=args.expected_repository,
             )
             ensure_git_credentials(
                 fabric_git_client,
@@ -119,6 +131,8 @@ def main() -> None:
                 fabric_git_client,
                 config.workspace_id,
                 expected_branch=args.expected_branch,
+                expected_owner=args.expected_owner,
+                expected_repository=args.expected_repository,
             )
             ensure_git_credentials(
                 fabric_git_client,

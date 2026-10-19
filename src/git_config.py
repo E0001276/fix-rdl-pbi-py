@@ -49,10 +49,10 @@ def load_fabric_git_config(
         commit_message=str(
             section.get(
                 "commitMessage",
-                "chore(fabric): apply Power BI post-deploy fixes",
+                "chore(fabric): apply Power BI post-deploy fixes [skip ci]",
             )
         ).strip()
-        or "chore(fabric): apply Power BI post-deploy fixes",
+        or "chore(fabric): apply Power BI post-deploy fixes [skip ci]",
         allow_override_items=bool(section.get("allowOverrideItems", True)),
         require_clean_workspace_before_update=bool(
             section.get("requireCleanWorkspaceBeforeUpdate", True)
