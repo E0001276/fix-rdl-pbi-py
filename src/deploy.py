@@ -26,7 +26,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "Microsoft Fabric deployment orchestrator: Git -> Workspace -> "
-            "existing FIX -> Git"
+            "existing FIX. Commit back to Git is manual by default."
         )
     )
     parser.add_argument(
@@ -59,6 +59,14 @@ def build_argument_parser() -> argparse.ArgumentParser:
             "Optional Fabric cloud connection ID used as Git credentials for "
             "the current caller. Can also be supplied with "
             "FABRIC_GIT_CONNECTION_ID."
+        ),
+    )
+    parser.add_argument(
+        "--commit-to-git",
+        action="store_true",
+        help=(
+            "Enable the final Fabric commitToGit step. Disabled by default; "
+            "when omitted, workspace changes must be committed/pushed manually."
         ),
     )
     return parser
@@ -123,7 +131,10 @@ def main() -> None:
         # No internal FIX step is changed by this orchestrator.
         run_post_deploy(args.config, diagnostics)
 
-        if git_config.enabled:
+        if git_config.enabled and args.commit_to_git:
+            # Optional final step. Disabled by default because commit/push is
+            # currently performed manually. The implementation is preserved so
+            # it can be re-enabled later with --commit-to-git.
             # Acquire a fresh token/client in case the FIX took long enough for
             # the pre-deploy access token to approach expiration.
             fabric_git_client = create_fabric_client(diagnostics)
@@ -145,6 +156,12 @@ def main() -> None:
                 expected_remote_commit_hash=baseline_remote_commit,
                 comment=git_config.commit_message,
                 timeout_seconds=git_config.lro_timeout_seconds,
+            )
+        elif git_config.enabled:
+            print_section("FABRIC GIT - POST-FIX")
+            print(
+                "[GIT] Automatic commitToGit is disabled. "
+                "Commit and push the workspace changes manually."
             )
     finally:
         print_http_request_summary(diagnostics)
