@@ -1277,3 +1277,4 @@ Se documentan aquí únicamente para diferenciar código auxiliar existente de l
 | Power BI | Report Get Datasources | Inspeccionar runtime RDL |
 | Power BI | Report TakeOver | Tomar propiedad del datasource |
 | Power BI | Report UpdateDatasources | Vincular paginado al Semantic Model |
+
