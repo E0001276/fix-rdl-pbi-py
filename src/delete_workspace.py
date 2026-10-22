@@ -25,6 +25,12 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Path to the workspace configuration YAML.",
     )
 
+    parser.add_argument(
+        "--confirm-delete",
+        action="store_true",
+        help="Confirm deletion without interactive input.",
+    )
+
     return parser
 
 
@@ -118,6 +124,49 @@ def delete_item(
     return False
 
 
+def confirm_deletion(
+    config,
+    item_count: int,
+    confirm_delete: bool,
+) -> bool:
+    print()
+    print("========================================")
+    print("WARNING")
+    print("========================================")
+    print(
+        f"ALL {item_count} item(s) from workspace "
+        f"'{config.workspace_name}' will be deleted."
+    )
+    print()
+    print("This operation modifies the Fabric workspace.")
+    print()
+
+    if confirm_delete:
+        print("[CONFIRMATION] Deletion confirmed " "by --confirm-delete.")
+        return True
+
+    try:
+        confirmation = input(
+            f"Type the workspace name " f"'{config.workspace_name}' to continue: "
+        )
+    except EOFError:
+        print()
+        print("[ERROR] Interactive confirmation " "is not available.")
+        print(
+            "Use --confirm-delete when running "
+            "from Jenkins or another "
+            "non-interactive environment."
+        )
+        return False
+
+    if confirmation != config.workspace_name:
+        print()
+        print("[CANCELLED] Workspace name " "did not match.")
+        return False
+
+    return True
+
+
 def main() -> None:
     args = build_argument_parser().parse_args()
 
@@ -141,28 +190,18 @@ def main() -> None:
     print_items(items)
 
     if not items:
-        return
-
-    print()
-    print("========================================")
-    print("WARNING")
-    print("========================================")
-    print(
-        f"ALL {len(items)} item(s) from workspace "
-        f"'{config.workspace_name}' will be deleted."
-    )
-    print()
-    print("This operation modifies the Fabric workspace.")
-    print()
-
-    confirmation = input(
-        f"Type the workspace name " f"'{config.workspace_name}' to continue: "
-    )
-
-    if confirmation != config.workspace_name:
         print()
-        print("[CANCELLED] Workspace name did not match.")
+        print("[INFO] Nothing to delete.")
         return
+
+    confirmed = confirm_deletion(
+        config=config,
+        item_count=len(items),
+        confirm_delete=args.confirm_delete,
+    )
+
+    if not confirmed:
+        sys.exit(1)
 
     print()
     print("[DELETE] Starting deletion...")
