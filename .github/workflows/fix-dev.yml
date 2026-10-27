@@ -3,57 +3,10 @@ name: Power BI FIX - DEV
 on:
   workflow_dispatch:
 
-permissions:
-  contents: read
-
-concurrency:
-  group: power-bi-fix-dev
-  cancel-in-progress: false
-
 jobs:
   fix:
-    name: Run Power BI FIX - DEV
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install dependencies
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m pip install --upgrade pip
-          pip install -r src/requirements.txt
-
-      - name: Login to Azure with Service Principal
-        shell: bash
-        env:
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-        run: |
-          set -euo pipefail
-
-          if [[ -z "$AZURE_CLIENT_ID" || -z "$AZURE_CLIENT_SECRET" || -z "$AZURE_TENANT_ID" ]]; then
-            echo "ERROR: AZURE_CLIENT_ID, AZURE_CLIENT_SECRET and AZURE_TENANT_ID are required."
-            exit 1
-          fi
-
-          az login \
-            --service-principal \
-            --username "$AZURE_CLIENT_ID" \
-            --password "$AZURE_CLIENT_SECRET" \
-            --tenant "$AZURE_TENANT_ID" \
-            --output none
-
-      - name: Run Power BI FIX - DEV
-        shell: bash
-        run: |
-          set -euo pipefail
-          python src/main.py --config src/config/ws-dev-cicd.yaml
+    uses: ./.github/workflows/fix.yml
+    with:
+      environment_name: DEV
+      config_file: src/config/ws-dev-cicd.yaml
+    secrets: inherit
