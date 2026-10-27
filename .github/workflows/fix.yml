@@ -27,6 +27,9 @@ jobs:
     name: Run Power BI FIX - ${{ inputs.environment_name }}
     runs-on: ubuntu-latest
 
+    environment:
+      name: ${{ inputs.environment_name }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
