@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-class _Tee:
+class TeeStream:
     def __init__(self, original, log_file):
         self.original = original
         self.log_file = log_file
@@ -44,17 +44,21 @@ class DiagnosticLogger:
         self.http_dir.mkdir(parents=True, exist_ok=True)
         self.rdl_dir = self.run_dir / "rdl"
         self.rdl_dir.mkdir(parents=True, exist_ok=True)
+        self.rpt_dir = self.run_dir / "rpt"
+        self.rpt_dir.mkdir(parents=True, exist_ok=True)
+        self.sm_dir = self.run_dir / "sm"
+        self.sm_dir.mkdir(parents=True, exist_ok=True)
         self.execution_path = self.run_dir / "execution.log"
         self._execution_file = self.execution_path.open("w", encoding="utf-8", buffering=1)
         self._counter = 0
         self._method_counts = {"GET": 0, "POST": 0}
         self._original_stdout = sys.stdout
         self._original_stderr = sys.stderr
-        sys.stdout = _Tee(sys.stdout, self._execution_file)
-        sys.stderr = _Tee(sys.stderr, self._execution_file)
-        self._write_manifest()
+        sys.stdout = TeeStream(sys.stdout, self._execution_file)
+        sys.stderr = TeeStream(sys.stderr, self._execution_file)
+        self.write_manifest()
 
-    def _write_manifest(self):
+    def write_manifest(self):
         manifest = {
             "createdUtc": datetime.now(timezone.utc).isoformat(),
             "notes": [
@@ -86,12 +90,12 @@ class DiagnosticLogger:
             self._execution_file.close()
 
     @staticmethod
-    def _safe_name(value: str) -> str:
+    def safe_name(value: str) -> str:
         value = re.sub(r"[^A-Za-z0-9._-]+", "_", value or "request")
         return value.strip("._")[:100] or "request"
 
     @staticmethod
-    def _redact_headers(headers: dict) -> dict:
+    def redact_headers(headers: dict) -> dict:
         result = {}
         for key, value in (headers or {}).items():
             if key.lower() in {"authorization", "proxy-authorization"}:
@@ -101,12 +105,12 @@ class DiagnosticLogger:
         return result
 
     @staticmethod
-    def _quote_ps(value: str) -> str:
+    def quote_powershell_value(value: str) -> str:
         # curl.exe command suitable for PowerShell. Single quotes are uncommon in URLs;
         # escape them in PowerShell-compatible form if they occur.
         return "'" + str(value).replace("'", "''") + "'"
 
-    def _extract_inline_parts(self, data, destination: Path):
+    def extract_inline_parts(self, data, destination: Path):
         if not isinstance(data, dict):
             return
         definition = data.get("definition")
@@ -132,7 +136,7 @@ class DiagnosticLogger:
                 continue
 
             # Keep each Fabric part in a flat but identifiable file to avoid unsafe paths.
-            filename = f"{number:03d}_{self._safe_name(path)}"
+            filename = f"{number:03d}_{self.safe_name(path)}"
             target = destination / filename
             target.write_bytes(raw)
             index.append(
@@ -151,22 +155,108 @@ class DiagnosticLogger:
 
     def log_rdl(self, report_name: str, report_id: str, stage: str, xml_text: str):
         filename = (
-            f"{self._safe_name(report_name)}_{self._safe_name(report_id)}_"
-            f"{self._safe_name(stage)}.rdl"
+            f"{self.safe_name(report_name)}_{self.safe_name(report_id)}_"
+            f"{self.safe_name(stage)}.rdl"
         )
         target = self.rdl_dir / filename
         target.write_text(xml_text, encoding="utf-8")
         print(f"[RDL] {stage}: {target}")
 
+    @staticmethod
+    def safe_part_path(path: str, fallback: str) -> Path:
+        """Return a safe relative path for one Fabric definition part."""
+        raw = str(path or fallback).replace("\\", "/")
+        pieces = []
+        for piece in raw.split("/"):
+            if not piece or piece in {".", ".."}:
+                continue
+            pieces.append(DiagnosticLogger.safe_name(piece))
+        return Path(*pieces) if pieces else Path(fallback)
+
+    def log_item_definition(
+        self,
+        item_kind: str,
+        item_name: str,
+        item_id: str,
+        definition_response: dict,
+    ):
+        """Persist all InlineBase64 definition parts in decoded form.
+
+        Reports are written under ``rpt`` and semantic models under ``sm``.
+        The original Fabric part hierarchy is preserved inside a directory per
+        item so PBIR/TMDL definitions remain easy to inspect and compare.
+        """
+        destinations = {
+            "Report": (self.rpt_dir, "RPT"),
+            "SemanticModel": (self.sm_dir, "SM"),
+        }
+        destination_info = destinations.get(item_kind)
+        if destination_info is None:
+            return
+
+        root_dir, label = destination_info
+        item_dir = root_dir / (
+            f"{self.safe_name(item_name)}_{self.safe_name(item_id)}"
+        )
+        item_dir.mkdir(parents=True, exist_ok=True)
+
+        parts = definition_response.get("definition", {}).get("parts", [])
+        index = []
+        for number, part in enumerate(parts, start=1):
+            if not isinstance(part, dict):
+                continue
+
+            original_path = str(part.get("path") or f"part_{number}.bin")
+            payload = part.get("payload")
+            payload_type = part.get("payloadType")
+
+            try:
+                if payload_type == "InlineBase64":
+                    raw = base64.b64decode(payload or "")
+                elif isinstance(payload, str):
+                    raw = payload.encode("utf-8")
+                else:
+                    raise ValueError(
+                        f"Unsupported payload type: {payload_type or '(empty)'}"
+                    )
+
+                relative_path = self.safe_part_path(
+                    original_path, f"part_{number}.bin"
+                )
+                target = item_dir / relative_path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(raw)
+                index.append(
+                    {
+                        "path": original_path,
+                        "decoded": True,
+                        "file": relative_path.as_posix(),
+                        "bytes": len(raw),
+                    }
+                )
+            except Exception as exc:
+                index.append(
+                    {
+                        "path": original_path,
+                        "decoded": False,
+                        "error": str(exc),
+                    }
+                )
+
+        (item_dir / "index.json").write_text(
+            json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        print(f"[{label}] Definition: {item_dir}")
+
     def log_http(self, method: str, url: str, request_headers: dict, request_json, response, token_label: str = "ACCESS_TOKEN"):
         self._counter += 1
         method_key = method.upper()
         self._method_counts[method_key] = self._method_counts.get(method_key, 0) + 1
-        parsed_name = self._safe_name(url.split("?", 1)[0].rstrip("/").split("/")[-1])
+        parsed_name = self.safe_name(url.split("?", 1)[0].rstrip("/").split("/")[-1])
         request_dir = self.http_dir / f"{self._counter:04d}_{method.upper()}_{parsed_name}"
         request_dir.mkdir(parents=True, exist_ok=True)
 
-        safe_request_headers = self._redact_headers(dict(request_headers or {}))
+        safe_request_headers = self.redact_headers(dict(request_headers or {}))
         response_headers = dict(response.headers or {})
 
         meta = {
@@ -190,7 +280,7 @@ class DiagnosticLogger:
             request_body_file.write_text(
                 json.dumps(request_json, ensure_ascii=False, indent=2), encoding="utf-8"
             )
-            self._extract_inline_parts(request_json, request_dir / "decoded-request-parts")
+            self.extract_inline_parts(request_json, request_dir / "decoded-request-parts")
 
         response_text = response.text or ""
         (request_dir / "response.txt").write_text(response_text, encoding="utf-8")
@@ -202,13 +292,13 @@ class DiagnosticLogger:
             (request_dir / "response.json").write_text(
                 json.dumps(response_json, ensure_ascii=False, indent=2), encoding="utf-8"
             )
-            self._extract_inline_parts(response_json, request_dir / "decoded-response-parts")
+            self.extract_inline_parts(response_json, request_dir / "decoded-response-parts")
 
         curl_lines = [
             "# Replay with curl.exe from PowerShell.",
             "f"# Replace <{token_label}> with a fresh token. The real token is never logged.",
             f"curl.exe --request {method.upper()} `",
-            f"  --url {self._quote_ps(meta['url'])} `",
+            f"  --url {self.quote_powershell_value(meta['url'])} `",
             f"  --header 'Authorization: Bearer <{token_label}>' `",
             "  --header 'Content-Type: application/json'",
         ]

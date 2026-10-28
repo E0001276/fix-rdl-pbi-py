@@ -1,11 +1,12 @@
 import time
+from failure_summary import format_failure_details, print_failure_summary
 
 
-def _dataset_info(powerbi, workspace_id: str, dataset_id: str) -> dict:
+def get_dataset_info(powerbi, workspace_id: str, dataset_id: str) -> dict:
     return powerbi.get(f"groups/{workspace_id}/datasets/{dataset_id}").json()
 
 
-def _latest_refresh(powerbi, workspace_id: str, dataset_id: str) -> dict | None:
+def get_latest_refresh(powerbi, workspace_id: str, dataset_id: str) -> dict | None:
     response = powerbi.get(
         f"groups/{workspace_id}/datasets/{dataset_id}/refreshes",
         params={"$top": 1},
@@ -33,7 +34,7 @@ def refresh_semantic_models(powerbi, workspace_items, config):
         print(f"  Name              : {model.name}")
         print(f"  Model Id          : {model.id}")
         try:
-            info = _dataset_info(powerbi, config.workspace_id, model.id)
+            info = get_dataset_info(powerbi, config.workspace_id, model.id)
             is_refreshable = bool(info.get("isRefreshable"))
             print(f"  IsRefreshable     : {is_refreshable}")
             if not is_refreshable:
@@ -53,7 +54,7 @@ def refresh_semantic_models(powerbi, workspace_items, config):
             deadline = time.monotonic() + config.refresh_timeout_seconds
             while time.monotonic() < deadline:
                 time.sleep(config.refresh_poll_seconds)
-                latest = _latest_refresh(powerbi, config.workspace_id, model.id)
+                latest = get_latest_refresh(powerbi, config.workspace_id, model.id)
                 status = str((latest or {}).get("status") or "").strip()
                 request_id = str((latest or {}).get("requestId") or "").strip()
                 print(
@@ -76,7 +77,12 @@ def refresh_semantic_models(powerbi, workspace_items, config):
             message = str(exc)
             print("  Status            : ERROR")
             print(f"  Reason            : {message}")
-            failures.append((model, message))
+            failures.append({
+                "element_type": "Semantic Model",
+                "element_name": model.name,
+                "operation": "Semantic model refresh",
+                "reason": message,
+            })
             results.append((model, "ERROR"))
 
     print()
@@ -87,7 +93,9 @@ def refresh_semantic_models(powerbi, workspace_items, config):
         print(f"- {model.name}: {status}")
 
     if failures and config.fail_on_refresh_error:
+        print_failure_summary("SEMANTIC MODEL REFRESH FAILURE SUMMARY", failures)
         raise RuntimeError(
-            f"Unable to refresh {len(failures)} semantic model(s)."
+            f"Unable to refresh {len(failures)} semantic model(s).\n"
+            + format_failure_details(failures)
         )
     return results

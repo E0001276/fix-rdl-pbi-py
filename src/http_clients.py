@@ -22,14 +22,17 @@ class ApiClient:
                 "Content-Type": "application/json",
             }
         )
+        self.transient_retry_count = 0
+        self.transient_retry_initial_seconds = 0
+        self.transient_retry_max_seconds = 0
 
-    def _url(self, path_or_url: str) -> str:
+    def build_url(self, path_or_url: str) -> str:
         if path_or_url.startswith("http://") or path_or_url.startswith("https://"):
             return path_or_url
         return urljoin(self.base_url, path_or_url.lstrip("/"))
 
     @staticmethod
-    def _raise_for_status_with_body(response):
+    def raise_for_status_with_body(response):
         if response.ok:
             return
 
@@ -44,7 +47,7 @@ class ApiClient:
             response=response,
         )
 
-    def _log(self, method: str, url: str, request_json, response):
+    def log_http_exchange(self, method: str, url: str, request_json, response):
         if self.diagnostics is not None:
             self.diagnostics.log_http(
                 method=method,
@@ -56,39 +59,97 @@ class ApiClient:
             )
 
     def get(self, path_or_url: str, params=None):
-        url = self._url(path_or_url)
+        url = self.build_url(path_or_url)
         response = self.session.get(url, params=params)
-        self._log("GET", url, None, response)
-        self._raise_for_status_with_body(response)
+        self.log_http_exchange("GET", url, None, response)
+        self.raise_for_status_with_body(response)
         return response
 
     def post(self, path_or_url: str, json=None, params=None):
-        url = self._url(path_or_url)
+        url = self.build_url(path_or_url)
         response = self.session.post(url, json=json, params=params)
-        self._log("POST", url, json, response)
-        self._raise_for_status_with_body(response)
+        self.log_http_exchange("POST", url, json, response)
+        self.raise_for_status_with_body(response)
         return response
 
-    # def patch(self, path_or_url: str, json=None, params=None):
-    #     url = self._url(path_or_url)
-    #     response = self.session.patch(url, json=json, params=params)
-    #     self._log("PATCH", url, json, response)
-    #     self._raise_for_status_with_body(response)
-    #     return response
+    def configure_transient_retries(
+        self, retry_count: int, initial_seconds: int, max_seconds: int
+    ):
+        """Configure retries used only by explicitly retryable operations."""
+        self.transient_retry_count = max(0, int(retry_count))
+        self.transient_retry_initial_seconds = max(0, int(initial_seconds))
+        self.transient_retry_max_seconds = max(0, int(max_seconds))
+
+    @staticmethod
+    def _retry_after_seconds(response, fallback_seconds: int) -> int:
+        value = str(response.headers.get("Retry-After", "")).strip()
+        if value.isdigit():
+            return max(0, int(value))
+        return max(0, int(fallback_seconds))
+
+    def post_with_transient_retry(
+        self,
+        path_or_url: str,
+        json=None,
+        params=None,
+        retry_status_codes=(429, 502, 503, 504),
+    ):
+        """POST with bounded retries for transient service failures.
+
+        This method is intentionally opt-in so existing POST behavior remains
+        unchanged for update, binding, refresh, and other operations.
+        """
+        url = self.build_url(path_or_url)
+        total_attempts = self.transient_retry_count + 1
+
+        for attempt in range(1, total_attempts + 1):
+            response = self.session.post(url, json=json, params=params)
+            self.log_http_exchange("POST", url, json, response)
+
+            if response.ok or response.status_code not in retry_status_codes:
+                self.raise_for_status_with_body(response)
+                return response
+
+            if attempt >= total_attempts:
+                self.raise_for_status_with_body(response)
+
+            base_delay = self.transient_retry_initial_seconds * (2 ** (attempt - 1))
+            if self.transient_retry_max_seconds > 0:
+                base_delay = min(base_delay, self.transient_retry_max_seconds)
+            delay = self._retry_after_seconds(response, base_delay)
+
+            print(
+                f"[WARN] HTTP {response.status_code} {response.reason} for {url}."
+            )
+            print(
+                f"[RETRY] Attempt {attempt}/{self.transient_retry_count} failed; "
+                f"waiting {delay} second(s) before retrying..."
+            )
+            if delay > 0:
+                time.sleep(delay)
+
+        raise RuntimeError("Transient retry loop ended unexpectedly.")
+
+    def patch(self, path_or_url: str, json=None, params=None):
+        url = self.build_url(path_or_url)
+        response = self.session.patch(url, json=json, params=params)
+        self.log_http_exchange("PATCH", url, json, response)
+        self.raise_for_status_with_body(response)
+        return response
 
     # def delete(self, path_or_url: str, params=None):
-    #     url = self._url(path_or_url)
+    #     url = self.build_url(path_or_url)
     #     response = self.session.delete(url, params=params)
-    #     self._log("DELETE", url, None, response)
-    #     self._raise_for_status_with_body(response)
+    #     self.log_http_exchange("DELETE", url, None, response)
+    #     self.raise_for_status_with_body(response)
     #     return response
 
     @staticmethod
-    def _fabric_operation_path(operation_id: str) -> str:
+    def fabric_operation_path(operation_id: str) -> str:
         return f"operations/{operation_id}"
 
     @staticmethod
-    def _fabric_result_path(operation_id: str) -> str:
+    def fabric_result_path(operation_id: str) -> str:
         return f"operations/{operation_id}/result"
 
     def wait_for_lro_completion(self, response, timeout_seconds: int = 300):
@@ -116,7 +177,7 @@ class ApiClient:
             # include a regional wabi-paas Location; using x-ms-operation-id keeps all
             # polling on https://api.fabric.microsoft.com/v1.
             state_ref = (
-                self._fabric_operation_path(operation_id) if operation_id else location
+                self.fabric_operation_path(operation_id) if operation_id else location
             )
             state_response = self.get(state_ref)
             state = state_response.json()
@@ -155,7 +216,7 @@ class ApiClient:
 
             time.sleep(max(1, retry_after))
             state_ref = (
-                self._fabric_operation_path(operation_id) if operation_id else location
+                self.fabric_operation_path(operation_id) if operation_id else location
             )
             state_response = self.get(state_ref)
             state = state_response.json()
@@ -163,7 +224,7 @@ class ApiClient:
 
             if status == "Succeeded":
                 if operation_id:
-                    return self.get(self._fabric_result_path(operation_id)).json()
+                    return self.get(self.fabric_result_path(operation_id)).json()
                 result_url = state_response.headers.get("Location")
                 if not result_url:
                     raise RuntimeError(

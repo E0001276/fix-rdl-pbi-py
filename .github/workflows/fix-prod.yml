@@ -1,0 +1,12 @@
+name: Power BI FIX - PROD
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    uses: ./.github/workflows/fix.yml
+    with:
+      environment_name: PROD
+      config_file: src/config/ws-gamma.yaml
+    secrets: inherit
