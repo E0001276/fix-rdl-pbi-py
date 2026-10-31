@@ -1,0 +1,12 @@
+name: Power BI FIX - QA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    uses: ./.github/workflows/fix.yml
+    with:
+      environment_name: QA
+      config_file: src/config/ws-beta.yaml
+    secrets: inherit

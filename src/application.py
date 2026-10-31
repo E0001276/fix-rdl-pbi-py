@@ -9,6 +9,11 @@ from paginated_mapping import load_paginated_report_mapping
 from powerbi_gateway import bind_semantic_models_to_gateway
 from powerbi_paginated import bind_paginated_reports_to_semantic_models
 from remediation import apply_remediation, summarize_discovery
+from remediation_scope import (
+    build_remediation_scope,
+    print_scope_summary,
+    select_configured_definition_items,
+)
 from semantic_refresh import refresh_semantic_models
 from workspace import (
     discover_paginated_report_definitions,
@@ -62,16 +67,20 @@ def print_configuration(config_path: str, config, mapping) -> None:
     print(f"[WORKSPACE] Name     : {config.workspace_name}")
     print(f"[WORKSPACE] Id       : {config.workspace_id}")
     print(
-        f"[WORKSPACE] Database : "
+        f"[WORKSPACE] Oracle server      : "
         f"{config.expected_oracle_database or '(not configured)'}"
+    )
+    print(
+        f"[WORKSPACE] Fabric connection  : "
+        f"{config.semantic_model_connection_name or '(not configured)'}"
     )
     print(f"[MAPPING] File       : {config.reports_mapping_path}")
     print(f"[MAPPING] Reports    : {mapping.report_count}")
     print(f"[MAPPING] Pages      : {mapping.page_count}")
 
 
-def discover_workspace_state(fabric, config):
-    """Discover workspace items and all definitions needed by remediation."""
+def discover_workspace_state(fabric, config, mapping):
+    """Discover all workspace items, then load only configured definitions."""
     print_section("WORKSPACE DISCOVERY")
     print(
         f"[DISCOVERY] Reading items from workspace "
@@ -86,13 +95,20 @@ def discover_workspace_state(fabric, config):
     print(f"  Paginated Reports : {len(workspace_items.paginated_reports)}")
     print(f"  Total items       : {len(workspace_items)}")
 
+    configured_reports, configured_paginated = select_configured_definition_items(
+        workspace_items, mapping
+    )
+
     print_section("REPORT DEFINITIONS")
-    print("[DISCOVERY] Reading report definitions and RDL Visuals with Fabric REST...")
+    print(
+        "[DISCOVERY] Reading report definitions and RDL Visuals only for "
+        "reports selected by the configuration file..."
+    )
     report_definition_cache = {}
     rdl_visuals = discover_report_definitions(
         fabric,
         config.workspace_id,
-        workspace_items,
+        configured_reports,
         definition_cache=report_definition_cache,
     )
     print(f"[DISCOVERY] RDL Visuals found: {len(rdl_visuals)}")
@@ -101,20 +117,13 @@ def discover_workspace_state(fabric, config):
         f"{len(report_definition_cache)}"
     )
 
-    print_section("SEMANTIC MODEL DEFINITIONS")
-    print("[DISCOVERY] Reading semantic model definitions with Fabric REST...")
-    discover_semantic_model_definitions(
-        fabric, config.workspace_id, workspace_items
-    )
-    print(
-        f"[DISCOVERY] Semantic model definitions logged: "
-        f"{len(workspace_items.semantic_models)}"
-    )
-
     print_section("PAGINATED REPORT DEFINITIONS")
-    print("[DISCOVERY] Reading paginated report definitions with Fabric REST...")
+    print(
+        "[DISCOVERY] Reading paginated report definitions only for paginated "
+        "reports selected by the configuration file..."
+    )
     paginated_infos = discover_paginated_report_definitions(
-        fabric, config.workspace_id, workspace_items
+        fabric, config.workspace_id, configured_paginated
     )
     print(f"[DISCOVERY] Paginated report definitions loaded: {len(paginated_infos)}")
 
@@ -147,6 +156,7 @@ def execute_post_deploy_pipeline(
     report_definition_cache,
     config,
     mapping,
+    scope,
 ) -> None:
     """Execute the target-only post-deploy steps in their required order."""
     print_section("DISCOVERY SUMMARY")
@@ -163,20 +173,38 @@ def execute_post_deploy_pipeline(
     # 5) Main report RDL Visual -> current target paginated itemIds.
 
     print_section("SEMANTIC MODEL GATEWAY BINDING")
-    bind_semantic_models_to_gateway(powerbi, workspace_items, config)
+    bind_semantic_models_to_gateway(
+        fabric, powerbi, scope.semantic_model_items, config
+    )
 
     print_section("SEMANTIC MODEL REFRESH")
-    refresh_semantic_models(powerbi, workspace_items, config)
+    refresh_semantic_models(powerbi, scope.semantic_model_items, config)
 
     print_section("PAGINATED REPORT RDL REMEDIATION")
-    remediate_paginated_reports(fabric, workspace_items, paginated_infos, config)
+    remediate_paginated_reports(
+        fabric, workspace_items, scope.paginated_infos, config
+    )
 
-    print_post_rdl_snapshot_status(paginated_infos)
+    print_post_rdl_snapshot_status(scope.paginated_infos)
 
     print_section("PAGINATED REPORT RUNTIME DATASOURCE BINDING")
-    bind_paginated_reports_to_semantic_models(
-        powerbi, fabric, workspace_items, paginated_infos, config
-    )
+    deferred_paginated_binding_error = None
+    try:
+        bind_paginated_reports_to_semantic_models(
+            powerbi, fabric, workspace_items, scope.paginated_infos, config
+        )
+    except RuntimeError as exc:
+        if not config.defer_paginated_datasource_binding_failure_until_after_rdl_visual_fix:
+            raise
+        deferred_paginated_binding_error = exc
+        print()
+        print(
+            "[DEFERRED FAILURE] Paginated runtime datasource binding reported "
+            "one or more unresolved items. The failure is deferred until after "
+            "RDL Visual remediation so report-to-paginated-report references are "
+            "still repaired."
+        )
+        print(f"[DEFERRED FAILURE] Reason: {exc}")
 
     print_section("RDL VISUAL RESOLUTION AND APPLY")
     print(
@@ -185,12 +213,15 @@ def execute_post_deploy_pipeline(
     )
     apply_remediation(
         fabric,
-        rdl_visuals,
-        paginated_infos,
+        scope.rdl_visuals,
+        scope.paginated_infos,
         config,
         mapping,
         report_definition_cache=report_definition_cache,
     )
+
+    if deferred_paginated_binding_error is not None:
+        raise deferred_paginated_binding_error
 
 
 def run_post_deploy(config_path: str, diagnostics) -> None:
@@ -200,20 +231,50 @@ def run_post_deploy(config_path: str, diagnostics) -> None:
     print_configuration(config_path, config, mapping)
 
     fabric, powerbi = create_api_clients(diagnostics)
+    fabric.configure_transient_retries(
+        config.fabric_get_definition_retry_count,
+        config.fabric_get_definition_retry_initial_seconds,
+        config.fabric_get_definition_retry_max_seconds,
+    )
     (
         workspace_items,
         rdl_visuals,
         paginated_infos,
         report_definition_cache,
-    ) = discover_workspace_state(fabric, config)
+    ) = discover_workspace_state(fabric, config, mapping)
 
-    execute_post_deploy_pipeline(
-        fabric,
-        powerbi,
-        workspace_items,
-        rdl_visuals,
-        paginated_infos,
-        report_definition_cache,
-        config,
-        mapping,
+    scope = build_remediation_scope(
+        workspace_items, rdl_visuals, paginated_infos, mapping
     )
+
+    print_section("SEMANTIC MODEL DEFINITIONS")
+    print(
+        "[DISCOVERY] Reading semantic model definitions only for models in "
+        "the selected remediation scope..."
+    )
+    discover_semantic_model_definitions(
+        fabric, config.workspace_id, scope.semantic_model_items
+    )
+    print(
+        f"[DISCOVERY] Semantic model definitions logged: "
+        f"{len(scope.semantic_model_items.semantic_models)}"
+    )
+
+    print_section("CONFIGURATION / WORKSPACE MATCH")
+    print_scope_summary(scope, "CONFIGURATION / WORKSPACE MATCH SUMMARY")
+
+    try:
+        execute_post_deploy_pipeline(
+            fabric,
+            powerbi,
+            workspace_items,
+            rdl_visuals,
+            paginated_infos,
+            report_definition_cache,
+            config,
+            mapping,
+            scope,
+        )
+    finally:
+        print_section("FINAL CONFIGURATION SCOPE SUMMARY")
+        print_scope_summary(scope, "FINAL CONFIGURATION SCOPE SUMMARY")

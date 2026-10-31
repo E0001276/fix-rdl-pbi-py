@@ -1,6 +1,8 @@
 workspaceId: 567000c2-2893-4e44-9d56-c8f4053e6200
 workspaceName: ws-uat-cicd
+reportsMappingPath: reports-custom.yaml
 expectedOracleDatabase: NCI_QA_DB
+semanticModelConnectionName: NCI_QA_DB
 failOnUnresolvedRdlVisual: true
 applyRdlVisualFix: true
 applyPaginatedReportFix: true
@@ -9,3 +11,10 @@ bindSemanticModelsToConnection: true
 failOnUnresolvedConnectionBinding: true
 bindPaginatedReportsToSemanticModels: true
 failOnUnresolvedPaginatedDatasourceBinding: true
+paginatedRuntimeDatasourceRetryCount: 6
+paginatedRuntimeDatasourceRetrySeconds: 5
+takeOverPaginatedReportWhenRuntimeDatasourceEmpty: true
+deferPaginatedDatasourceBindingFailureUntilAfterRdlVisualFix: true
+fabricGetDefinitionRetryCount: 5
+fabricGetDefinitionRetryInitialSeconds: 5
+fabricGetDefinitionRetryMaxSeconds: 30

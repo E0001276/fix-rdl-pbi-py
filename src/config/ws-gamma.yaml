@@ -1,6 +1,8 @@
-workspaceId: 2fbd70f4-9eed-4493-b38d-106cc4c01d7c
+workspaceId: c8f0cd4b-1898-441f-8553-a0585229a665
 workspaceName: ws-gamma
-expectedOracleDatabase: NCI_TEST_DB
+reportsMappingPath: reports-gamma.yaml
+expectedOracleDatabase: NCI_DEV_DB
+semanticModelConnectionName: NCI_TEST_DB
 failOnUnresolvedRdlVisual: true
 applyRdlVisualFix: true
 applyPaginatedReportFix: true
@@ -9,3 +11,10 @@ bindSemanticModelsToConnection: true
 failOnUnresolvedConnectionBinding: true
 bindPaginatedReportsToSemanticModels: true
 failOnUnresolvedPaginatedDatasourceBinding: true
+paginatedRuntimeDatasourceRetryCount: 6
+paginatedRuntimeDatasourceRetrySeconds: 5
+takeOverPaginatedReportWhenRuntimeDatasourceEmpty: true
+deferPaginatedDatasourceBindingFailureUntilAfterRdlVisualFix: true
+fabricGetDefinitionRetryCount: 5
+fabricGetDefinitionRetryInitialSeconds: 5
+fabricGetDefinitionRetryMaxSeconds: 30

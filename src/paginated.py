@@ -2,6 +2,7 @@ import base64
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
+from failure_summary import format_failure_details, print_failure_summary
 
 from workspace import (
     get_paginated_report_definition,
@@ -25,7 +26,11 @@ def xml_local_name(tag: str) -> str:
 
 
 def normalize_workspace_datasource_prefix(workspace_name: str) -> str:
-    return re.sub(r"[\s-]+", "", workspace_name or "")
+    # RDL datasource prefixes omit workspace separators such as spaces, hyphens,
+    # and periods. Keep this normalization narrowly scoped so existing workspace
+    # naming behavior remains unchanged while names such as "Operaciones 5.0 DEV"
+    # resolve to the existing RDL prefix "Operaciones50DEV".
+    return re.sub(r"[\s.-]+", "", workspace_name or "")
 
 
 def build_target_datasource_name(current_name: str, workspace_name: str) -> str:
@@ -431,7 +436,12 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
             message = "Unable to resolve semantic model(s) safely: " + " | ".join(resolution_failures)
             print("  Semantic models   : NOT RESOLVED")
             print(f"  Reason            : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Paginated Report",
+                "element_name": item.name,
+                "operation": "RDL semantic model resolution",
+                "reason": message,
+            })
             results.append(PaginatedBindingResult(item.id, item.name, "", "", "UNRESOLVED", message))
             continue
 
@@ -466,7 +476,12 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
             message = "The RDL was not already correct but no patchable binding fields changed."
             print("  Status             : PATCH_FAILED")
             print(f"  Reason             : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Paginated Report",
+                "element_name": item.name,
+                "operation": "RDL patch",
+                "reason": message,
+            })
             results.append(PaginatedBindingResult(item.id, item.name, model_ids, model_names, "PATCH_FAILED", message))
             continue
 
@@ -474,7 +489,12 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
             message = "Datasource-level local RDL validation failed before calling Fabric updateDefinition."
             print("  Status             : LOCAL_VERIFY_FAILED")
             print(f"  Reason             : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Paginated Report",
+                "element_name": item.name,
+                "operation": "Local RDL validation",
+                "reason": message,
+            })
             results.append(PaginatedBindingResult(item.id, item.name, model_ids, model_names, "LOCAL_VERIFY_FAILED", message))
             continue
 
@@ -496,7 +516,12 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
             message = str(exc)
             print("  Status             : UPDATE_FAILED")
             print(f"  Reason             : {message}")
-            failures.append(message)
+            failures.append({
+                "element_type": "Paginated Report",
+                "element_name": item.name,
+                "operation": "Fabric updateDefinition",
+                "reason": message,
+            })
             results.append(PaginatedBindingResult(item.id, item.name, model_ids, model_names, "UPDATE_FAILED", message))
             continue
 
@@ -546,7 +571,11 @@ def remediate_paginated_reports(fabric, workspace_items, paginated_infos, config
         print(f"- {result.paginated_report_name}: {result.status} -> {result.semantic_model_name or '(not resolved)'} [{result.semantic_model_id or '-'}]")
 
     if failures and config.fail_on_unresolved_paginated_report:
-        raise RuntimeError(f"Unable to safely remediate {len(failures)} paginated report relationship(s).")
+        print_failure_summary("PAGINATED REPORT REMEDIATION FAILURE SUMMARY", failures)
+        raise RuntimeError(
+            f"Unable to safely remediate {len(failures)} paginated report relationship(s).\n"
+            + format_failure_details(failures)
+        )
 
     return results
 

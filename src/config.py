@@ -12,6 +12,7 @@ class PostDeployConfig:
     workspace_id: str
     workspace_name: str
     expected_oracle_database: str
+    semantic_model_connection_name: str
     fail_on_unresolved_rdl_visual: bool
     apply_rdl_visual_fix: bool
     apply_paginated_report_fix: bool
@@ -20,6 +21,13 @@ class PostDeployConfig:
     fail_on_unresolved_connection_binding: bool
     bind_paginated_reports_to_semantic_models: bool
     fail_on_unresolved_paginated_datasource_binding: bool
+    paginated_runtime_datasource_retry_count: int
+    paginated_runtime_datasource_retry_seconds: int
+    take_over_paginated_report_when_runtime_datasource_empty: bool
+    defer_paginated_datasource_binding_failure_until_after_rdl_visual_fix: bool
+    fabric_get_definition_retry_count: int
+    fabric_get_definition_retry_initial_seconds: int
+    fabric_get_definition_retry_max_seconds: int
     refresh_semantic_models: bool
     wait_for_refresh: bool
     fail_on_refresh_error: bool
@@ -36,6 +44,12 @@ def load_config(path: str) -> PostDeployConfig:
         workspace_id=require_text(data, "workspaceId", config_path),
         workspace_name=require_text(data, "workspaceName", config_path),
         expected_oracle_database=str(data.get("expectedOracleDatabase", "")).strip(),
+        semantic_model_connection_name=str(
+            data.get(
+                "semanticModelConnectionName",
+                data.get("expectedOracleDatabase", ""),
+            )
+        ).strip(),
         fail_on_unresolved_rdl_visual=bool(
             data.get("failOnUnresolvedRdlVisual", True)
         ),
@@ -56,13 +70,54 @@ def load_config(path: str) -> PostDeployConfig:
         fail_on_unresolved_paginated_datasource_binding=bool(
             data.get("failOnUnresolvedPaginatedDatasourceBinding", True)
         ),
+        paginated_runtime_datasource_retry_count=max(
+            0, int(data.get("paginatedRuntimeDatasourceRetryCount", 0))
+        ),
+        paginated_runtime_datasource_retry_seconds=max(
+            0, int(data.get("paginatedRuntimeDatasourceRetrySeconds", 0))
+        ),
+        take_over_paginated_report_when_runtime_datasource_empty=bool(
+            data.get("takeOverPaginatedReportWhenRuntimeDatasourceEmpty", False)
+        ),
+        defer_paginated_datasource_binding_failure_until_after_rdl_visual_fix=bool(
+            data.get(
+                "deferPaginatedDatasourceBindingFailureUntilAfterRdlVisualFix",
+                False,
+            )
+        ),
+        fabric_get_definition_retry_count=max(
+            0, int(data.get("fabricGetDefinitionRetryCount", 5))
+        ),
+        fabric_get_definition_retry_initial_seconds=max(
+            0, int(data.get("fabricGetDefinitionRetryInitialSeconds", 5))
+        ),
+        fabric_get_definition_retry_max_seconds=max(
+            0, int(data.get("fabricGetDefinitionRetryMaxSeconds", 30))
+        ),
         refresh_semantic_models=bool(data.get("refreshSemanticModels", True)),
         wait_for_refresh=bool(data.get("waitForRefresh", False)),
         fail_on_refresh_error=bool(data.get("failOnRefreshError", True)),
         refresh_poll_seconds=int(data.get("refreshPollSeconds", 5)),
         refresh_timeout_seconds=int(data.get("refreshTimeoutSeconds", 1800)),
-        reports_mapping_path=REPORTS_MAPPING_PATH,
+        reports_mapping_path=resolve_reports_mapping_path(data, config_path),
     )
+
+
+def resolve_reports_mapping_path(data: dict, config_path: Path) -> Path:
+    """Resolve the reports mapping configured for one environment.
+
+    Existing configurations keep using the historical reports.yaml default.
+    Environment-specific configurations can override it with a path relative
+    to their own YAML file.
+    """
+    value = data.get("reportsMappingPath")
+    if value is None or not str(value).strip():
+        return REPORTS_MAPPING_PATH
+
+    mapping_path = Path(str(value).strip())
+    if mapping_path.is_absolute():
+        return mapping_path
+    return (config_path.parent / mapping_path).resolve()
 
 
 def require_text(data: dict, key: str, config_path: Path) -> str:

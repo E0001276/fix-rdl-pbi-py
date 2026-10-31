@@ -1,0 +1,12 @@
+name: Power BI FIX - DEV
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    uses: ./.github/workflows/fix.yml
+    with:
+      environment_name: DEV
+      config_file: src/config/ws-dev-cicd.yaml
+    secrets: inherit
